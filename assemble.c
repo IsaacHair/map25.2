@@ -1,17 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-//first arg is the source file, second is the target file
-//third arg is the first buffer file, fourth is the other buffer file
-//buffer files can be used to examine progress, but they are basically garbage
-
-//note: everything ends with >lower case< hex
-//default to lower case for all
-
 int main(int argc, char* argv[]) {
-  int vsbclean();
-  void vsbmap();
-  void vsbpage();
+  void page();
+  void assemble();
 
   if (argc != 4) {
     printf("usage: ./vas <source file> <target file> <buffer file> \n");
@@ -22,75 +14,13 @@ int main(int argc, char* argv[]) {
   FILE *target = fopen(argv[2], "w");
   FILE *clean = fopen(argv[3], "w");
 
-  printf("started\n");
-  vsbclean(source, clean);
-  printf("cleaned\n");
-  fclose(clean);
-  vsbpage(target, argv[3]);
-  printf("paged\n");
-
   fclose(source);
   fclose(target);
   fclose(clean);
   return (0);
 }
 
-int vsbclean(FILE *source, FILE *clean) {
-  //remove comments
-  //store the data as a continuous stream
-  //4 characters for address, has not been re-ordered
-  //2 characters for data to be written to each chip, has not been re-ordered
-  //continuous stream of information
-  char c;
-  int i;
-  for (c = fgetc(source); c != EOF; c = fgetc(source))
-    if (c == '/') {
-      while ((c = fgetc(source)) != '\n')
-	if (c == EOF)
-	  return (0);
-    }
-    else if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
-      for (i = 0; i < 4; i++, c = fgetc(source))
-	fprintf(clean, "%c", c);
-      c = fgetc(source);
-      fgetc(source);
-      fgetc(source);
-      switch (c) {
-      case 'j':
-	if ((c = fgetc(source)) == 'i')
-	  fprintf(clean, "00");
-	else
-	  fprintf(clean, "20");
-	break;
-      case 'o':
-	if ((c = fgetc(source)) == '0')
-	  fprintf(clean, "40");
-	else
-	  fprintf(clean, "60");
-	break;
-      case 'a':
-	if ((c = fgetc(source)) == '0')
-	  fprintf(clean, "80");
-	else
-	  fprintf(clean, "a0");
-	break;
-      case 'b':
-	if ((c = fgetc(source)) == '0')
-	  fprintf(clean, "c0");
-	else
-	  fprintf(clean, "e0");
-	break;
-      }
-      c = fgetc(source);
-      for (i = 0; i < 4; i++)
-	fprintf(clean, "%c", (c = fgetc(source)));
-      c = fgetc(source);
-      for (i = 0; i < 4; i++)
-	fprintf(clean, "%c", (c = fgetc(source)));
-    }
-}
-      
-void vsbpage(FILE *target, char *location) {
+void vsbpage(FILE *target, FILE *clean) {
   //write data as page instructions
   //4 characters for page
   //2 characters for line on that page
@@ -107,18 +37,15 @@ void vsbpage(FILE *target, char *location) {
   //again, everything is in eeprom order
   //no spaces or any garbage inserted, just a stream of data
 
-  FILE *mapped;
   int i, j, k;
   int ba;
   int v;
   int data;
   char c;
-  mapped = fopen(location, "r");
   for (k = 0; k < 5; k++) {
     for (j = 0; j < (1 << 16); j += 128) {
       //reset to beginning of file to check for the next page
-      fclose(mapped);
-      mapped = fopen(location, "r");
+      rewind(mapped);
       //see if there is data at page j
       for (data = 0, c = fgetc(mapped); c != EOF; c = fgetc(mapped)) {
 	for (i = 0, ba = 0; i < 4;
