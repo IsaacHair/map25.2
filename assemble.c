@@ -71,8 +71,7 @@ void vsbpage(FILE *target, FILE *clean) {
 	else
 	  fprintf(target, "%c", (ba/(1 << 12))+'a'-10);
       //reset to beginning of file to find all entries in this page
-      fclose(mapped);
-      mapped = fopen(location, "r");
+      rewind(mapped);
       for (c = fgetc(mapped); c != EOF; c = fgetc(mapped)) {
 	for (i = 0, ba = 0; i < 4;
 	     i++, ba = (ba << 4) + v, i < 4 ? c = fgetc(mapped) : 0)
@@ -89,13 +88,13 @@ void vsbpage(FILE *target, FILE *clean) {
 	    else
 	      fprintf(target, "%c", (v/(1 << 4))+'a'-10);
 	  //pad out to the correct chip
-	  for (i = 0; i < 2*k; i++)
+	  for (i = 0; i < 8-2*k; i++)
 	    fgetc(mapped);
 	  //print data for the chip at that spot
 	  for (i = 0; i < 2; i++)
 	    fprintf(target, "%c", fgetc(mapped));
 	  //pad out to next entry
-	  for (i = 0; i < 8-2*k; i++)
+	  for (i = 0; i < 2*k; i++)
 	    fgetc(mapped);
 	}
 	//if the entry isn't the desired page, pad out to next entry
