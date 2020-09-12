@@ -24,15 +24,20 @@ int main(int argc, char* argv[]) {
 }
 
 void assemble(FILE *source, FILE *clean) {
-	//Input format: <instruction addr, 4 hex digits><tab><op code upper>
-	//<tab><op code lower><tab><immediate, 4 hex digits><tab><next addr,
-	//4 hex digits><return>
-	//Comments:type "/" on a fresh line, type comment on line after that,
-	//then type "\" on a fresh line, then start code on line after that
 	char c;
 	char* opcode = malloc(1*sizeof(char));
 	int i, j;
 	char *opdecode();
+
+	while ((c = fgetc(source)) != EOF) {
+		if (c == '<') {
+			while ((c = fgetc(source)) != '>')
+				;
+			fseek(source, 1, SEEK_CUR);
+			continue;
+		}
+		/*copy the code over*/
+	}
 }
 
 char *opdecode(char* opcode) {

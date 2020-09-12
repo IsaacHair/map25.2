@@ -13,6 +13,8 @@ X's correspond to the same things as above.
 Also, a line with only "<" begins a comment (start the comment
 on the next line) and ">" ends the comment (put the ">" on its
 own line and start the code after that line).
+Note: comment should not contain ">" in the actual content of
+the comment.
 
 bus pneumonics (upper nibble):
 0x0 imm
