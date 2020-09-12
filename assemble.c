@@ -17,9 +17,6 @@ int main(int argc, char* argv[]) {
   fclose(clean);
   fopen(argv[3], "r");
   page(clean, target);
-  fclose(source);
-  fclose(target);
-  fclose(clean);
   return (0);
 }
 
@@ -27,21 +24,155 @@ void assemble(FILE *source, FILE *clean) {
 	char c;
 	char* opcode = malloc(1*sizeof(char));
 	int i, j;
-	char *opdecode();
+	char opdecode();
 
-	while ((c = fgetc(source)) != EOF) {
+	c = fgetc(source);
+	while (c != EOF) {
 		if (c == '<') {
 			while ((c = fgetc(source)) != '>')
+				if (c == EOF) {
+					printf("Comment error\n");
+					exit(0x01);
+				}
+			while (((c = fgetc(source)) == 10 || c == 13 ) &&
+			       c != EOF)
 				;
-			fseek(source, 1, SEEK_CUR);
 			continue;
 		}
-		/*copy the code over*/
+
+		for (i = 0; i < 4; i++) {
+			if (!(((c <= '9') && (c >= '0')) || ((c <= 'f')
+							&& (c >= 'a')))) {
+				printf("invalid hex\n");
+				exit(0x05);
+			}
+			fputc(c, clean);
+			c = fgetc(source);
+		}
+
+		c = fgetc(source);
+		opcode = realloc(opcode, 4*sizeof(char));
+		for (i = 0; c != ' '; i++) {
+			if (i >= 3) {
+				printf("pneumonic error\n");
+				exit(0x02);
+			}
+			if (c == EOF) {
+				printf("unexpected end\n");
+				exit(0x04);
+			}
+			opcode[i] = c;
+			c = fgetc(source);
+		}
+		if (i < 2) {
+			printf("pneumonic error\n");
+			exit(0x03);
+		}
+		opcode[3] = '\0';
+		fputc(opdecode(opcode), clean);
+
+		c = fgetc(source);
+		opcode = realloc(opcode, 5*sizeof(char));
+		for (i = 0; c != ' '; i++) {
+			if (i >= 4) {
+				printf("pneumonic error\n");
+				exit(0x02);
+			}
+			if (c == EOF) {
+				printf("unexpected end\n");
+				exit(0x04);
+			}
+			opcode[i] = c;
+			c = fgetc(source);
+		}
+		if (i < 3) {
+			printf("pneumonic error\n");
+			exit(0x03);
+		}
+		opcode[4] = '\0';
+		fputc(opdecode(opcode), clean);
+
+		for (j = 0; j < 2; j++) {
+			for (i = 0; i < 4; i++) {
+				c = fgetc(source);
+				if (!(((c <= '9') && (c >= '0')) || ((c <= 'f')
+				      && (c >= 'a')))) {
+					printf("invalid hex\n");
+					exit(0x05);
+				}
+				fputc(c, clean);
+			}
+			c = fgetc(source);
+		}
+
+		while (c != 10 && c != 13)
+			c = fgetc(source);
+		while (c == 10 || c == 13)
+			c = fgetc(source);
 	}
 }
 
-char *opdecode(char* opcode) {
-	return "a";
+int compare(char* str0, char* str1) {
+	int i;
+	for (i = 0; str0[i] == str1[i]; i++)
+		if (str0[i] == '\0')
+			return 1;
+	return 0;
+}
+
+char opdecode(char* opcode) {
+	int compare();
+
+	if (compare("imm", opcode))
+		return '0';
+	else if (compare("adr", opcode))
+		return '1';
+	else if (compare("gen", opcode))
+		return '2';
+	else if (compare("rol", opcode))
+		return '3';
+	else if (compare("ror", opcode))
+		return '4';
+	else if (compare("out", opcode))
+		return '5';
+	else if (compare("dir", opcode))
+		return '6';
+	else if (compare("inp", opcode))
+		return '7';
+	else if (compare("ram", opcode))
+		return '8';
+	else if (compare("jzor", opcode))
+		return '0';
+	else if (compare("asnx", opcode))
+		return '1';
+	else if (compare("out0", opcode))
+		return '2';
+	else if (compare("out1", opcode))
+		return '3';
+	else if (compare("adr0", opcode))
+		return '4';
+	else if (compare("adr1", opcode))
+		return '5';
+	else if (compare("dir0", opcode))
+		return '6';
+	else if (compare("dir1", opcode))
+		return '7';
+	else if (compare("gen0", opcode))
+		return '8';
+	else if (compare("gen1", opcode))
+		return '9';
+	else if (compare("noop", opcode))
+		return 'a';
+	else if (compare("rlow", opcode))
+		return 'd';
+	else if (compare("rupp", opcode))
+		return 'e';
+	else if (compare("rall", opcode))
+		return 'f';
+	else {
+		printf("unrecognized opcode: %s\n", opcode);
+		exit(0x06);
+	}
 }
 
 void page(FILE *clean, FILE *target) {

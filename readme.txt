@@ -45,3 +45,5 @@ write/jump/no-op pneumonics (lower nibble):
 0xd rlow
 0xe rupp
 0xf rall
+
+***NOTE: Rom chip zero is the RIGHTMOST chip and rom chip four is the LEFTMOST.
