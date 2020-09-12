@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
 void assemble(FILE *source, FILE *clean) {
 	char c;
 	char* opcode = malloc(1*sizeof(char));
-	int i, j;
+	int i, j, k;
 	char opdecode();
 
 	c = fgetc(source);
@@ -50,47 +50,25 @@ void assemble(FILE *source, FILE *clean) {
 			c = fgetc(source);
 		}
 
-		c = fgetc(source);
-		opcode = realloc(opcode, 4*sizeof(char));
-		for (i = 0; c != ' '; i++) {
-			if (i >= 3) {
-				printf("pneumonic error\n");
-				exit(0x02);
-			}
-			if (c == EOF) {
-				printf("unexpected end\n");
-				exit(0x04);
-			}
-			opcode[i] = c;
+		for (k = 0; k < 2; k++) {
 			c = fgetc(source);
-		}
-		if (i < 2) {
-			printf("pneumonic error\n");
-			exit(0x03);
-		}
-		opcode[3] = '\0';
-		fputc(opdecode(opcode), clean);
-
-		c = fgetc(source);
-		opcode = realloc(opcode, 5*sizeof(char));
-		for (i = 0; c != ' '; i++) {
-			if (i >= 4) {
-				printf("pneumonic error\n");
-				exit(0x02);
+			for (j = 0; c != ' '; j++) {
+				if (c == EOF) {
+					printf("unexpected end\n");
+					exit(0x04);
+				}
+				c = fgetc(source);
 			}
-			if (c == EOF) {
-				printf("unexpected end\n");
-				exit(0x04);
-			}
-			opcode[i] = c;
+			fseek(source, -j-1, SEEK_CUR);
 			c = fgetc(source);
+			opcode = realloc(opcode, (j+1)*sizeof(char));
+			for (i = 0; c != ' '; i++) {
+				opcode[i] = c;
+				c = fgetc(source);
+			}
+			opcode[j] = '\0';
+			fputc(opdecode(opcode), clean);
 		}
-		if (i < 3) {
-			printf("pneumonic error\n");
-			exit(0x03);
-		}
-		opcode[4] = '\0';
-		fputc(opdecode(opcode), clean);
 
 		for (j = 0; j < 2; j++) {
 			for (i = 0; i < 4; i++) {
@@ -125,7 +103,7 @@ char opdecode(char* opcode) {
 
 	if (compare("imm", opcode))
 		return '0';
-	else if (compare("adr", opcode))
+	else if (compare("adr", opcode) || compare("addr", opcode))
 		return '1';
 	else if (compare("gen", opcode))
 		return '2';
@@ -137,21 +115,21 @@ char opdecode(char* opcode) {
 		return '5';
 	else if (compare("dir", opcode))
 		return '6';
-	else if (compare("inp", opcode))
+	else if (compare("inp", opcode) || compare("in", opcode))
 		return '7';
 	else if (compare("ram", opcode))
 		return '8';
-	else if (compare("jzor", opcode))
+	else if (compare("jzor", opcode) || compare("jumpor", opcode))
 		return '0';
-	else if (compare("asnx", opcode))
+	else if (compare("asnx", opcode) || compare("asnnext", opcode))
 		return '1';
 	else if (compare("out0", opcode))
 		return '2';
 	else if (compare("out1", opcode))
 		return '3';
-	else if (compare("adr0", opcode))
+	else if (compare("adr0", opcode) || compare("addr0", opcode))
 		return '4';
-	else if (compare("adr1", opcode))
+	else if (compare("adr1", opcode) || compare("addr1", opcode))
 		return '5';
 	else if (compare("dir0", opcode))
 		return '6';
@@ -163,11 +141,12 @@ char opdecode(char* opcode) {
 		return '9';
 	else if (compare("noop", opcode))
 		return 'a';
-	else if (compare("rlow", opcode))
+	else if (compare("rlow", opcode) || compare("ramlow", opcode))
 		return 'd';
-	else if (compare("rupp", opcode))
+	else if (compare("rupp", opcode) || compare("ramup", opcode)
+		 || compare("rup", opcode))
 		return 'e';
-	else if (compare("rall", opcode))
+	else if (compare("rall", opcode) || compare("ramall", opcode))
 		return 'f';
 	else {
 		printf("unrecognized opcode: %s\n", opcode);
