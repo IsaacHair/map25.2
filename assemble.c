@@ -119,6 +119,8 @@ char opdecode(char* opcode) {
 		return '7';
 	else if (compare("ram", opcode))
 		return '8';
+	else if (compare("dnc", opcode) || compare("nc", opcode))
+		return '9';
 	else if (compare("jzor", opcode) || compare("jumpor", opcode))
 		return '0';
 	else if (compare("asnx", opcode) || compare("asnnext", opcode))
