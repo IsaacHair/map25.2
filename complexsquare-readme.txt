@@ -37,3 +37,10 @@ logic gates and everything. Actually, it might
 be faster to use if-else instead of mask logic
 gates for the addition part (not the rotation
 though).
+
+Note: using 2's complement for negative numbers.
+Wait this might be bad for the multiplication
+algorithm.
+The algorithm kinda sucks though, but it seems
+that with the current setup the worst case
+will always be O(x^2+x) for factors of x bits.
