@@ -1,0 +1,57 @@
+<
+Adds one to a 16 bit signed or unsigned integer.
+This is extremely fast.
+Uses bubble sort to identify the lowest 0-1 edge,
+then makes all of the ones to the right of that zeros
+and sets the zero to a one on the edge.
+
+00100111
+    ^^ edge
+output:
+00101000
+    ^set to one
+     ^^^ set to zero
+
+Number stored at f000 and number+1 is outputted to f001.
+>
+0000 imm addr0 ffff 0001
+0001 imm addr1 f000 0002
+0002 imm gen1 ffff 0003
+0003 ram gen0 0000 0004
+<
+Have now loaded the inverse of the number to have 1 added
+to it.
+>
+0004 gen jzor 00ff 0006
+0006 gen jzor 0fff 0008
+0007 gen jzor 000f 000a
+0008 gen jzor 3fff 000c
+0009 gen jzor 03ff 000e
+000a gen jzor 003f 0010
+000b gen jzor 0003 0012
+000c gen jzor 7fff 0014
+000d gen jzor 1fff 0016
+000e gen jzor 07ff 0018
+000f gen jzor 01ff 001a
+0010 gen jzor 007f 001c
+0011 gen jzor 001f 001e
+0012 gen jzor 0007 0020
+0013 gen jzor 0001 0022
+0014 gen jzor ffff 0024
+0015 edge at e
+0016 edge at d
+0017 edge at c
+0018 edge at b
+0019 edge at a
+001a edge at 9
+001b edge at 8
+001c edge at 7
+001d edge at 6
+001e edge at 5
+001f edge at 4
+0020 edge at 3
+0021 edge at 2
+0022 edge at 1
+0023 edge at 0
+0024 edge at 10
+0025 edge at f

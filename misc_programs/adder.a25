@@ -5,4 +5,14 @@ Note: using two's complement, so range is -128 to 127.
 Addends are stored at f000 and f001 in ram (lower byte
 for each), and the sum is stored at f002 (sum is only
 8 bits; the last bit is truncated).
+
+This adder uses mask logic instead of if-else logic.
 >
+
+0000 imm reg1 ffff 0001
+0001 imm addr0 ffff 0002
+0002 imm addr1 f000 0003
+0003 ram reg0 0000 0004
+0004 imm addr0 ffff 0005
+0005 imm addr1 f003 0006
+0006

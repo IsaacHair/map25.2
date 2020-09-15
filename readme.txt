@@ -47,3 +47,7 @@ write/jump/no-op pneumonics (lower nibble):
 0xf rall
 
 ***NOTE: Rom chip zero is the RIGHTMOST chip and rom chip four is the LEFTMOST.
+
+Using *.u25 for upload code for EEPROMS (ie a stream of hex digits with
+a page and data for that page).
+Using *.a25 for assembly code.
