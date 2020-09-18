@@ -13,6 +13,12 @@ output:
      ^^^ set to zero
 
 Number stored at f000 and number+1 is outputted to f001.
+*Nah it ain't gonna get re-stored in ram. This would make it
+a bit slower.
+*The current setup uses a random value from ram and takes 8 clocks
+to increment it by one and output it, then it repeats.
+*If the number is odd, it will only take 7 clocks. If the number is
+exactly 7fff, it will take 9 clocks.
 >
 0000 imm addr0 ffff 0001
 0001 imm addr1 f000 0002
@@ -22,6 +28,11 @@ Number stored at f000 and number+1 is outputted to f001.
 <
 Have now loaded the inverse of the number to have 1 added
 to it.
+The inverse is used because the lack of a jzand command
+means that identifiying the 0-1 edge is much harder
+than identifying the 1-0 edge.
+Should you have decided to not be a bitch and add in the
+jzand command and corresponding logic card ...?
 >
 0005 gen jzor 00ff 0006
 0006 gen jzor 0fff 0008
@@ -72,5 +83,9 @@ to it.
 0033 imm gen0 0002 0035
 0034 imm gen0 8000 0035
 0035 imm out1 ffff 0036
-0036 gen out0 0000 0037
-0037 out ramall 0000 0003
+0036 gen out0 0000 0005
+<
+Changed this to just keep looping using
+the value already in the register and
+then outputting the inverse to output.
+>
