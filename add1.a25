@@ -38,20 +38,35 @@ to it.
 0012 gen jzor 0007 0020
 0013 gen jzor 0001 0022
 0014 gen jzor ffff 0024
-0015 edge at e
-0016 edge at d
-0017 edge at c
-0018 edge at b
-0019 edge at a
-001a edge at 9
-001b edge at 8
-001c edge at 7
-001d edge at 6
-001e edge at 5
-001f edge at 4
-0020 edge at 3
-0021 edge at 2
-0022 edge at 1
-0023 edge at 0
-0024 edge at 10
-0025 edge at f
+0015 imm gen1 3fff 0026
+0016 imm gen1 1fff 0027
+0017 imm gen1 0fff 0028
+0018 imm gen1 07ff 0029
+0019 imm gen1 03ff 002a
+001a imm gen1 01ff 002b
+001b imm gen1 00ff 002c
+001c imm gen1 007f 002d
+001d imm gen1 003f 002e
+001e imm gen1 001f 002f
+001f imm gen1 000f 0030
+0020 imm gen1 0007 0031
+0021 imm gen1 0003 0032
+0022 imm gen1 0001 0033
+0023 imm gen0 0001 
+0024 imm gen1 ffff 
+0025 imm gen1 7fff 0034
+0026 imm gen0 4000 
+0027 imm gen0 2000 
+0028 imm gen0 1000 
+0029 imm gen0 0800 
+002a imm gen0 0400 
+002b imm gen0 0200
+002c imm gen0 0100 
+002d imm gen0 0080 
+002e imm gen0 0040 
+002f imm gen0 0020
+0030 imm gen0 0010 
+0031 imm gen0 0008 
+0032 imm gen0 0004 
+0033 imm gen0 0002 
+0034 imm gen0 0001
