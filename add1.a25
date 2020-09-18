@@ -16,13 +16,14 @@ Number stored at f000 and number+1 is outputted to f001.
 >
 0000 imm addr0 ffff 0001
 0001 imm addr1 f000 0002
-0002 imm gen1 ffff 0003
-0003 ram gen0 0000 0004
+0002 imm dir1 ffff 0003
+0003 imm gen1 ffff 0004
+0004 ram gen0 0000 0005
 <
 Have now loaded the inverse of the number to have 1 added
 to it.
 >
-0004 gen jzor 00ff 0006
+0005 gen jzor 00ff 0006
 0006 gen jzor 0fff 0008
 0007 gen jzor 000f 000a
 0008 gen jzor 3fff 000c
@@ -52,21 +53,24 @@ to it.
 0020 imm gen1 0007 0031
 0021 imm gen1 0003 0032
 0022 imm gen1 0001 0033
-0023 imm gen0 0001 
-0024 imm gen1 ffff 
+0023 imm gen0 0001 0035
+0024 imm gen1 ffff 0035
 0025 imm gen1 7fff 0034
-0026 imm gen0 4000 
-0027 imm gen0 2000 
-0028 imm gen0 1000 
-0029 imm gen0 0800 
-002a imm gen0 0400 
-002b imm gen0 0200
-002c imm gen0 0100 
-002d imm gen0 0080 
-002e imm gen0 0040 
-002f imm gen0 0020
-0030 imm gen0 0010 
-0031 imm gen0 0008 
-0032 imm gen0 0004 
-0033 imm gen0 0002 
-0034 imm gen0 0001
+0026 imm gen0 4000 0035
+0027 imm gen0 2000 0035
+0028 imm gen0 1000 0035
+0029 imm gen0 0800 0035
+002a imm gen0 0400 0035
+002b imm gen0 0200 0035
+002c imm gen0 0100 0035
+002d imm gen0 0080 0035
+002e imm gen0 0040 0035
+002f imm gen0 0020 0035
+0030 imm gen0 0010 0035
+0031 imm gen0 0008 0035
+0032 imm gen0 0004 0035
+0033 imm gen0 0002 0035
+0034 imm gen0 8000 0035
+0035 imm out1 ffff 0036
+0036 gen out0 0000 0037
+0037 out ramall 0000 0003
