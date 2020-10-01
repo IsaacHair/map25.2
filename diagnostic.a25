@@ -1,0 +1,21 @@
+<
+See why the address keeps killing itself.
+Set up so that, if the address is corrupted,
+it will probably occur during the 0008 address
+instruction (this is the only time the 4th
+bit from the right is used; all other instructions
+only use the right most 3; also, all the other
+instructions using the 4th bit from the right
+feed to instruction at ffff since wiped eeprom
+defaults to all 1's).
+Also, pwm to a certain degree so you can clearly
+see when everything fails.
+>
+0000 imm out0 ffff 0001
+0001 imm dir0 ffff 0002
+0002 imm gen0 ffff 0003
+0003 imm addr0 ffff 0004
+0004 imm addr1 ffff 0005
+0005 imm gen1 ffff 0006
+0006 imm dir1 ffff 0008
+0008 imm out1 ffff 0000
