@@ -1,0 +1,12 @@
+0000 imm addr0 ffff 0001
+0001 imm ramall 00a0 0002
+0002 imm addr1 0001 0003
+0003 imm ramall 0050 0050
+0050 imm addr0 ffff 0051
+0051 ram asnx 0000 0000
+00a0 imm addr1 0001 00a1
+00a1 ram asnx 0000 0000
+<
+Just forces some values into ram and then failes to ffff if corrupted.
+Also tests asnx.
+>
