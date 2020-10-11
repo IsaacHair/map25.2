@@ -114,7 +114,7 @@ int errusr(int chip)
   buff[len] = '\0';
   printf("errors during check: %s\n", buff);
   printf("re-write? (y/n)");
-  if (getchar() == 'n')
+  if (getchar() != 'y')
     chip++;
   getchar();
   return(chip);
@@ -188,6 +188,14 @@ void endbar()
   fflush(stdout);
 }
 
+void sendhighlow(int high_prog) {
+	if (high_prog)
+		write(fd, "1", 1);
+	else
+		write(fd, "0", 1);
+	write(fd, "#", 1);
+}
+
 int main(int argc, char* argv[])
 {
     char *portname = "/dev/ttyUSB0";
@@ -196,6 +204,7 @@ int main(int argc, char* argv[])
     int chip;
     int done;
     int written;
+    int high_prog;
     unsigned char buff[20];
 
     if (argc != 2) {
@@ -215,6 +224,12 @@ int main(int argc, char* argv[])
     set_interface_attribs(fd, B500000);
     //set_mincount(fd, 0);                /* set to pure timed read */
     
+    printf("Value of upper most addr bit (1/0): ");
+    if(getchar() == '1')
+	high_prog = 1;
+    else
+	high_prog = 0;
+    getchar();
     for (chip = 0, done = 0, written = 0; chip <= 4; done = 0, written = 0) {
       getchip(chip);
       while (!done) {
@@ -235,6 +250,9 @@ int main(int argc, char* argv[])
 	  endbar();
 	  chip = errusr(chip);
 	  done = 1;
+	  break;
+	case 'h':
+	  sendhighlow(high_prog);
 	  break;
 	}
       }
