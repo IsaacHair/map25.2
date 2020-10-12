@@ -1,0 +1,9 @@
+0000 imm gen0 ffff 0001
+0001 imm gen1 6666 0002
+0002 ror asnx 0000 0000
+3333 imm gen0 ffff 3334
+3334 imm gen1 5551 3335
+3335 rol asnx 0000 0000
+aaa2 imm gen0 ffff aaa3
+aaa3 imm gen1 0000 aaa4
+aaa4 rol asnx 0000 0000

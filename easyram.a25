@@ -1,0 +1,13 @@
+0000 imm addr0 ffff 0001
+0001 imm ramall 0005 f002
+f002 imm noop 0005 0002
+0002 imm addr1 0001 0003
+0003 imm ramall 0050 0004
+0004 imm addr1 0003 0005
+0005 imm ramall 0500 0010
+0010 imm addr0 ffff 0011
+0011 ram noop 0000 0012
+0012 imm addr1 0001 0013
+0013 ram noop 0000 0014
+0014 imm addr1 0003 0015
+0015 ram noop 0000 0000
