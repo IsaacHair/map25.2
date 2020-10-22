@@ -90,3 +90,9 @@ not three, so it defaults to 0xa)
 
 There is a command for d/c in the latest version,
 which corresponds to 0x9.
+
+Ok basically I'm going to update the pneumonics and then make a
+full list of pneumonics with functional descriptions.
+A single character is also considered a pneumonic and it just
+directly corresponds to the machine code; ie typing "7" is the same
+as typing "dir1".
