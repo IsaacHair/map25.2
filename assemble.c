@@ -150,6 +150,10 @@ char opdecode(char* opcode) {
 		return 'e';
 	else if (compare("rall", opcode) || compare("ramall", opcode))
 		return 'f';
+	else if ((opcode[0] >= '0' && opcode[0] <= '9')
+		 || (opcode[0] >= 'a' && opcode[0] <= 'f'))
+		if (opcode[1] == '\0')
+			return opcode[0];
 	else {
 		printf("unrecognized opcode: %s\n", opcode);
 		exit(0x06);

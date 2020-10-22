@@ -102,3 +102,45 @@ and the .u25 file extension denotes machine code files that have
 been organized into the eeprom page data format for upload.
 These extensions are not required by any means, it just
 makes things more organized when you read over the file contents.
+
+
+ACTUAL COMPLETE LIST OF OP CODES:
+upper 4 bits:
+0x0 => "imm", "0" (immediate value is put on bus)
+0x1 => "adr", "addr", "1" (address register is put on bus)
+0x2 => "gen", "2" (general register is put on bus)
+0x3 => "rol", "3" (general register rotated left is put on bus)
+0x4 => "ror", "4" (general register rotated right is put on bus)
+0x5 => "out", "5" (output register is put on bus)
+0x6 => "dir", "6" (direction register is put on bus)
+0x7 => "inp", "in", "7" (input is put on bus)
+0x8 => "ram", "8" (value of ram at the address register address is put on bus)
+0x9 => "dnc", "nc", "9" (bus is not connected, so it is pulled high)
+0xa => "a" (same as 0x9)
+0xb => "b" (same as 0x9)
+0xc => "c" (same as 0x9)
+0xd => "d" (same as 0x9)
+0xe => "e" (same as 0x9)
+0xf => "f" (same as 0x9)
+lower 4 bits:
+0x0 => "jzor", "jnz", "jumpor", "0" (the bus and immediate are bitwise "and"-ed,
+then the result is "or"-ed with itself and this is used as the last bit
+of the next program address value)
+0x1 => "asnx", "asnnext", "1" (next program address is set equal to bus value)
+0x2 => "out0", "2" (output register is set to zero with bus as mask)
+0x3 => "out1", "3" (output register is set to one with bus as mask)
+0x4 => "adr0", "addr0", "4" (address register is set to zero with bus as mask)
+0x5 => "adr1", "addr1", "5" (address register is set to one with bus as mask)
+0x6 => "dir0", "6" (direction register is set to zero with bus as mask)
+0x7 => "dir1", "7" (direction register is set to one with bus as mask)
+0x8 => "gen0", "8" (general register is set to zero with bus as mask)
+0x9 => "gen1", "9" (general register is set to one with bus as mask)
+0xa => "noop", "a" (no operation is performed)
+0xb => "b" (same as 0xa)
+0xc => "c" (same as 0xa)
+0xd => "rlow", "ramlow", "d" (ram lower byte at address register
+address is set to the value of the lower byte of the bus)
+0xe => "rupp", "ramup", "rup", "e" (ram upper byte at address register
+address is set to the value of the upper byte of the bus)
+0xf => "rall", "ramall", "f" (ram upper and lower byte at address register
+address is set to the value of the bus)
