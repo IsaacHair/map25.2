@@ -96,3 +96,9 @@ full list of pneumonics with functional descriptions.
 A single character is also considered a pneumonic and it just
 directly corresponds to the machine code; ie typing "7" is the same
 as typing "dir1".
+
+Also, the .a25 file extension is used to denote assembly files
+and the .u25 file extension denotes machine code files that have
+been organized into the eeprom page data format for upload.
+These extensions are not required by any means, it just
+makes things more organized when you read over the file contents.
