@@ -86,7 +86,7 @@ void main() {
 	buswrite(0x13); //normal display mode
 	buswrite(0x20); //inversion is off
 	buswrite(0x29); //display is on
-	comm1dat(0x0c, 0xe5); //set COLMOD
+	comm1dat(0x0c, 0xe6); //set COLMOD
 	comm4dat(0x2a, 0x00, 0x00, 0x00, 0xef); //set column min-max
 	comm4dat(0x2b, 0x00, 0x00, 0x01, 0x3f); //set page min-max
 	buswrite(0x2c); //begin frame write
