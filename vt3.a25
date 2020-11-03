@@ -167,7 +167,7 @@ ff2e imm addr1 ff07 ff2f
 ff2f gen ramall 0000 ff30
 ff30 imm addr0 ffff ff31
 ff31 imm addr1 ff02 ff32
-ff32 imm gen0 1000 ff33
+ff32 imm gen0 8000 ff33
 ff33 rol ramall 0000 ff34
 ff34 imm gen0 ffff ff35
 ff35 imm addr0 ffff ff36

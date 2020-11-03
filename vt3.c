@@ -175,7 +175,7 @@ void addcode() {
 	inst("gen ramall 0000");
 	inst("imm addr0 ffff");
 	inst("imm addr1 ff02");
-	inst("imm gen0 1000");
+	inst("imm gen0 8000");
 	inst("rol ramall 0000");
 
 	//"xor" the values from 0xff01 and 0xff02
