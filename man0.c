@@ -83,8 +83,6 @@ void to(int mark) {
 void rst() {
 	if (!(addr%2))
 		//this is where i left off, please finish this
-		//make sure to re-compile vt3.c
-		//also make the list of cats and dogs complete in LearnPython because it was cut off
 }
 
 void addcode() {
