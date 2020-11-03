@@ -20,6 +20,15 @@
  * Gonna write a gradient of data to the vma412, leaving
  * screen on during the writing and computation.
  * Should look kinda cool hopefully.
+ *
+ * Ok so for this version, I am expecting the user
+ * to type the target file name.
+ * I am also going to not require the user to pull input0
+ * on the map25.2 high then low to reset. Instead, 
+ * the map25.2 will schedule the reset itself.
+ *
+ * For this version, I am simply going to just create a color
+ * gradient based on the x and y coordinates of each pixel.
  */
 
 unsigned short addr;
@@ -72,20 +81,8 @@ void to(int mark) {
 }
 
 void rst() {
-	fprintf(fd, "%04x imm out0 1000 %04x\n", addr, addr%2 ? addr+2 : addr+1);
-	addr += addr%2 ? 2 : 1;
-	fprintf(fd, "%04x in jzor 0001 %04x\n", addr, addr+1);
-	addr++;
-	fprintf(fd, "%04x in noop 0000 %04x\n", addr, addr-1);
-	addr++;
-	fprintf(fd, "%04x imm out1 1000 %04x\n", addr, addr+2);
-	addr += 2;
-	fprintf(fd, "%04x in jzor 0001 %04x\n", addr, addr+1);
-	addr++;
-	fprintf(fd, "%04x in noop 0000 %04x\n", addr, addr+2);
-	addr++;
-	fprintf(fd, "%04x in noop 0000 %04x\n", addr, addr-2);
-	addr++;
+	if (!(addr%2))
+		//this is where i left off, please finish this
 }
 
 void addcode() {
@@ -200,7 +197,7 @@ void addcode() {
 	//at ram address 0xff00
 	inst("imm addr0 ffff");
 	inst("imm addr1 ff02");
-	if (!(addr%1))
+	if (!(addr%2))
 		inst("dnc noop 0000");
 	inst("ram jzor ffff");
 	to(addr+2);
@@ -212,8 +209,12 @@ void addcode() {
 	addr = buff;
 }
 
-void main() {
-	fd = fopen("vt3.a25", "w");
+void main(int argc, char** argv) {
+	if (argc != 2) {
+		printf("provide a target file please\nUsage: ./man0 <target file path/name>\n");
+		exit(0x01);
+	}
+	fd = fopen(argv[1], "w");
 	addr = 0;
 	int placeholder;
 	inst("imm dir1 ffff");
