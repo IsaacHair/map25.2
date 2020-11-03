@@ -1,0 +1,2 @@
+need to upload the pcb routing code
+also need to describe, in detail, the assembly procedure
