@@ -200,7 +200,7 @@ void addcode() {
 	//at ram address 0xff00
 	inst("imm addr0 ffff");
 	inst("imm addr1 ff02");
-	if (!(addr%1))
+	if (!(addr%2))
 		inst("dnc noop 0000");
 	inst("ram jzor ffff");
 	to(addr+2);
