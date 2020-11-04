@@ -28,7 +28,8 @@
 
 void main(int argc, char** argv) {
 	if (argc != 2) {
-		printf("provide a target file please\nUsage: ./man0 <target file path/name>\n");
+		printf("provide a target file please\nUsage:\
+			./man0 <target file path/name>\n");
 		exit(0x01);
 	}
 	fd = fopen(argv[1], "w");
