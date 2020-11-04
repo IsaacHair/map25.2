@@ -29,6 +29,12 @@
  *
  * For this version, I am simply going to just create a color
  * gradient based on the x and y coordinates of each pixel.
+ * 
+ * Future versions (eg man1.c, etc) should make better use
+ * of c macros and functions; this one kind of just bangs
+ * everything out manually with very little use of what c can do.
+ * Future versions also need to use a faster addition algorithm.
+ * The overall efficiency of this program is just disgusting.
  */
 
 unsigned short addr;
@@ -81,8 +87,59 @@ void to(int mark) {
 }
 
 void rst() {
+	int marklow, markhigh;
+	inst("imm out0 1000");
+	inst("imm addr0 ffff");
+	inst("imm addr1 ff0e");
+	inst("imm ramall ff80");
+	inst("imm addr0 ffff");
+	inst("imm addr1 ff0f");
+	inst("imm ramall 0001");
+	inst("imm addr0 ffff");
+	inst("imm addr1 ff00");
+	fprintf(fd, "%04x imm ramall %04x %04x\n", addr, addr+2, addr+1);
+	addr++;
+	marklow = addr;
+	to(0xff00);
+	inst("imm addr0 ffff");
+	inst("imm addr1 ff01");
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	inst("imm addr0 ffff");
+	inst("imm addr1 ff0e");
+	inst("gen ramall 0000");
 	if (!(addr%2))
-		//this is where i left off, please finish this
+		inst("dnc noop 0000");
+	inst("gen jzor ffff");
+	to(addr+2);
+	to(marklow);
+
+	inst("imm out1 1000");
+	inst("imm addr0 ffff");
+	inst("imm addr1 ff0e");
+	inst("imm ramall f000");
+	inst("imm addr0 ffff");
+	inst("imm addr1 ff0f");
+	inst("imm ramall 0001");
+	inst("imm addr0 ffff");
+	inst("imm addr1 ff00");
+	fprintf(fd, "%04x imm ramall %04x %04x\n", addr, addr+2, addr+1);
+	addr++;
+	markhigh = addr;
+	to(0xff00);
+	inst("imm addr0 ffff");
+	inst("imm addr1 ff01");
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	inst("imm addr0 ffff");
+	inst("imm addr1 ff0e");
+	inst("gen ramall 0000");
+	if (!(addr%2))
+		inst("dnc noop 0000");
+	inst("gen jzor ffff");
+	to(addr+2);
+	to(markhigh);
+	inst("dnc noop 0000");
 }
 
 void addcode() {
@@ -230,35 +287,118 @@ void main(int argc, char** argv) {
 	comm4dat(0x2a, 0x00, 0x00, 0x00, 0xef); //set column min-max
 	comm4dat(0x2b, 0x00, 0x00, 0x01, 0x3f); //set page min-max
 	buswrite(0x2c); //begin frame write
-	inst("imm out1 0400");
+	inst("imm out1 0400"); //RS high
 
-	//initialize addition
+	//initialize column and row value
+	//column indexes are 0x0000 thru 0x00ef and rows are 0x0000 thru 0x013f
+	//when printing, columns count up, then, once they reach 0x00ef,
+	//it is reset to 0x0000 and rows increases by 1
+	//when columns reach 0x013f, write is terminated with no-op to lcd
+	//column counter at ram 0xfe00 and rows at 0xfe01
+	inst("imm addr0 ffff");
+	inst("imm addr1 fe00");
+	inst("imm ramall 0000");
+	inst("imm addr0 ffff");
+	inst("imm addr1 fe01");
+	inst("imm ramall 0000");
+
+	//initialize addition (second operand is set to 1)
 	inst("imm addr0 ffff");
 	inst("imm addr1 ff0f");
 	inst("imm ramall 0001");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff00");
-	fprintf(fd, "%04x imm ramall %04x %04x\n", addr, addr+9, addr+1);
-	addr++;
 
-	placeholder = addr; //just keep dumping data into the frame infinitely
+	placeholder = addr; //frame write loop
 	
-	//transfer result to be added again
-	//then actually add it
 	inst("imm addr0 ffff");
-	inst("imm addr1 ff01");
+	inst("imm addr1 fe00");
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	buswritegen(); //red (upper 6 bits) (aquires (column value)/4)
+	inst("imm addr0 ffff");
+	inst("imm addr1 fe01");
+	inst("imm gen0 ffff");
+	inst("ram gen1 ffff");
+	inst("imm addr0 ffff");
+	inst("ror addr1 0000");
+	inst("imm gen0 ffff");
+	inst("addr gen1 ffff");
+	buswritegen(); //green (upper 6 bits) (aquires (row value)/8)
+	buswritegen(); //blue (upper 6 bits) (aquires (row value)/8)
+	
+	//decide if column or row is being added
+	inst("imm addr0 ffff");
+	inst("imm addr1 fe00");
+	inst("imm gen1 ffff");
+	inst("ram gen0 0000");
+	if (!(addr%2))
+		inst("dnc noop 0000");
+	inst("gen jzor 00ef");
+	to(addr+20);
+	inst("imm addr0 ffff");
+	inst("imm addr1 fe00");
 	inst("imm gen0 ffff");
 	inst("ram gen1 0000");
 	inst("imm addr0 ffff");
 	inst("imm addr1 ff0e");
 	inst("gen ramall 0000");
+	//call "add" and set return address
+	inst("imm addr0 ffff");
+	inst("imm addr1 ff00");
+	fprintf(fd, "%04x imm ramall %04x %04x\n", addr, addr+2, addr+1);
+	addr++;
 	to(0xff00);
-
-	buswritegen(); //red (upper 6 bits)
-	buswritegen(); //green (upper 6 bits)
-	buswritegen(); //blue (upper 6 bits)
-
+	//store result in column value
+	inst("imm addr0 ffff");
+	inst("imm addr1 ff01");
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	inst("imm addr0 ffff");
+	inst("imm addr1 fe00");
+	inst("gen ramall 0000");
+	//loop again
 	to(placeholder);
+
+	//this is to increment rows and set column to zero
+	inst("imm addr0 ffff");
+	inst("imm addr1 fe00");
+	inst("imm ramall 0000");
+	inst("imm addr0 ffff");
+	inst("imm addr1 fe01");
+	inst("imm gen1 ffff");
+	inst("ram gen0 0000");
+	if (!(addr%2))
+		inst("dnc noop 0000");
+	inst("gen jzor 013f");
+	to(addr+20);
+	inst("imm addr0 ffff");
+	inst("imm addr1 fe01");
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	inst("imm addr0 ffff");
+	inst("imm addr1 ff0e");
+	inst("gen ramall 0000");
+	//call "add" and set return address
+	inst("imm addr0 ffff");
+	inst("imm addr1 ff00");
+	fprintf(fd, "%04x imm ramall %04x %04x\n", addr, addr+2, addr+1);
+	addr++;
+	to(0xff00);
+	//store result in row value
+	inst("imm addr0 ffff");
+	inst("imm addr1 ff01");
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	inst("imm addr0 ffff");
+	inst("imm addr1 fe01");
+	inst("gen ramall 0000");
+	//loop again
+	to(placeholder);
+
+	//the frame write is done, so exit (eg enter infinite loop)
+	inst("imm out0 0400");
+	buswrite(0x00);
+	placeholder = addr;
+	to(addr);
 
 	addcode();
 	fclose(fd);
