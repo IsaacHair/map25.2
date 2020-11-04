@@ -24,6 +24,9 @@
 #define WR 0x0200
 #define RD 0x0100
 
+#define XLOC 0xfff0
+#define YLOC 0xfff1
+
 unsigned short addr;
 FILE* fd;
 
