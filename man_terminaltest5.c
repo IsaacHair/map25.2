@@ -55,10 +55,14 @@ column:
 	zr = 0.0;
 	zi = 0.0;
 iterate:
-	zrs = zr*zr;
-	zis = zi*zi;
-	zi = 2*zi*zr + ci;
-	zr = zrs - zis + cr;
+	multiply(&zrs, zr, zr);
+	multiply(&zis, zi, zi);
+	mul2(&zi, zi);
+	multiply(&zi, zi, zr);
+	add(&zi, zi, ci);
+	twocomp(&zis, zis);
+	add(&zr, zrs, zis);
+	add(&zr, zr, cr);
 	if (zr > 2.0 || zi > 2.0 || zr < -2.0 || zi < -2.0)
 		goto iterate_end;
 	if (i < 50) {
