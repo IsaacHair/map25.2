@@ -14,8 +14,7 @@
  * 5v, sd_ss, sd_di, sd_do, sd_sck = n/c
  * Logic is value, not inverse.
  *
- * This program will render the mandelbrot set and display it
- * on the vma412.
+ * This program will render a color gradient to test the functions.
  */
 
 #define RST 0x1000
@@ -76,11 +75,25 @@ void comm4dat(int a, int b, int c, int d, int e) {
 }
 
 void to(int mark) {
-	fprintf(fd, "%04x nc noop 0000 %04x\n", addr, mark);
-	addr++;
+	//dont use if it is the very beginning of the program
+	fseek(fd, -5, SEEK_CUR);
+	fprintf("%04x\n", mark);
+}
+
+void slowloop(char*str, zeroaddr, oneaddr) {
+	//this takes 4 instructions
+	if (!(addr%2))
+		inst("dnc noop 0000");
+	inst(str);
+	inst("dnc noop 0000");
+	to(zeroaddr);
+	inst("dnc noop 0000");
+	to(oneaddr);
 }
 
 void rst() {
+	//this macro is rather inneficient but it doesnt matter
+	//reset is a slow process anyways
 	int marklow, markhigh;
 	inst("imm out0 1000");
 	inst("imm addr0 ffff");
@@ -91,8 +104,7 @@ void rst() {
 	inst("imm ramall 0001");
 	inst("imm addr0 ffff");
 	inst("imm addr1 ff00");
-	fprintf(fd, "%04x imm ramall %04x %04x\n", addr, addr+2, addr+1);
-	addr++;
+	instval("imm ramall", addr+2);
 	marklow = addr;
 	to(0xff00);
 	inst("imm addr0 ffff");
@@ -102,11 +114,7 @@ void rst() {
 	inst("imm addr0 ffff");
 	inst("imm addr1 ff0e");
 	inst("gen ramall 0000");
-	if (!(addr%2))
-		inst("dnc noop 0000");
-	inst("gen jzor ffff");
-	to(addr+2);
-	to(marklow);
+	slowjump("gen jzor ffff", addr+2, marklow);
 
 	inst("imm out1 1000");
 	inst("imm addr0 ffff");
@@ -397,3 +405,17 @@ void main(int argc, char** argv) {
 	addcode();
 	fclose(fd);
 }
+
+void main(int argc, char** argv) {
+	//240 columns and 320 rows; colums are imaginary and rows are real
+	//column 0x0000 is -0.9375i and column 0x00ef is +0.9375i
+	//row 0x0000 is +0.5 and row 0x013f is -2
+	//rows and columns are divided evenly across their range of numbers
+	//
+	if (argc != 2) {
+		printf("provide target file\n");
+		exit(0x01);
+	}
+	assembly_init(argv[1]);
+	lcd_init();
+	set(XLOC, 
