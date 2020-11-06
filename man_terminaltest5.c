@@ -89,9 +89,9 @@ iterate:
 	dotwocomp(&zis, zis);
 	calladd(&zr, zrs, zis);
 	calladd(&zr, zr, cr);
-	i += 1;
 	if (zr > 2.0 || zi > 2.0 || zr < -2.0 || zi < -2.0)
 		goto iterate_end;
+	i += 1;
 	if (i < 32)
 		goto iterate;
 iterate_end:
