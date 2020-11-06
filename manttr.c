@@ -91,7 +91,7 @@ iterate:
 	calladd(&zr, zr, cr);
 	i += 1; //putting this here instead of after checking zr
 		//shifts the colors by 1; <4 means <3 iterations
-	if (zr > 2.0 || zr < -2.0)
+	if (zr > 2.0)
 		goto iterate_end;
 	if (i < 32)
 		goto iterate;
