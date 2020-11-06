@@ -16,8 +16,6 @@
  * Also going to adjust for the difference in width and height of characters.
  * In other words, characters are repeated twice left to right.
  * On the terminal display, set the font to 1px to see it properly.
- * This program even enters into an infinite loop at the very end,
- * just like the halt condition for map25.2 (type ^C to end program).
  */
 
 #define RED "\x1B[41m"
@@ -39,7 +37,8 @@ void lcd_beginwrite() {
 }
 
 void lcd_endwrite() {
-	1;
+	//set terminal highlight back to white
+	printf("\n\x1B[49m");
 }
 
 void putpixel(char*color) {
@@ -119,5 +118,5 @@ iterate_end:
 
 	lcd_endwrite();
 end:
-	goto end;
+	1; //would be goto end in the map25.2
 }
