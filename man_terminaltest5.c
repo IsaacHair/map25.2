@@ -95,9 +95,7 @@ iterate:
 	if (i < 32)
 		goto iterate;
 iterate_end:
-	if (i < 1)
-		putpixel(MAG);
-	else if (i < 2)
+	if (i < 2)
 		putpixel(RED);
 	else if (i < 4)
 		putpixel(YEL);
