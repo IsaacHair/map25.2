@@ -16,6 +16,8 @@
  * Also going to adjust for the difference in width and height of characters.
  * In other words, characters are repeated twice left to right.
  * On the terminal display, set the font to 1px to see it properly.
+ * This program even enters into an infinite loop at the very end,
+ * just like the halt condition for map25.2 (type ^C to end program).
  */
 
 #define RED "\x1B[41m"
@@ -32,6 +34,14 @@ void lcd_init() {
 	pos = 0;
 }
 
+void lcd_beginwrite() {
+	1;
+}
+
+void lcd_endwrite() {
+	1;
+}
+
 void putpixel(char*color) {
 	printf("%s  ", color);
 	pos++;
@@ -41,11 +51,28 @@ void putpixel(char*color) {
 	}
 }
 
+void callmultiply(double*prod, double factor0, double factor1) {
+	*prod = factor0*factor1;
+}
+
+void domul2(double*prod, double factor) {
+	*prod = 2*factor;
+}
+
+void calladd(double*sum, double addend0, double addend1) {
+	*sum = addend0+addend1;
+}
+
+void dotwocomp(double*comp, double before) {
+	*comp = -before;
+}
+
 void main() {
 	double zr, zi, cr, ci, zrs, zis;
 	int i;
 
 	lcd_init();
+	lcd_beginwrite();
 
 	cr = 1.0;
 row:
@@ -55,45 +82,42 @@ column:
 	zr = 0.0;
 	zi = 0.0;
 iterate:
-	multiply(&zrs, zr, zr);
-	multiply(&zis, zi, zi);
-	mul2(&zi, zi);
-	multiply(&zi, zi, zr);
-	add(&zi, zi, ci);
-	twocomp(&zis, zis);
-	add(&zr, zrs, zis);
-	add(&zr, zr, cr);
+	callmultiply(&zrs, zr, zr);
+	callmultiply(&zis, zi, zi);
+	domul2(&zi, zi);
+	callmultiply(&zi, zi, zr);
+	calladd(&zi, zi, ci);
+	dotwocomp(&zis, zis);
+	calladd(&zr, zrs, zis);
+	calladd(&zr, zr, cr);
+	i += 1;
 	if (zr > 2.0 || zi > 2.0 || zr < -2.0 || zi < -2.0)
 		goto iterate_end;
-	if (i < 50) {
-		i += 1;
+	if (i < 32)
 		goto iterate;
-	}
 iterate_end:
-	if (i < 6)
+	if (i < 1)
 		putpixel(MAG);
-	else if (i < 8)
+	else if (i < 2)
 		putpixel(RED);
-	else if (i < 10)
+	else if (i < 4)
 		putpixel(YEL);
-	else if (i < 14)
+	else if (i < 8)
 		putpixel(GRN);
-	else if (i < 20)
+	else if (i < 16)
 		putpixel(CYA);
-	else if (i < 50)
+	else if (i < 32)
 		putpixel(BLU);
 	else
 		putpixel(BLK);
-	if (ci < 1.40625 - 0.01171875) {
-		ci += 0.01171875;
+	ci += 0.01171875;
+	if (ci < 1.40625)
 		goto column;
-	}
-	if (cr > -2.75 + 0.01171875) {
-		cr -= 0.01171875;
+	cr -= 0.01171875;
+	if (cr > -2.75)
 		goto row;
-	}
-	else
-		goto end;
+
+	lcd_endwrite();
 end:
-	1;
+	goto end;
 }
