@@ -42,7 +42,7 @@ void lcd_endwrite() {
 	printf("\n\x1B[49m");
 }
 
-void doasn(unsigned short*var, unsigned short val) {
+void doasnimm(unsigned short*var, unsigned short val) {
 	*var = val;
 }
 
@@ -55,35 +55,27 @@ void putpixel(char*color) {
 	}
 }
 
-void callmultiply(unsigned short*prod, unsigned short factor0, unsigned short factor1) {
+void callmultiply(unsigned short*prod, unsigned short* factor0, unsigned short* factor1) {
 	double f0, f1;
-	f0 = ((double)(factor0&0x7fff))/4096.0;
-	if (factor0&0x8000)
+	f0 = ((double)((*factor0)&0x7fff))/4096.0;
+	if ((*factor0)&0x8000)
 		f0 -= 8;
-	f1 = ((double)(factor1&0x7fff))/4096.0;
-	if (factor1&0x8000)
+	f1 = ((double)((*factor1)&0x7fff))/4096.0;
+	if ((*factor1)&0x8000)
 		f1 -= 8;
 	*prod = (unsigned short)((f1*f0)*4096.0);
 }
 
-void domul2(unsigned short*prod, unsigned short factor) {
-	*prod = 2*factor;
+void domul2(unsigned short*prod, unsigned short* factor) {
+	*prod = 2*(*factor);
 }
 
-void calladd(unsigned short*sum, unsigned short addend0, unsigned short addend1) {
-	*sum = addend0+addend1;
+void calladd(unsigned short*sum, unsigned short* addend0, unsigned short* addend1) {
+	*sum = (*addend0)+(*addend1);
 }
 
-void dotwocomp(unsigned short*comp, unsigned short before) {
-	*comp = (~before)+1;
-}
-
-double read(unsigned short num) {
-	double result;
-	result = ((double)(num&0x7fff))/4096.0;
-	if (num&0x8000)
-		result -= 8;
-	return result;
+void dotwocomp(unsigned short*comp, unsigned short* before) {
+	*comp = (~(*before))+1;
 }
 
 void main(int argc, char**argv) {
@@ -94,47 +86,52 @@ void main(int argc, char**argv) {
 	lcd_init();
 	lcd_beginwrite();
 
-	doasn(&cr, 0x1000);
+	doasnimm(&cr, 0x1000);
 row:
-	doasn(&ci, 0xe980);
+	doasnimm(&ci, 0xe980);
 column:
-	doasn(&i, 0x0000);
-	doasn(&zr, 0x0000);
-	doasn(&zi, 0x0000);
+	doasnimm(&i, 0x0000);
+	doasnimm(&zr, 0x0000);
+	doasnimm(&zi, 0x0000);
 iterate:
-	callmultiply(&zrs, zr, zr);
-	callmultiply(&zis, zi, zi);
-	domul2(&zi, zi);
-	callmultiply(&zi, zi, zr);
-	calladd(&zi, zi, ci);
-	dotwocomp(&zis, zis);
-	calladd(&zr, zrs, zis);
-	calladd(&zr, zr, cr);
-	dotwocomp(&zrn, zr);
-	dotwocomp(&zin, zi);
-	calladd(&i, i, 0x0001); //putting this here instead of after checking zr
+	callmultiply(&zrs, &zr, &zr);
+	callmultiply(&zis, &zi, &zi);
+	domul2(&zi, &zi);
+	callmultiply(&zi, &zi, &zr);
+	calladd(&zi, &zi, &ci);
+	dotwocomp(&zis, &zis);
+	calladd(&zr, &zrs, &zis);
+	calladd(&zr, &zr, &cr);
+	dotwocomp(&zrn, &zr);
+	dotwocomp(&zin, &zi);
+	doasnimm(&jmpbuff, 0x0001);
+	calladd(&i, &i, &jmpbuff); //putting this here instead of after checking zr
 	if (((zi&0x6000)&&!(zi&0x8000)) || (((zin)&0x6000&&!((zin)&0x8000))) ||
 	    ((zr&0x6000)&&!(zr&0x8000)) || (((zrn)&0x6000&&!((zrn)&0x8000))))
 		goto iterate_end;
-	if (i < 0x0020)
+	if (!(i&0xffe0))
 		goto iterate;
 iterate_end:
-	if (i < 0x0004)
+	if (!(i&0xfffc))
 		putpixel(YEL);
-	else if (i < 0x0008)
+	else if (!(i&0xfff8))
 		putpixel(GRN);
-	else if (i < 0x0010)
+	else if (!(i&0xfff0))
 		putpixel(CYA);
-	else if (i < 0x0020)
+	else if (!(i&0xffe0))
 		putpixel(BLU);
 	else
 		putpixel(BLK);
-	calladd(&ci, ci, 0x0030);
-	calladd(&jmpbuff, ci, 0xe980);
+	doasnimm(&jmpbuff, 0x0030);
+	calladd(&ci, &ci, &jmpbuff);
+	doasnimm(&jmpbuff, 0xe980);
+	calladd(&jmpbuff, &ci, &jmpbuff);
 	if (jmpbuff&0x8000)
 		goto column;
-	calladd(&cr, cr, 0xffd0);
-	calladd(&jmpbuff, cr, 0x2c00);
+	doasnimm(&jmpbuff, 0xffd0);
+	calladd(&cr, &cr, &jmpbuff);
+	doasnimm(&jmpbuff, 0x2c00);
+	calladd(&jmpbuff, &cr, &jmpbuff);
 	if (!(jmpbuff&0x8000))
 		goto row;
 

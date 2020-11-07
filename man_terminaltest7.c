@@ -94,11 +94,6 @@ void main(int argc, char**argv) {
 	lcd_init();
 	lcd_beginwrite();
 
-	zr = atoi(argv[1]);
-	zi = atoi(argv[2]);
-	callmultiply(&jmpbuff, zi, zr);
-	printf("%04x\n", jmpbuff);
-
 	doasn(&cr, 0x1000);
 row:
 	doasn(&ci, 0xe980);
