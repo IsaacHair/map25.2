@@ -45,7 +45,15 @@ unsigned short ram[65536];
 #define MAIN_ZRN 0x8006
 #define MAIN_ZIN 0x8007
 #define MAIN_I 0x8008
-#define MAIN_BUFF 0x8009
+#define MAIN_JMPBUFF 0x8009
+
+#define MUL_MULBUFF0 0x800a
+#define MUL_MULBUFF1 0x800b
+#define MUL_FACTOR0ROTATE 0x800c
+#define MUL_BITSHIFTER 0x800d
+#define MUL_ENDSIGN 0x800e
+#define MUL_ACTUAL0 0x800f
+#define MUL_ACTUAL1 0x8010
 
 int pos;
 
@@ -62,16 +70,16 @@ void lcd_endwrite() {
 	printf("\n\x1B[49m");
 }
 
-void calltwocomp(unsigned short*comp, unsigned short* before) {
-	*comp = (~(*before))+1;
+void calltwocomp(unsigned short comp, unsigned short before) {
+	ram[comp] = (~ram[before])+1;
 }
 
-void doasnimm(unsigned short*var, unsigned short val) {
-	*var = val;
+void doasnimm(unsigned short var, unsigned short val) {
+	ram[var] = val;
 }
 
-void doasn(unsigned short* var, unsigned short* val) {
-	*var = *val;
+void doasn(unsigned short var, unsigned short val) {
+	ram[var] = ram[val];
 }
 
 void putpixel(char*color) {
@@ -83,7 +91,11 @@ void putpixel(char*color) {
 	}
 }
 
-void calladd32(unsigned short*sumhigh, unsigned short*sumlow, unsigned short*addendhigh, unsigned short*addendlow) {
+void calladd32(unsigned short eh, unsigned short el, unsigned short ih, unsigned short il) {
+	unsigned short * addendhigh = ram+ih;
+	unsigned short * addendlow = ram+il;
+	unsigned short * sumhigh = ram+eh;
+	unsigned short * sumlow = ram+el;
 	unsigned int sum = 0;
 	sum += (*sumhigh)*65536+(*sumlow);
 	sum += (*addendhigh)*65536+(*addendlow);
@@ -91,63 +103,75 @@ void calladd32(unsigned short*sumhigh, unsigned short*sumlow, unsigned short*add
 	*sumlow = sum%65536;
 }
 
-void do32mul2(unsigned short*endhigh, unsigned short*endlow, unsigned short*inhigh, unsigned short*inlow) {
+void do32mul2(unsigned short eh, unsigned short el, unsigned short ih, unsigned short il) {
+	unsigned short * inhigh = ram+ih;
+	unsigned short * inlow = ram+il;
+	unsigned short * endhigh = ram+eh;
+	unsigned short * endlow = ram+el;
 	unsigned int sum = (*inhigh)*65536+(*inlow);
 	sum *= 2;
 	*endhigh = sum/65536;
 	*endlow = sum%65536;
 }
 
-void do32ror12(unsigned short*endhigh, unsigned short*endlow, unsigned short*inhigh, unsigned short*inlow) {
+void do32ror12(unsigned short eh, unsigned short el, unsigned short ih, unsigned short il) {
+	unsigned short * inhigh = ram+ih;
+	unsigned short * inlow = ram+il;
+	unsigned short * endhigh = ram+eh;
+	unsigned short * endlow = ram+el;
 	unsigned int num = (*inhigh)*65536+(*inlow);
 	num = num>>12;
 	*endhigh = num/65536;
 	*endlow = num%65536;
 }
 
-void domul2(unsigned short*prod, unsigned short* factor) {
+void domul2(unsigned short p, unsigned short f) {
 	//this is different from rol
+	unsigned short * prod = ram+p;
+	unsigned short * factor = ram+f;
 	*prod = 2*(*factor);
 }
 
-void calladd(unsigned short*sum, unsigned short* addend0, unsigned short* addend1) {
+void calladd(unsigned short s, unsigned short a0, unsigned short a1) {
+	unsigned short * sum = ram+s;
+	unsigned short * addend0 = ram+a0;
+	unsigned short * addend1 = ram+a1;
 	*sum = (*addend0)+(*addend1);
 }
 
-void callmultiply(unsigned short*prod, unsigned short* factor0, unsigned short* factor1) {
-	unsigned short mulbuff0, mulbuff1, factor0rotate, bitshifter, endsign, actual0, actual1;
-	doasnimm(&mulbuff0, 0x0000);
-	doasnimm(&mulbuff1, 0x0000);
-	doasnimm(&factor0rotate, 0x0000);
-	doasnimm(&bitshifter, 0x0001);
-	if ((*factor0)&0x8000) {
-		calltwocomp(&actual0, factor0);
-		doasnimm(&endsign, 0x8000);
+void callmultiply(unsigned short prod, unsigned short factor0, unsigned short factor1) {
+	doasnimm(MUL_MULBUFF0, 0x0000);
+	doasnimm(MUL_MULBUFF1, 0x0000);
+	doasnimm(MUL_FACTOR0ROTATE, 0x0000);
+	doasnimm(MUL_BITSHIFTER, 0x0001);
+	if ((ram[factor0])&0x8000) {
+		calltwocomp(MUL_ACTUAL0, factor0);
+		doasnimm(MUL_ENDSIGN, 0x8000);
 	}
 	else {
-		doasn(&actual0, factor0);
-		doasnimm(&endsign, 0x0000);
+		doasn(MUL_ACTUAL0, factor0);
+		doasnimm(MUL_ENDSIGN, 0x0000);
 	}
-	if ((*factor1)&0x8000) {
-		calltwocomp(&actual1, factor1);
-		if (endsign&0x8000)
-			doasnimm(&endsign, 0x0000);
+	if ((ram[factor1])&0x8000) {
+		calltwocomp(MUL_ACTUAL1, factor1);
+		if (ram[MUL_ENDSIGN]&0x8000)
+			doasnimm(MUL_ENDSIGN, 0x0000);
 		else
-			doasnimm(&endsign, 0x8000);
+			doasnimm(MUL_ENDSIGN, 0x8000);
 	}
 	else
-		doasn(&actual1, factor1);
+		doasn(MUL_ACTUAL1, factor1);
 mulloop:
-	if (actual1&bitshifter)
-		calladd32(&mulbuff1, &mulbuff0, &factor0rotate, &actual0);
-	do32mul2(&factor0rotate, &actual0, &factor0rotate, &actual0);
-	domul2(&bitshifter, &bitshifter);
-	if (!(bitshifter&0x8000))
+	if (ram[MUL_ACTUAL1]&ram[MUL_BITSHIFTER])
+		calladd32(MUL_MULBUFF1, MUL_MULBUFF0, MUL_FACTOR0ROTATE, MUL_ACTUAL0);
+	do32mul2(MUL_FACTOR0ROTATE, MUL_ACTUAL0, MUL_FACTOR0ROTATE, MUL_ACTUAL0);
+	domul2(MUL_BITSHIFTER, MUL_BITSHIFTER);
+	if (!(ram[MUL_BITSHIFTER]&0x8000))
 		goto mulloop;
-	do32ror12(&mulbuff1, &mulbuff0, &mulbuff1, &mulbuff0);
-	if (endsign&0x8000)
-		calltwocomp(&mulbuff0, &mulbuff0);
-	*prod = mulbuff0;
+	do32ror12(MUL_MULBUFF1, MUL_MULBUFF0, MUL_MULBUFF1, MUL_MULBUFF0);
+	if (ram[MUL_ENDSIGN]&0x8000)
+		calltwocomp(MUL_MULBUFF0, MUL_MULBUFF0);
+	ram[prod] = ram[MUL_MULBUFF0];
 }
 
 /*void addcode() {
@@ -275,60 +299,67 @@ mulloop:
 }*/
 
 void main(int argc, char**argv) {
-	unsigned short zr, zi, cr, ci, zrs, zis, zrn, zin; //ones place is at (1<<12)
-	unsigned short i; //ones place is at (1<<0)
-	unsigned short jmpbuff;
-
 	lcd_init();
 	lcd_beginwrite();
 
-	doasnimm(&cr, 0x1000);
+/*	if (argc != 3) {
+		printf("need args\n");
+		exit(0x01);
+	}
+	ram[0] = atoi(argv[1]);
+	ram[1] = atoi(argv[2]);
+	callmultiply(2, 1, 0);
+	printf("product:%04x\n", ram[2]);
+*/
+	doasnimm(MAIN_CR, 0x1000);
 row:
-	doasnimm(&ci, 0xe980);
+	doasnimm(MAIN_CI, 0xe980);
 column:
-	doasnimm(&i, 0x0000);
-	doasnimm(&zr, 0x0000);
-	doasnimm(&zi, 0x0000);
+	doasnimm(MAIN_I, 0x0000);
+	doasnimm(MAIN_ZR, 0x0000);
+	doasnimm(MAIN_ZI, 0x0000);
 iterate:
-	callmultiply(&zrs, &zr, &zr);
-	callmultiply(&zis, &zi, &zi);
-	domul2(&zi, &zi);
-	callmultiply(&zi, &zi, &zr);
-	calladd(&zi, &zi, &ci);
-	calltwocomp(&zis, &zis);
-	calladd(&zr, &zrs, &zis);
-	calladd(&zr, &zr, &cr);
-	calltwocomp(&zrn, &zr);
-	calltwocomp(&zin, &zi);
-	doasnimm(&jmpbuff, 0x0001);
-	calladd(&i, &i, &jmpbuff); //putting this here instead of after checking zr
-	if (((zi&0x6000)&&!(zi&0x8000)) || (((zin)&0x6000&&!((zin)&0x8000))) ||
-	    ((zr&0x6000)&&!(zr&0x8000)) || (((zrn)&0x6000&&!((zrn)&0x8000))))
+	callmultiply(MAIN_ZRS, MAIN_ZR, MAIN_ZR);
+	callmultiply(MAIN_ZIS, MAIN_ZI, MAIN_ZI);
+	domul2(MAIN_ZI, MAIN_ZI);
+	callmultiply(MAIN_ZI, MAIN_ZI, MAIN_ZR);
+	calladd(MAIN_ZI, MAIN_ZI, MAIN_CI);
+	calltwocomp(MAIN_ZIS, MAIN_ZIS);
+	calladd(MAIN_ZR, MAIN_ZRS, MAIN_ZIS);
+	calladd(MAIN_ZR, MAIN_ZR, MAIN_CR);
+	calltwocomp(MAIN_ZRN, MAIN_ZR);
+	calltwocomp(MAIN_ZIN, MAIN_ZI);
+	doasnimm(MAIN_JMPBUFF, 0x0001);
+	calladd(MAIN_I, MAIN_I, MAIN_JMPBUFF); //putting this here instead of after checking zr
+	if (((ram[MAIN_ZI]&0x6000)&&!(ram[MAIN_ZI]&0x8000)) ||
+	    (((ram[MAIN_ZIN])&0x6000&&!((ram[MAIN_ZIN])&0x8000))) ||
+	    ((ram[MAIN_ZR]&0x6000)&&!(ram[MAIN_ZR]&0x8000)) ||
+	    (((ram[MAIN_ZRN])&0x6000&&!((ram[MAIN_ZRN])&0x8000))))
 		goto iterate_end;
-	if (!(i&0xffe0))
+	if (!(ram[MAIN_I]&0xffe0))
 		goto iterate;
 iterate_end:
-	if (!(i&0xfffc))
+	if (!(ram[MAIN_I]&0xfffc))
 		putpixel(YEL);
-	else if (!(i&0xfff8))
+	else if (!(ram[MAIN_I]&0xfff8))
 		putpixel(GRN);
-	else if (!(i&0xfff0))
+	else if (!(ram[MAIN_I]&0xfff0))
 		putpixel(CYA);
-	else if (!(i&0xffe0))
+	else if (!(ram[MAIN_I]&0xffe0))
 		putpixel(BLU);
 	else
 		putpixel(BLK);
-	doasnimm(&jmpbuff, 0x0030);
-	calladd(&ci, &ci, &jmpbuff);
-	doasnimm(&jmpbuff, 0xe980);
-	calladd(&jmpbuff, &ci, &jmpbuff);
-	if (jmpbuff&0x8000)
+	doasnimm(MAIN_JMPBUFF, 0x0030);
+	calladd(MAIN_CI, MAIN_CI, MAIN_JMPBUFF);
+	doasnimm(MAIN_JMPBUFF, 0xe980);
+	calladd(MAIN_JMPBUFF, MAIN_CI, MAIN_JMPBUFF);
+	if (ram[MAIN_JMPBUFF]&0x8000)
 		goto column;
-	doasnimm(&jmpbuff, 0xffd0);
-	calladd(&cr, &cr, &jmpbuff);
-	doasnimm(&jmpbuff, 0x2c00);
-	calladd(&jmpbuff, &cr, &jmpbuff);
-	if (!(jmpbuff&0x8000))
+	doasnimm(MAIN_JMPBUFF, 0xffd0);
+	calladd(MAIN_CR, MAIN_CR, MAIN_JMPBUFF);
+	doasnimm(MAIN_JMPBUFF, 0x2c00);
+	calladd(MAIN_JMPBUFF, MAIN_CR, MAIN_JMPBUFF);
+	if (!(ram[MAIN_JMPBUFF]&0x8000))
 		goto row;
 
 	lcd_endwrite();
