@@ -55,7 +55,7 @@ unsigned short ram[65536];
 #define MUL_ACTUAL0 0x800f
 #define MUL_ACTUAL1 0x8010
 
-#define DO32DWN12_BUFF 0x8011
+#define DWN12_BUFF 0x8011
 
 int pos;
 
@@ -72,11 +72,6 @@ void lcd_endwrite() {
 	printf("\n\x1B[49m");
 }
 
-void domul2(unsigned short prod, unsigned short factor) {
-	ram[prod] = 2*ram[factor];
-	ram[prod] &= 0xfffe;
-}
-
 void calltwocomp(unsigned short comp, unsigned short before) {
 	ram[comp] = (~ram[before])+1;
 }
@@ -87,11 +82,6 @@ void doasnimm(unsigned short var, unsigned short val) {
 
 void doasn(unsigned short var, unsigned short val) {
 	ram[var] = ram[val];
-}
-
-void dorol(unsigned short end, unsigned short in) {
-	ram[end] = ram[in]<<1;
-	ram[end] |= !!(ram[in]&0x8000);
 }
 
 void putpixel(char*color) {
@@ -112,26 +102,26 @@ void calladd32(unsigned short sumhigh, unsigned short sumlow, unsigned short add
 }
 
 void do32mul2(unsigned short endhigh, unsigned short endlow, unsigned short inhigh, unsigned short inlow) {
-	domul2(endlow, inlow);
-	domul2(endhigh, inhigh);
-	if (ram[inlow]&0x8000)
-		ram[endhigh] |= 0x0001;
+	unsigned int sum = (ram[inhigh])*65536+(ram[inlow]);
+	sum *= 2;
+	ram[endhigh] = sum/65536;
+	ram[endlow] = sum%65536;
 }
 
-void do32dwn12(unsigned short endhigh, unsigned short endlow, unsigned short inhigh, unsigned short inlow) {
-	/*dorol(endlow, inlow);
-	dorol(endlow, endlow);
-	dorol(endlow, endlow);
-	dorol(endlow, endlow);
-	ram[endlow] &= 0x000f;
-	dorol(DO32DWN12_BUFF, inhigh);
-	dorol(DO32DWN12_BUFF, DO32DWN12_BUFF);
-	dorol(DO32DWN12_BUFF, DO32DWN12_BUFF);
-	dorol(DO32DWN12_BUFF, DO32DWN12_BUFF);
-	ram[DO32DWN12_BUFF] &= 0xfff0;
-	ram[endlow] |= ram[DO32DWN12_BUFF];*/
-	ram[endlow] = ((ram[inlow]>>12)&0x000f) | ((ram[inhigh]<<4)&0xfff0);
-	ram[endhigh] = (ram[inhigh]>>12)&0x000f;
+void do32ror12(unsigned short endhigh, unsigned short endlow, unsigned short inhigh, unsigned short inlow) {
+	/*unsigned int num = (ram[inhigh])*65536+(ram[inlow]);
+	num = num>>12;
+	ram[endhigh] = num/65536;
+	ram[endlow] = num%65536;*/
+	ram[DWN12_BUFF] = 0x0000;
+	ram[DWN12_BUFF] |= (ram[inlow]>>12)&0x000f;
+	ram[DWN12_BUFF] |= (ram[inhigh]<<4)&0xfff0;
+	ram[endlow] = ram[DWN12_BUFF];
+}
+
+void domul2(unsigned short prod, unsigned short factor) {
+	//this is different from rol
+	ram[prod] = 2*ram[factor];
 }
 
 void calladd(unsigned short sum, unsigned short addend0, unsigned short addend1) {
@@ -167,7 +157,7 @@ mulloop:
 	domul2(MUL_BITSHIFTER, MUL_BITSHIFTER);
 	if (!(ram[MUL_BITSHIFTER]&0x8000))
 		goto mulloop;
-	do32dwn12(MUL_MULBUFF1, MUL_MULBUFF0, MUL_MULBUFF1, MUL_MULBUFF0);
+	do32ror12(MUL_MULBUFF1, MUL_MULBUFF0, MUL_MULBUFF1, MUL_MULBUFF0);
 	if (ram[MUL_ENDSIGN]&0x8000)
 		calltwocomp(MUL_MULBUFF0, MUL_MULBUFF0);
 	ram[prod] = ram[MUL_MULBUFF0];

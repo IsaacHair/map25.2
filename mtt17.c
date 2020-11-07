@@ -26,6 +26,7 @@
  * This is actually gonna simulate everything down to the 64k ram.
  */
 
+//bash terminal color escape codes
 #define RED "\x1B[41m"
 #define MAG "\x1B[45m"
 #define YEL "\x1B[43m"
@@ -35,6 +36,11 @@
 #define BLK "\x1B[40m"
 
 //ram and addresses of variables
+//NOTE: BECAUSE FUNCTION VARIABLE POINTERS
+//ARE IMMEDIATE VALUES AND NOT ON A FUNCTION STACK,
+//RECURSIVE FUNCTIONS WILL NOT WORK.
+//For future programs, I will define a stack,
+//but it is unncecessary for this program.
 unsigned short ram[65536];
 #define MAIN_ZR 0x8000
 #define MAIN_ZI 0x8001
@@ -55,7 +61,11 @@ unsigned short ram[65536];
 #define MUL_ACTUAL0 0x800f
 #define MUL_ACTUAL1 0x8010
 
-#define DO32DWN12_BUFF 0x8011
+#define DWN12_BUFF 0x8011
+#define DOMUL2_BUFF 0x8012
+#define DO32MUL2_BUFF 0x8013
+#define ADD32_BUFFLOW 0x8014
+#define ADD32_BUFFHIGH 0x8015
 
 int pos;
 
@@ -72,11 +82,6 @@ void lcd_endwrite() {
 	printf("\n\x1B[49m");
 }
 
-void domul2(unsigned short prod, unsigned short factor) {
-	ram[prod] = 2*ram[factor];
-	ram[prod] &= 0xfffe;
-}
-
 void calltwocomp(unsigned short comp, unsigned short before) {
 	ram[comp] = (~ram[before])+1;
 }
@@ -89,9 +94,16 @@ void doasn(unsigned short var, unsigned short val) {
 	ram[var] = ram[val];
 }
 
-void dorol(unsigned short end, unsigned short in) {
-	ram[end] = ram[in]<<1;
-	ram[end] |= !!(ram[in]&0x8000);
+void calladd(unsigned short sum, unsigned short addend0, unsigned short addend1) {
+	//twos complement addition automatically manages the sign for you
+	ram[sum] = ram[addend0]+ram[addend1];
+}
+
+void domul2(unsigned short prod, unsigned short factor) {
+	//note: this DOES NOT FIX SIGN, so it is just the bit shift
+	//sign only becomes a problem if the number is within 1 digit of max
+	ram[prod] = ram[factor]*2;
+	ram[prod] &= 0xfffe; //zeroth bit to zero
 }
 
 void putpixel(char*color) {
@@ -103,7 +115,17 @@ void putpixel(char*color) {
 	}
 }
 
+void dosuccessor(unsigned short num) {
+	ram[num] += 1;
+}
+
 void calladd32(unsigned short sumhigh, unsigned short sumlow, unsigned short addendhigh, unsigned short addendlow) {
+	/*doasn(ADD32_BUFFLOW, sumlow);
+	calladd(sumlow, addendlow, sumlow);
+	calladd(sumhigh, addendhigh, sumhigh);
+	if (((ram[ADD32_BUFFLOW]&0x8000)&&(ram[addendlow]&0x8000)) ||
+	    ((!(ram[sumlow]&0x8000))&&((ram[ADD32_BUFFLOW]&0x8000)||(ram[addendlow]&0x8000))))
+		dosuccessor(sumhigh);*/
 	unsigned int sum = 0;
 	sum += (ram[sumhigh])*65536+(ram[sumlow]);
 	sum += (ram[addendhigh])*65536+(ram[addendlow]);
@@ -112,6 +134,7 @@ void calladd32(unsigned short sumhigh, unsigned short sumlow, unsigned short add
 }
 
 void do32mul2(unsigned short endhigh, unsigned short endlow, unsigned short inhigh, unsigned short inlow) {
+	//positive inputs only, and output is sign adjusted
 	domul2(endlow, inlow);
 	domul2(endhigh, inhigh);
 	if (ram[inlow]&0x8000)
@@ -119,23 +142,11 @@ void do32mul2(unsigned short endhigh, unsigned short endlow, unsigned short inhi
 }
 
 void do32dwn12(unsigned short endhigh, unsigned short endlow, unsigned short inhigh, unsigned short inlow) {
-	/*dorol(endlow, inlow);
-	dorol(endlow, endlow);
-	dorol(endlow, endlow);
-	dorol(endlow, endlow);
-	ram[endlow] &= 0x000f;
-	dorol(DO32DWN12_BUFF, inhigh);
-	dorol(DO32DWN12_BUFF, DO32DWN12_BUFF);
-	dorol(DO32DWN12_BUFF, DO32DWN12_BUFF);
-	dorol(DO32DWN12_BUFF, DO32DWN12_BUFF);
-	ram[DO32DWN12_BUFF] &= 0xfff0;
-	ram[endlow] |= ram[DO32DWN12_BUFF];*/
-	ram[endlow] = ((ram[inlow]>>12)&0x000f) | ((ram[inhigh]<<4)&0xfff0);
-	ram[endhigh] = (ram[inhigh]>>12)&0x000f;
-}
-
-void calladd(unsigned short sum, unsigned short addend0, unsigned short addend1) {
-	ram[sum] = ram[addend0]+ram[addend1];
+	//endhigh is not actually changed
+	ram[DWN12_BUFF] = 0x0000;
+	ram[DWN12_BUFF] |= (ram[inlow]>>12)&0x000f;
+	ram[DWN12_BUFF] |= (ram[inhigh]<<4)&0xfff0;
+	ram[endlow] = ram[DWN12_BUFF];
 }
 
 void callmultiply(unsigned short prod, unsigned short factor0, unsigned short factor1) {
@@ -161,6 +172,7 @@ void callmultiply(unsigned short prod, unsigned short factor0, unsigned short fa
 	else
 		doasn(MUL_ACTUAL1, factor1);
 mulloop:
+	//note: this part requires that the factors are all positive
 	if (ram[MUL_ACTUAL1]&ram[MUL_BITSHIFTER])
 		calladd32(MUL_MULBUFF1, MUL_MULBUFF0, MUL_FACTOR0ROTATE, MUL_ACTUAL0);
 	do32mul2(MUL_FACTOR0ROTATE, MUL_ACTUAL0, MUL_FACTOR0ROTATE, MUL_ACTUAL0);
@@ -173,142 +185,18 @@ mulloop:
 	ram[prod] = ram[MUL_MULBUFF0];
 }
 
-/*void addcode() {
-	//adds two numbers together
-	//this code is located in rom at 0xff00
-	//return address is ram 0xff00
-	//operand 0 is ram 0xff0e
-	//operand 1 is ram 0xff0f
-	//sum is stored at ram 0xff01
-	//ram 0xff02 thru 0xff0c is used to buffer data for this function
-	//all other ram values, including parameters, are preserved
-	//the states of the gen register and addr register are NOT PRESERVED
-	
-	int buff;
-	int partialsumaddr;
-	buff = addr;
-	addr = 0xff00;
-
-	//transfer operands to their placeholder locations
-	//0xff01 buffers operand 0
-	//0xff02 buffers operand 1
-	//these values in 0xff01 and 0xff02 will be written over
-	//0xff02 is the left rotated "and" (eg the carry)
-	//0xff01 is the "xor" (eg the partial sum)
-	//keeps repeating until carry is zero
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff0e");
-	inst("imm gen0 ffff");
-	inst("ram gen1 0000");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff01");
-	inst("gen ramall 0000");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff0f");
-	inst("imm gen0 ffff");
-	inst("ram gen1 0000");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff02");
-	inst("gen ramall 0000");
-
-	partialsumaddr = addr;
-	
-	//"or" the values at 0xff01 and 0xff02 and store at 0xff04
-	inst("imm gen0 ffff");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff01");
-	inst("ram gen1 0000");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff02");
-	inst("ram gen1 0000");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff04");
-	inst("gen ramall 0000");
-	
-	//"one's complement" operand 0 and operand 1, storing at 0xff05
-	//and 0xff06 respectively
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff01");
-	inst("imm gen1 ffff");
-	inst("ram gen0 0000");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff05");
-	inst("gen ramall 0000");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff02");
-	inst("imm gen1 ffff");
-	inst("ram gen0 0000");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff06");
-	inst("gen ramall 0000");
-
-	//"nor" the inverses and store at 0xff07
-	//this is the same as "and"ing the values
-	//store the rol of this value in 0xff02;
-	//this is the carry value
-	//note: the upper most bit is put to zero before loading
-	//to avoid carry wrapping back around
-	inst("imm gen1 ffff");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff05");
-	inst("ram gen0 0000");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff06");
-	inst("ram gen0 0000");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff07");
-	inst("gen ramall 0000");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff02");
-	inst("imm gen0 8000");
-	inst("rol ramall 0000");
-
-	//"xor" the values from 0xff01 and 0xff02
-	//this is equivalent to setting gen to zero
-	//then writing one with the "or" result at 0xff04
-	//then writing zero with the "and" result at 0xff07
-	//"xor" result is stored at 0xff01
-	inst("imm gen0 ffff");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff04");
-	inst("ram gen1 0000");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff07");
-	inst("ram gen0 0000");
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff01");
-	inst("gen ramall 0000");
-
-	//repeat addition with the carry and partial sum if carry
-	//is non-zero; if carry is non-zero, partial sum is sum
-	//and the program can return to rom address stored
-	//at ram address 0xff00
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff02");
-	if (!(addr%2))
-		inst("dnc noop 0000");
-	inst("ram jzor ffff");
-	to(addr+2);
-	to(partialsumaddr);
-	inst("imm addr0 ffff");
-	inst("imm addr1 ff00");
-	inst("ram asnx 0000");
-
-	addr = buff;
-}*/
-
 void main(int argc, char**argv) {
 	lcd_init();
 	lcd_beginwrite();
-
-/*	if (argc != 3) {
+/*
+	if (argc != 2) {
 		printf("need args\n");
 		exit(0x01);
 	}
-	ram[0] = atoi(argv[1]);
-	ram[1] = atoi(argv[2]);
-	callmultiply(2, 1, 0);
-	printf("product:%04x\n", ram[2]);
+	ram[0] = atoi(argv[1])/65536;
+	ram[1] = atoi(argv[1])%65536;
+	do32mul2(3, 2, 0, 1);
+	printf("product:%d\n", ram[3]*65536+ram[2]);
 */
 	doasnimm(MAIN_CR, 0x1000);
 row:
