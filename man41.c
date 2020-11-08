@@ -425,7 +425,7 @@ void domul2(unsigned short prod, unsigned short factor) {
 
 void recordcodeadd() {
 	unsigned short addloopaddr, placeholder;
-	placeholer = addr;
+	placeholder = addr;
 	addr = FXADD;
 	doasn(ADD_ARG_SUM, ADD_ARG_ADDEND0);
 	doasn(ADD_CARRY, ADD_ARG_ADDEND1);
@@ -501,7 +501,7 @@ void do32mul2(unsigned short endhigh, unsigned short endlow, unsigned short inhi
 	_immgen1(0x0001);
 	_genram;
 	toimm(doneaddr);
-	addr = doneadr;
+	addr = doneaddr;
 }
 
 void do32dwn12(unsigned short endhigh, unsigned short endlow, unsigned short inhigh, unsigned short inlow) {
@@ -718,7 +718,7 @@ void main(int argc, char**argv) {
 		inst("dnc noop 0000");
 	inst("ram jzor ffe0");
 	toimm(iterate);
-	toimm(terate_end);
+	toimm(iterate_end);
 	addr = iterate_end;
 	_immaddr(MAIN_I);
 	doneaddr = addr+0x0400;
