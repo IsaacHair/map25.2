@@ -2,52 +2,12 @@
 #include <stdio.h>
 
 /*
- * This serves as a way to simulate what will be going on in the map25.2
- * with its mandelbrot program.
- * Going to have a 240 by 320 character output.
- * Using spaces with colored background.
- * So, make sure the terminal window is enlarged when executing.
- * You can fit this in the terminal by making the font smaller.
- * The 240 by 320 "display" is used because this needs to almost exactly
- * replicate what the map25.2 program will be.
- * This program should also replicate the functionality of the map25.2
- * Yes, that means using gotos.
- * It also means defining math functions on a bitwise level.
- * Also going to adjust for the difference in width and height of characters.
- * In other words, characters are repeated twice left to right.
- * On the terminal display, set the font to 1px to see it properly.
- * Note: I am assuming that unsigned short is 16 bits.
- * The protol for writing funcitons is that addr register
- * and general register are NOT PRESERVED between functions or
- * code blocks.
- * Note: this version still hasnt actually separated the map25.2 functions
- * out properly; I am going to do this once everything is scripted in terms
- * of the instrucitons the map25.2 can handle.
- * This is actually gonna simulate everything down to the 64k ram.
- * Primitive instruction counter for map25.2 execution.
- * For jump operations, going to favor single, unnested if statements because
- * these are the least likely to create random shithole glitches when
- * translated to map25.2 assembly.
- * If the jump operation needs to be nested or complex, I will do this through
- * the use of virtual logic gates applied to the various factors that are
- * tested. The efficacy of this code can easily be checked with the c program
- * in the terminal.
- * Change name of global variables when using definitions for instructions;
- * this will show you if any places try to use the variables besides the definitions
- * because it will throw an error.
+ * Should display a mandelbrot set rendering.
+ * This version isn't completed.
  */
-
-#define RED "\x1B[41m"
-#define MAG "\x1B[45m"
-#define YEL "\x1B[43m"
-#define GRN "\x1B[42m"
-#define CYA "\x1B[46m"
-#define BLU "\x1B[44m"
-#define BLK "\x1B[40m"
 
 //ram and addresses of variables
 //THESE ARE GLOBAL, SO RECURSIVE FUNCTIONS WILL FAIL
-unsigned short ram[65536];
 #define MAIN_ZR 0x8000
 #define MAIN_ZI 0x8001
 #define MAIN_CR 0x8002
@@ -114,14 +74,7 @@ unsigned short ram[65536];
 #define MUL_JMPBUFF7 0x8035
 #define MUL_JMPBUFF8 0x8036
 
-unsigned short genval;
-unsigned short addrval;
-unsigned short outval;
-unsigned short dirval;
 
-//******Definitions to change for conversion to map25.2
-//******The only other thing you have to change is "if"
-//******and "goto" and the labels.
 #define _rorgenaddr \
 	addrval = (genval*2)|((genval&0x8000)/0x8000); \
 	genval = addrval
@@ -162,7 +115,9 @@ unsigned short dirval;
 		pos = 0; \
 	}
 
-int pos;
+
+FILE* fd;
+unsigned short progaddr;
 
 void dolcd_init() {
 	_dolcd_init;
@@ -223,11 +178,6 @@ void doornand(unsigned short end, unsigned short in0, unsigned short in1, unsign
 	_ramgen0;
 	_immaddr(end);
 	_genram;
-	/*genval = 0x0000;
-	genval |= ram[in0];
-	genval |= ram[in1];
-	genval &= ~ram[in2];
-	ram[end] = genval;*/
 }
 
 void donor(unsigned short end, unsigned short in0, unsigned short in1) {
@@ -238,10 +188,6 @@ void donor(unsigned short end, unsigned short in0, unsigned short in1) {
 	_ramgen0;
 	_immaddr(end);
 	_genram;
-	/*genval = 0xffff;
-	genval &= ~ram[in0];
-	genval &= ~ram[in1];
-	ram[end] = genval;*/
 }
 
 void dologiccompressedandimm(unsigned short out, unsigned short in, unsigned short imm) {
@@ -250,9 +196,6 @@ void dologiccompressedandimm(unsigned short out, unsigned short in, unsigned sho
 	_immaddr(DLCAI_BUFF);
 	_ramgen0;
 	_immgen0(~imm);
-	/*genval = 0xffff;
-	genval &= ~ram[DLCAI_BUFF];
-	genval &= imm;*/
 	if (genval&0xffff) {
 		_immaddr(out);
 		_immram(0x0001);
@@ -266,7 +209,6 @@ void dologiccompressedandimm(unsigned short out, unsigned short in, unsigned sho
 void dologiconecomp(unsigned short out, unsigned short in) {
 	_immaddr(in);
 	_ramgen;
-	/*genval = ram[in];*/
 	if (genval&0xffff) {
 		_immaddr(out);
 		_immram(0x0000);
@@ -285,10 +227,6 @@ void dologicnor(unsigned short result, unsigned short in0, unsigned short in1) {
 	_ramgen0;
 	_immaddr(result);
 	_genram;
-	/*genval = 0x0001;
-	genval &= ~ram[in1];
-	genval &= ~ram[in0];
-	ram[result] = genval;*/
 }
 
 void dologicor(unsigned short result, unsigned short in0, unsigned short in1) {
@@ -310,8 +248,6 @@ void domul2(unsigned short prod, unsigned short factor) {
 	_immgen0(0x8000);
 	_immaddr(prod);
 	_rolram;
-	/*genval = ram[factor];
-	ram[prod] = genval*2;*/
 }
 
 void recordcodeadd() {
@@ -363,23 +299,14 @@ void do32mul2(unsigned short endhigh, unsigned short endlow, unsigned short inhi
 	doasn(DO32MUL2_BUFF, inlow);
 	domul2(endlow, inlow);
 	domul2(endhigh, inhigh);
-	if (ram[DO32MUL2_BUFF]&0x8000) {
-		_immaddr(endhigh);
-		_ramgen;
-		_immgen1(0x0001);
-		_genram;
-	}
+	if (ram[DO32MUL2_BUFF]&0x8000)
+		ram[endhigh] |= 0x0001;
 }
 
 void do32dwn12(unsigned short endhigh, unsigned short endlow, unsigned short inhigh, unsigned short inlow) {
 	//endhigh is not actually changed
-	/*ram[DWN12_BUFF] = 0x0000;
-	ram[DWN12_BUFF] |= (ram[inlow]/4096)&0x000f;
-	ram[DWN12_BUFF] |= (ram[inhigh]*16)&0xfff0;
-	ram[endlow] = ram[DWN12_BUFF];*/
 	_immaddr(inlow);
 	_ramgen;
-	/*genval = ram[inlow];*/
 	dorolgenaddr();
 	dorolgenaddr();
 	dorolgenaddr();
@@ -389,9 +316,6 @@ void do32dwn12(unsigned short endhigh, unsigned short endlow, unsigned short inh
 	_genram;
 	_immaddr(inhigh);
 	_ramgen;
-	/*genval &= 0x000f;
-	ram[DWN12_BUFF] = genval;
-	genval = ram[inhigh];*/
 	dorolgenaddr();
 	dorolgenaddr();
 	dorolgenaddr();
@@ -401,9 +325,6 @@ void do32dwn12(unsigned short endhigh, unsigned short endlow, unsigned short inh
 	_ramgen1;
 	_immaddr(endlow);
 	_genram;
-	/*genval &= 0xfff0;
-	genval |= ram[DWN12_BUFF];
-	ram[endlow] = genval;*/
 }
 
 void recordcodemultiply() {
@@ -458,7 +379,6 @@ mulloop:
 	if (ram[MUL_ENDSIGN]&0x8000)
 		dotwocomp(MUL_MULBUFF0, MUL_MULBUFF0);
 	doasn(MUL_ARG_PROD, MUL_MULBUFF0);
-	/*ram[MUL_ARG_PROD] = ram[MUL_MULBUFF0];*/
 	//goto ram[MUL_ARG_RETADDR];
 }
 

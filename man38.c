@@ -2,52 +2,30 @@
 #include <stdio.h>
 
 /*
- * This serves as a way to simulate what will be going on in the map25.2
- * with its mandelbrot program.
- * Going to have a 240 by 320 character output.
- * Using spaces with colored background.
- * So, make sure the terminal window is enlarged when executing.
- * You can fit this in the terminal by making the font smaller.
- * The 240 by 320 "display" is used because this needs to almost exactly
- * replicate what the map25.2 program will be.
- * This program should also replicate the functionality of the map25.2
- * Yes, that means using gotos.
- * It also means defining math functions on a bitwise level.
- * Also going to adjust for the difference in width and height of characters.
- * In other words, characters are repeated twice left to right.
- * On the terminal display, set the font to 1px to see it properly.
- * Note: I am assuming that unsigned short is 16 bits.
- * The protol for writing funcitons is that addr register
- * and general register are NOT PRESERVED between functions or
- * code blocks.
- * Note: this version still hasnt actually separated the map25.2 functions
- * out properly; I am going to do this once everything is scripted in terms
- * of the instrucitons the map25.2 can handle.
- * This is actually gonna simulate everything down to the 64k ram.
- * Primitive instruction counter for map25.2 execution.
- * For jump operations, going to favor single, unnested if statements because
- * these are the least likely to create random shithole glitches when
- * translated to map25.2 assembly.
- * If the jump operation needs to be nested or complex, I will do this through
- * the use of virtual logic gates applied to the various factors that are
- * tested. The efficacy of this code can easily be checked with the c program
- * in the terminal.
- * Change name of global variables when using definitions for instructions;
- * this will show you if any places try to use the variables besides the definitions
- * because it will throw an error.
+ * Should display a mandelbrot set rendering.
+ * A note about the map25.2 to vma412 pinout:
+ * (map25.2 pins are on the right, 0x0 is lsb and rightmost bit)
+ * gnd = gnd
+ * 3v3 = vpp
+ * lcd_rst = 0xc
+ * lcd_cs = 0xb
+ * lcd_rs = 0xa
+ * lcd_wr = 0x9
+ * lcd_rd = 0x8
+ * lcd_d[7:0] = [0x7:0x0]
+ * 5v, sd_ss, sd_di, sd_do, sd_sck = n/c
+ * Logic is value, not inverse.
  */
 
-#define RED "\x1B[41m"
-#define MAG "\x1B[45m"
-#define YEL "\x1B[43m"
-#define GRN "\x1B[42m"
-#define CYA "\x1B[46m"
-#define BLU "\x1B[44m"
-#define BLK "\x1B[40m"
+FILE* fd;
+unsigned short addr;
+
+//locations of MUL function and ADD funciton
+#define FXMUL 0xc000
+#define FXADD 0x8000
 
 //ram and addresses of variables
 //THESE ARE GLOBAL, SO RECURSIVE FUNCTIONS WILL FAIL
-unsigned short ram[65536];
 #define MAIN_ZR 0x8000
 #define MAIN_ZI 0x8001
 #define MAIN_CR 0x8002
@@ -114,70 +92,202 @@ unsigned short ram[65536];
 #define MUL_JMPBUFF7 0x8035
 #define MUL_JMPBUFF8 0x8036
 
-unsigned short genval;
-unsigned short addrval;
-unsigned short outval;
-unsigned short dirval;
+#define GARBAGE0 0x8037
+#define GARBAGE1 0x8038
+#define GARBAGE2 0x8039
+#define GARBAGE3 0x803a
 
-//******Definitions to change for conversion to map25.2
-//******The only other thing you have to change is "if"
-//******and "goto" and the labels.
-#define _rorgenaddr \
-	addrval = (genval*2)|((genval&0x8000)/0x8000); \
-	genval = addrval
+
+//Some general instruction/lcd functions.
+void inst(char*str) {
+	fprintf(fd, "%04x %s %04x\n", addr, str, addr+1);
+	addr++;
+}
+
+void buswrite(int val) {
+	int i;
+	inst("imm out0 00ff");
+	fprintf(fd, "%04x imm out1 %04x %04x\n", addr, val%256, addr+1);
+	addr++;
+	inst("imm out0 0200");
+	inst("imm out1 0200");
+}
+
+void buswritegen() {
+	//destroys upper part of gen
+	int i;
+	inst("imm out0 00ff");
+	inst("imm gen0 ff00");
+	inst("gen out1 0000");
+	inst("imm out0 0200");
+	inst("imm out1 0200");
+}
+
+void comm1dat(int a, int b) {
+	buswrite(a);
+	inst("imm out1 0400");
+	buswrite(b);
+	inst("imm out0 0400");
+}
+
+void comm4dat(int a, int b, int c, int d, int e) {
+	buswrite(a);
+	inst("imm out1 0400");
+	buswrite(b);
+	buswrite(c);
+	buswrite(d);
+	buswrite(e);
+	inst("imm out0 0400");
+}
+
+void toimm(unsigned short mark) {
+	fprintf(fd, "%04x nc noop 0000 %04x\n", addr, mark);
+	addr++;
+}
+
+void instval(char*str, unsigned short val) {
+	fprintf(fd, "%04x %s %04x %04x\n", addr, str, val, addr+1);
+	addr++;
+}
+
+void instnxt(char*str, unsigned short next) {
+	fprintf(fd, "%04x %s %04x\n", addr, str, next);
+	addr++;
+}
+
+void rst() {
+	int marklow, markhigh;
+	marklow = addr;
+	doasnimm(GARBAGE0, 0xffe0);
+	doasnimm(GARBAGE1, 0x0001);
+	calladd(GARBAGE0, GARBAGE0, GARBAGE1);
+	if (!(addr%2))
+		inst("dnc noop 0000");
+	inst("gen jzor ffff");
+	toimm(addr+2);
+	toimm(marklow);
+	markhigh = addr;
+	doasnimm(GARBAGE0, 0xf000);
+	doasnimm(GARBAGE1, 0x0001);
+	calladd(GARBAGE0, GARBAGE0, GARBAGE1);
+	if (!(addr%2))
+		inst("dnc noop 0000");
+	inst("gen jzor ffff");
+	toimm(addr+2);
+	toimm(markhigh);
+}
+
+
+//Macros for defining the operations within the rest of the program.
+#define _rolgenaddr \
+	inst("imm addr0 ffff"); \
+	inst("ror addr1 0000"); \
+	inst("imm gen0 ffff"); \
+	inst("addr gen1 0000")
 #define _immaddr(A) \
-	addrval = (A)
+	inst("imm addr0 ffff"); \
+	instval("imm addr1", A)
 #define _immgen1(A) \
-	genval |= (A)
+	instval("imm gen1", A)
 #define _ramgen0 \
-	genval &= ~ram[addrval]
+	inst("ram gen0 0000")
 #define _genram \
-	ram[addrval] = genval
+	inst("gen ramall 0000")
 #define _immram(A) \
-	ram[addrval] = (A)
+	instval("imm ramall", A)
 #define _ramgen \
-	genval = ram[addrval]
+	inst("imm gen0 ffff"); \
+	inst("ram gen1 0000")
 #define _ramgen1 \
-	genval |= ram[addrval]
+	inst("ram gen1 0000")
 #define _immgen(A) \
-	genval = (A)
+	inst("imm gen0 ffff"); \
+	instval("imm gen1", A)
 #define _immgen0(A) \
-	genval &= ~(A)
+	instval("imm gen0", A)
 #define _rolram \
-	ram[addrval] = (genval*2)|((genval&0x8000)/0x8000)
+	inst("rol ramall 0000")
 #define _successor(A) \
-	ram[A] += 1
-#define _dolcd_init \
-	pos = 0
-#define _dolcd_beginwrite \
-	1
+	inst("imm addr0 ffff"); \
+	instval("imm addr1", A); \
+	inst("imm gen1 ffff"); \
+	inst("ram gen0 0000"); \
+	if(!(addr%2)) \
+		inst("dnc noop 0000"); \
+	instnxt("gen jzor 00ff", addr+1); \
+	instnxt("gen jzor 0fff", addr+2); \
+	instnxt("gen jzor 000f", addr+3); \
+	instnxt("gen jzor 3fff", addr+4); \
+	instnxt("gen jzor 03ff", addr+5); \
+	instnxt("gen jzor 003f", addr+6); \
+	instnxt("gen jzor 0003", addr+7); \
+	instnxt("gen jzor 7fff", addr+8); \
+	instnxt("gen jzor 1fff", addr+9); \
+	instnxt("gen jzor 07ff", addr+10); \
+	instnxt("gen jzor 01ff", addr+11); \
+	instnxt("gen jzor 007f", addr+12); \
+	instnxt("gen jzor 001f", addr+13); \
+	instnxt("gen jzor 0007", addr+14); \
+	instnxt("gen jzor 0001", addr+15); \
+	instnxt("gen jzor ffff", addr+16); \
+	instnxt("imm gen1 3fff", addr+17); \
+	instnxt("imm gen1 1fff", addr+17); \
+	instnxt("imm gen1 0fff", addr+17); \
+	instnxt("imm gen1 07ff", addr+17); \
+	instnxt("imm gen1 03ff", addr+17); \
+	instnxt("imm gen1 01ff", addr+17); \
+	instnxt("imm gen1 00ff", addr+17); \
+	instnxt("imm gen1 007f", addr+17); \
+	instnxt("imm gen1 003f", addr+17); \
+	instnxt("imm gen1 001f", addr+17); \
+	instnxt("imm gen1 000f", addr+17); \
+	instnxt("imm gen1 0007", addr+17); \
+	instnxt("imm gen1 0003", addr+17); \
+	instnxt("imm gen1 0001", addr+17); \
+	instnxt("imm gen0 0001", addr+18); \
+	instnxt("imm gen1 ffff", addr+17); \
+	instnxt("imm gen1 7fff", addr+15); \
+	instnxt("imm gen0 4000", addr+15); \
+	instnxt("imm gen0 2000", addr+14); \
+	instnxt("imm gen0 1000", addr+13); \
+	instnxt("imm gen0 0800", addr+12); \
+	instnxt("imm gen0 0400", addr+11); \
+	instnxt("imm gen0 0200", addr+10); \
+	instnxt("imm gen0 0100", addr+9); \
+	instnxt("imm gen0 0080", addr+8); \
+	instnxt("imm gen0 0040", addr+7); \
+	instnxt("imm gen0 0020", addr+6); \
+	instnxt("imm gen0 0010", addr+5); \
+	instnxt("imm gen0 0008", addr+4); \
+	instnxt("imm gen0 0004", addr+3); \
+	instnxt("imm gen0 0002", addr+2); \
+	instnxt("imm gen0 8000", addr+1); \
+	inst("gen ramall 0000"); \
+	inst("imm gen1 ffff"); \
+	inst("ram gen0 0000"); \
+	inst("gen ramall 0000")
 #define _dolcd_endwrite \
-	/*set terminal highlight back to white*/ \
-	printf("\n\x1B[49m")
-#define _doputpixel \
-	printf("%s  ", color); \
-	pos++; \
-	if (pos > 239) { \
-		printf("\n"); \
-		pos = 0; \
-	}
+	inst("imm out0 0400"); \
+	buswrite(0x00)
+#define _doputpixel(R, G, B) \
+	inst("imm gen0 ffff"); \
+	instval("imm gen1", R); \
+	buswritegen(); \
+	inst("imm gen0 ffff"); \
+	instval("imm gen1", G); \
+	buswritegen(); \
+	inst("imm gen0 ffff"); \
+	instval("imm gen1", B); \
+	buswritegen()
 
-int pos;
 
-void dolcd_init() {
-	_dolcd_init;
-}
-
-void dolcd_beginwrite() {
-	_dolcd_beginwrite;
-}
-
+//The beginning of the actual mandelbrot functions.
 void dolcd_endwrite() {
 	_dolcd_endwrite;
 }
 
-void doputpixel(char*color) {
-	_doputpixel;
+void doputpixel(int red, int green, int blue) {
+	_doputpixel(red, green, blue);
 }
 
 void dosuccessor(unsigned short num) {
@@ -185,7 +295,7 @@ void dosuccessor(unsigned short num) {
 }
 
 void dorolgenaddr() {
-	_rorgenaddr;
+	_rolgenaddr;
 }
 
 void doonecomp(unsigned short comp, unsigned short before) {
@@ -223,11 +333,6 @@ void doornand(unsigned short end, unsigned short in0, unsigned short in1, unsign
 	_ramgen0;
 	_immaddr(end);
 	_genram;
-	/*genval = 0x0000;
-	genval |= ram[in0];
-	genval |= ram[in1];
-	genval &= ~ram[in2];
-	ram[end] = genval;*/
 }
 
 void donor(unsigned short end, unsigned short in0, unsigned short in1) {
@@ -238,10 +343,6 @@ void donor(unsigned short end, unsigned short in0, unsigned short in1) {
 	_ramgen0;
 	_immaddr(end);
 	_genram;
-	/*genval = 0xffff;
-	genval &= ~ram[in0];
-	genval &= ~ram[in1];
-	ram[end] = genval;*/
 }
 
 void dologiccompressedandimm(unsigned short out, unsigned short in, unsigned short imm) {
@@ -250,9 +351,6 @@ void dologiccompressedandimm(unsigned short out, unsigned short in, unsigned sho
 	_immaddr(DLCAI_BUFF);
 	_ramgen0;
 	_immgen0(~imm);
-	/*genval = 0xffff;
-	genval &= ~ram[DLCAI_BUFF];
-	genval &= imm;*/
 	if (genval&0xffff) {
 		_immaddr(out);
 		_immram(0x0001);
@@ -266,7 +364,6 @@ void dologiccompressedandimm(unsigned short out, unsigned short in, unsigned sho
 void dologiconecomp(unsigned short out, unsigned short in) {
 	_immaddr(in);
 	_ramgen;
-	/*genval = ram[in];*/
 	if (genval&0xffff) {
 		_immaddr(out);
 		_immram(0x0000);
@@ -285,10 +382,6 @@ void dologicnor(unsigned short result, unsigned short in0, unsigned short in1) {
 	_ramgen0;
 	_immaddr(result);
 	_genram;
-	/*genval = 0x0001;
-	genval &= ~ram[in1];
-	genval &= ~ram[in0];
-	ram[result] = genval;*/
 }
 
 void dologicor(unsigned short result, unsigned short in0, unsigned short in1) {
@@ -310,8 +403,6 @@ void domul2(unsigned short prod, unsigned short factor) {
 	_immgen0(0x8000);
 	_immaddr(prod);
 	_rolram;
-	/*genval = ram[factor];
-	ram[prod] = genval*2;*/
 }
 
 void recordcodeadd() {
@@ -331,8 +422,8 @@ addloop:
 void calladd(unsigned short sum, unsigned short addend0, unsigned short addend1) {
 	doasn(ADD_ARG_ADDEND0, addend0);
 	doasn(ADD_ARG_ADDEND1, addend1);
-	doasnimm(ADD_ARG_RETADDR, /*some addr bs*/0);
-	recordcodeadd(); //goto doadd
+	doasnimm(ADD_ARG_RETADDR, addr+5);
+	toimm(FXADD);
 	doasn(sum, ADD_ARG_SUM);
 }
 
@@ -373,13 +464,8 @@ void do32mul2(unsigned short endhigh, unsigned short endlow, unsigned short inhi
 
 void do32dwn12(unsigned short endhigh, unsigned short endlow, unsigned short inhigh, unsigned short inlow) {
 	//endhigh is not actually changed
-	/*ram[DWN12_BUFF] = 0x0000;
-	ram[DWN12_BUFF] |= (ram[inlow]/4096)&0x000f;
-	ram[DWN12_BUFF] |= (ram[inhigh]*16)&0xfff0;
-	ram[endlow] = ram[DWN12_BUFF];*/
 	_immaddr(inlow);
 	_ramgen;
-	/*genval = ram[inlow];*/
 	dorolgenaddr();
 	dorolgenaddr();
 	dorolgenaddr();
@@ -389,9 +475,6 @@ void do32dwn12(unsigned short endhigh, unsigned short endlow, unsigned short inh
 	_genram;
 	_immaddr(inhigh);
 	_ramgen;
-	/*genval &= 0x000f;
-	ram[DWN12_BUFF] = genval;
-	genval = ram[inhigh];*/
 	dorolgenaddr();
 	dorolgenaddr();
 	dorolgenaddr();
@@ -401,9 +484,6 @@ void do32dwn12(unsigned short endhigh, unsigned short endlow, unsigned short inh
 	_ramgen1;
 	_immaddr(endlow);
 	_genram;
-	/*genval &= 0xfff0;
-	genval |= ram[DWN12_BUFF];
-	ram[endlow] = genval;*/
 }
 
 void recordcodemultiply() {
@@ -458,7 +538,6 @@ mulloop:
 	if (ram[MUL_ENDSIGN]&0x8000)
 		dotwocomp(MUL_MULBUFF0, MUL_MULBUFF0);
 	doasn(MUL_ARG_PROD, MUL_MULBUFF0);
-	/*ram[MUL_ARG_PROD] = ram[MUL_MULBUFF0];*/
 	//goto ram[MUL_ARG_RETADDR];
 }
 
@@ -471,8 +550,29 @@ void callmultiply(unsigned short prod, unsigned short factor0, unsigned short fa
 }
 
 void main(int argc, char**argv) {
-	dolcd_init();
-	dolcd_beginwrite();
+	if (argc != 2) {
+		printf("need target file\n");
+		exit(0x01);
+	}
+	fd = fopen(argv[1], "w");
+	//***BEGIN EXPLICIT MAP25.2 INSTRUCTIONS
+	addr = 0;
+	inst("imm dir1 ffff");
+	inst("imm out1 ffff");
+	rst(); //reset
+	inst("imm out0 0c00"); //cs and rs low
+	buswrite(0x38); //out of idle
+	buswrite(0x11); //out of sleep
+	buswrite(0x13); //normal display mode
+	buswrite(0x20); //inversion is off
+	buswrite(0x29); //display is on
+	comm1dat(0x0c, 0xe6); //set COLMOD
+	comm4dat(0x2a, 0x00, 0x00, 0x00, 0xef); //set column min-max
+	comm4dat(0x2b, 0x00, 0x00, 0x01, 0x3f); //set page min-max
+	buswrite(0x2c); //begin frame write
+	inst("imm out1 0400"); //RS high
+	//***END EXPLICIT INSTRUCTIONS (these functions funnel
+	//down to the macros at the file beginning)
 
 	doasnimm(MAIN_CR, 0x1000);
 row:
