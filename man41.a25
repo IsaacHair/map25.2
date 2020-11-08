@@ -1142,7 +1142,7 @@ c00b imm ramall 0001 c00c
 c00c imm addr0 ffff c00d
 c00d imm addr1 8015 c00e
 c00e dnc noop 0000 c00f
-c00f ram jzor 0x8000 c010
+c00f ram jzor 8000 c010
 c010 nc noop 0000 c10f
 c011 imm addr0 ffff c012
 c012 imm addr1 8015 c013
