@@ -541,7 +541,7 @@ void recordcodemultiply() {
 		inst("dnc noop 0000");
 	elseaddr = addr+0x0100;
 	doneaddr = addr+0x0200;
-	inst("ram jzor 0x8000");
+	inst("ram jzor 8000");
 	toimm(elseaddr);
 	dotwocomp(MUL_ACTUAL0, MUL_ARG_FACTOR0);
 	doasnimm(MUL_ENDSIGN, 0x8000);
