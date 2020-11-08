@@ -240,14 +240,14 @@ void calladd32(unsigned short sumhigh, unsigned short sumlow, unsigned short add
 	dologicnor(ADD32_JMPBUFF0, ADD32_JMPBUFF0, ADD32_JMPBUFF1);
 	dologiccompressedandimm(ADD32_JMPBUFF2, sumlow, 0x8000);
 	dologiccompressedandimm(ADD32_JMPBUFF3, ADD32_BUFF, 0x8000);
-	dologiconecomp(ADD32_JMPBUFF3, ADD32_JMPBUFF3);
-	dologicnor(ADD32_JMPBUFF2, ADD32_JMPBUFF2, ADD32_JMPBUFF1);
 	dologiccompressedandimm(ADD32_JMPBUFF4, addendlow, 0x8000);
-	dologicor(ADD32_JMPBUFF0, ADD32_JMPBUFF2, ADD32_JMPBUFF0);
+	dologicor(ADD32_JMPBUFF4, ADD32_JMPBUFF3, ADD32_JMPBUFF4);
+	dologiconecomp(ADD32_JMPBUFF4, ADD32_JMPBUFF4);
+	dologicnor(ADD32_JMPBUFF4, ADD32_JMPBUFF4, ADD32_JMPBUFF2);
 	dologicor(ADD32_JMPBUFF0, ADD32_JMPBUFF4, ADD32_JMPBUFF0);
-	if (((ram[ADD32_BUFF]&0x8000)&&(ram[addendlow]&0x8000)) ||
-	    ((!(ram[sumlow]&0x8000))&&((ram[ADD32_BUFF]&0x8000)||(ram[addendlow]&0x8000)))
-	    /*ram[ADD32_JMPBUFF0]&0xffff*/)
+	if (/*((ram[ADD32_BUFF]&0x8000)&&(ram[addendlow]&0x8000)) ||
+	    ((!(ram[sumlow]&0x8000))&&((ram[ADD32_BUFF]&0x8000)||(ram[addendlow]&0x8000)))*/
+	    ram[ADD32_JMPBUFF0]&0xffff)
 		dosuccessor(sumhigh);
 }
 
@@ -358,11 +358,11 @@ iterate:
 	dologicor(MAIN_JMPBUFF0, MAIN_JMPBUFF0, MAIN_JMPBUFF2);
 	dologicor(MAIN_JMPBUFF0, MAIN_JMPBUFF0, MAIN_JMPBUFF4);
 	dologicor(MAIN_JMPBUFF0, MAIN_JMPBUFF0, MAIN_JMPBUFF6);
-	if (((ram[MAIN_ZI]&0x6000)&&!(ram[MAIN_ZI]&0x8000)) ||
+	if (/*((ram[MAIN_ZI]&0x6000)&&!(ram[MAIN_ZI]&0x8000)) ||
 	    (((ram[MAIN_ZIN])&0x6000&&!((ram[MAIN_ZIN])&0x8000))) ||
 	    ((ram[MAIN_ZR]&0x6000)&&!(ram[MAIN_ZR]&0x8000)) ||
-	    (((ram[MAIN_ZRN])&0x6000&&!((ram[MAIN_ZRN])&0x8000)))
-	    /*ram[MAIN_JMPBUFF0]&0xffff*/)
+	    (((ram[MAIN_ZRN])&0x6000&&!((ram[MAIN_ZRN])&0x8000)))*/
+	    ram[MAIN_JMPBUFF0]&0xffff)
 		goto iterate_end;
 	if (!(ram[MAIN_I]&0xffe0))
 		goto iterate;
