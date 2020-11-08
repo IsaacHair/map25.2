@@ -476,7 +476,7 @@ void calladd32(unsigned short sumhigh, unsigned short sumlow, unsigned short add
 	_immaddr(ADD32_JMPBUFF0);
 	if (!(addr%2))
 		inst("dnc noop 0000");
-	doneaddr = addr+0x0100;
+	doneaddr = addr+0x0060;
 	inst("ram jzor ffff");
 	toimm(doneaddr);
 	dosuccessor(sumhigh);
@@ -608,18 +608,22 @@ void recordcodemultiply() {
 	calladd32(MUL_MULBUFF1, MUL_MULBUFF0, MUL_FACTOR0ROTATE, MUL_ACTUAL0);
 	toimm(doneaddr);
 	addr = doneaddr;
+	fprintf(fd, "<\n before do32mul2 in mul\n>\n");
 	do32mul2(MUL_FACTOR0ROTATE, MUL_ACTUAL0, MUL_FACTOR0ROTATE, MUL_ACTUAL0);
+	fprintf(fd, "<\n before domul2 in mul\n>\n");
 	domul2(MUL_BITSHIFTER, MUL_BITSHIFTER);
+	fprintf(fd, "<\n before second to last comment in mul\n>\n");
 	_immaddr(MUL_BITSHIFTER);
 	if (!(addr%2))
 		inst("dnc noop 0000");
 	inst("ram jzor 8000");
 	toimm(mulloop);
 	do32dwn12(MUL_MULBUFF1, MUL_MULBUFF0, MUL_MULBUFF1, MUL_MULBUFF0);
+	fprintf(fd, "<\n before last comment in mul\n>\n");
 	_immaddr(MUL_ENDSIGN);
 	if (!(addr%2))
 		inst("dnc noop 0000");
-	doneaddr = addr+0x0100;
+	doneaddr = addr+0x0200;
 	inst("ram jzor ffff");
 	toimm(doneaddr);
 	dotwocomp(MUL_MULBUFF0, MUL_MULBUFF0);
