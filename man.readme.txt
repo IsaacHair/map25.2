@@ -1,0 +1,5 @@
+This whole project to create a mandelbrot set rendering showed me two things:
+- I need to build and test smaller pieces.
+- I need to make sure my code is actually readable.
+
+I am going to restart from scratch and see what I can do.
