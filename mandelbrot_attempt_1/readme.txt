@@ -41,3 +41,7 @@ In this paradigm, the only functions needed to render a mandelbrot set are:
    very few pushes and pulls form ram compared to virtual logic gates. Also,
    you need to define and test a macro for if statements instead of explicitly
    defining a bunch of instructions for them and hoping no typos occur.
+
+
+
+Yeah this thing is still failing, I need to try some different things.

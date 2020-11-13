@@ -12,11 +12,11 @@ void main(int argc, char** argv) {
 			     //collisions mean doubling up
 	int i, line;
 	for (line = 1, c = fgetc(fd); c != EOF; c = fgetc(fd), line++) {
-		for (i = 0; i < 3 && c != '\n'; i++) {
+		for (i = 0; (i < 3) && (c != '\n'); i++) {
 			addr[line][i] = c;
 			c = fgetc(fd);
 		}
-		if (i < 3)
+		if ((i < 3) || (c == '\n'))
 			continue;
 		while ((c = fgetc(fd)) != '\n' && c != EOF)
 			;
