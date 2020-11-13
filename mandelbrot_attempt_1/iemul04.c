@@ -40,9 +40,7 @@ void instvalnxt(char*op, unsigned short val, unsigned short nxt) {
 }
 
 void setprevnxt(unsigned short nxt) {
-	do
-		fseek(fd, -2, SEEK_CUR);
-	while (fgetc(fd) != ' ');
+	fseek(fd, -5, SEEK_CUR);
 	fprintf(fd, "%04x\n", nxt);
 }
 
@@ -110,9 +108,10 @@ void mulcode() {
 	//make both factors positive and record the answer sign in MUL_PROD
 	inst("imm addr0 ffff");
 	for (pointer = MUL_F0; pointer != MUL_F1; pointer = MUL_F1) {
+		instval("imm addr1", pointer);
 		makeaddrodd();
 		addrdone = addr+0x0040; //estimate
-		inst("ram jzor 0x8000");
+		inst("ram jzor 8000");
 		instnxt("imm addr0 ffff", addrdone);
 		inst("imm gen0 ffff");
 		inst("ram gen1 0000");
@@ -123,9 +122,9 @@ void mulcode() {
 		inst("ram gen0 ffff");
 		instval("ram gen1", MUL_PROD);
 		makeaddrodd();
-		inst("ram jzor 0x8000");
-		instnxt("imm ram 0x8000", addr+2);
-		instnxt("imm ram 0x0000", addr+1);
+		inst("ram jzor 8000");
+		instnxt("imm ram 8000", addr+2);
+		instnxt("imm ram 0000", addr+1);
 		inst("gen ram 0000");
 		instnxt("imm addr0 ffff", addrdone);
 		addr = addrdone;
@@ -137,9 +136,8 @@ void mulcode() {
 	inst("imm gen0 ffff");
 	inst("ram gen1 0000");
 	//part that doesn't shift up
-		instval("imm addr1", pointer);
 	for (i = 0xb, mask = 0x0001; i != 0xe;
-	     (i==0) ? (i--) : (i = 0xf), mask = mask<<1) {
+	     ((i==0) ? i = 0xf : i--), mask = mask<<1) {
 		inst("imm addr0 ffff");
 		instval("imm addr1", MUL_F1);
 		makeaddrodd();

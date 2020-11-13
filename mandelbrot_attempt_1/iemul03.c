@@ -40,9 +40,8 @@ void instvalnxt(char*op, unsigned short val, unsigned short nxt) {
 }
 
 void setprevnxt(unsigned short nxt) {
-	do
-		fseek(fd, -2, SEEK_CUR);
-	while (fgetc(fd) != ' ');
+	char c;
+	fseek(fd, -6, SEEK_CUR);
 	fprintf(fd, "%04x\n", nxt);
 }
 
@@ -110,6 +109,7 @@ void mulcode() {
 	//make both factors positive and record the answer sign in MUL_PROD
 	inst("imm addr0 ffff");
 	for (pointer = MUL_F0; pointer != MUL_F1; pointer = MUL_F1) {
+		instval("imm addr1", pointer);
 		makeaddrodd();
 		addrdone = addr+0x0040; //estimate
 		inst("ram jzor 0x8000");
@@ -137,9 +137,9 @@ void mulcode() {
 	inst("imm gen0 ffff");
 	inst("ram gen1 0000");
 	//part that doesn't shift up
-		instval("imm addr1", pointer);
 	for (i = 0xb, mask = 0x0001; i != 0xe;
-	     (i==0) ? (i--) : (i = 0xf), mask = mask<<1) {
+	     ((i==0) ? i = 0xf : i--), mask = mask<<1) {
+		printf("i:%d\n", i);
 		inst("imm addr0 ffff");
 		instval("imm addr1", MUL_F1);
 		makeaddrodd();
@@ -182,7 +182,7 @@ void main(int argc, char**argv) {
 		printf("need target\n");
 		exit(0x01);
 	}
-	fd = fopen(argv[1], "w");
+	fd = fopen(argv[1], "wr");
 	addr = 0;
 	
 	inst("dnc noop 0000");
