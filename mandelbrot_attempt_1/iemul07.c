@@ -98,8 +98,8 @@ void addrpred4() {
 
 void mulcode() {
 	//destroys MUL_F0 and MUL_F1
-	unsigned short addrdone, pointer, firstaddloop
-	unsigned short doneaddr, secondaddloop, carryaddr, noncarryaddr;
+	unsigned short addrdone, pointer, firstloopaddr;
+	unsigned short doneaddr, carryaddr, noncarryaddr;
 	unsigned short newnoncarryaddr, newcarryaddr;
 	int i;
 	unsigned short mask;
@@ -181,13 +181,13 @@ void mulcode() {
 	inst("imm addr0 ffff");
 	instval("imm addr1", MUL_ARRAY|0xc);
 	//loop that actually does the addition
-	firstaddloop = addr;
+	firstloopaddr = addr;
 	//next block address (for the very end of this one)
 	doneaddr = addr+0x0400;
 	//check addr what the addr WAS
 	makeaddrodd();
 	inst("addr jzor 000f");
-	instnxt("dnc noop 0000", /*next section*/);
+	instnxt("dnc noop 0000", doneaddr);
 	inst("dnc noop 0000");
 	//address predecessor
 	addrpred4();
