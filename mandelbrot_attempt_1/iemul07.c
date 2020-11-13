@@ -140,6 +140,7 @@ void mulcode() {
 	inst("imm gen0 ffff");
 	inst("ram gen1 0000");
 	//part that doesn't shift up
+	//uses all 16 bits
 	for (i = 0xb, mask = 0x0001; i != 0xe;
 	     ((i==0) ? i = 0xf : i--), mask = mask<<1) {
 		inst("imm addr0 ffff");
@@ -155,6 +156,7 @@ void mulcode() {
 	}
 	//part that does shift up (shifts before buffering value)
 	//also destroys gen
+	//uses all 16 bits
 	for (i = 0xe, mask = 0x2000; i >= 0xd;
 	     i--, mask = mask<<1) {
 		inst("imm gen0 8000");
@@ -191,6 +193,11 @@ void mulcode() {
 	inst("dnc noop 0000");
 	//address predecessor
 	addrpred4();
+	inst("dnc noop 0000");
+	//see if you can skip this address
+	makeaddrodd();
+	inst("ram jzor ffff");
+	instnxt("dnc noop 0000", firstloopaddr);
 	//do the rotation addition
 	inst("dnc noop 0000");
 	makeaddrodd();
@@ -257,7 +264,12 @@ void mulcode() {
 	instval("imm addr1", MUL_ARRAY|0xe);
 	//next code block approx location
 	doneaddr = addr+0x0400;
+	//see if you can skip this address
+	makeaddrodd();
+	inst("ram jzor ffff");
+	instnxt("dnc noop 0000", doneaddr);
 	//do the addition
+	inst("dnc noop 0000");
 	makeaddrodd();
 	//the following estimates need to be even
 	noncarryaddr = addr+0x0011;
@@ -316,7 +328,12 @@ void mulcode() {
 	instval("imm addr1", MUL_ARRAY|0xd);
 	//next code block approx location
 	doneaddr = addr+0x0400;
+	//see if you can skip this address
+	makeaddrodd();
+	inst("ram jzor ffff");
+	instnxt("dnc noop 0000", doneaddr);
 	//do the addition
+	inst("dnc noop 0000");
 	makeaddrodd();
 	//the following estimates need to be even
 	noncarryaddr = addr+0x0011;
