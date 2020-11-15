@@ -42,6 +42,8 @@ FILE* fd;
 #define MAIN_DY 0x420a
 #define MAIN_DX 0x420b
 #define MAIN_RESULT 0x420c
+#define MAIN_XLIMN 0x420d
+#define MAIN_YLIMN 0x420e
 
 void inst(char*op) {
 	fprintf(fd, "%04x %s %04x\n", addr, op, addr+1);
@@ -74,6 +76,47 @@ void makeaddrodd() {
 		addr--;
 		addr += 2;
 	}
+}
+
+void buswrite(int val) {
+	int i;
+	inst("imm out0 00ff");
+	instval("imm out1", val%256);
+	inst("imm out0 0200");
+	inst("imm out1 0200");
+}
+
+void buswritegen() {
+	//destroys upper part of gen
+	int i;
+	inst("imm out0 00ff");
+	inst("imm gen0 ff00");
+	inst("gen out1 0000");
+	inst("imm out0 0200");
+	inst("imm out1 0200");
+}
+
+void comm1dat(int a, int b) {
+	buswrite(a);
+	inst("imm out1 0400");
+	buswrite(b);
+	inst("imm out0 0400");
+}
+
+void comm4dat(int a, int b, int c, int d, int e) {
+	buswrite(a);
+	inst("imm out1 0400");
+	buswrite(b);
+	buswrite(c);
+	buswrite(d);
+	buswrite(e);
+	inst("imm out0 0400");
+}
+
+void to(int mark) {
+	//dont use if it is the very beginning of the program
+	fseek(fd, -5, SEEK_CUR);
+	fprintf(fd, "%04x\n", mark);
 }
 
 void genpred16() {
@@ -754,21 +797,13 @@ void main(int argc, char**argv) {
 	}
 	fd = fopen(argv[1], "w");
 	addr = 0;
-	unsigned short delayaddr;
-	
-	//see what colors you would give to some random points
-	inst("imm addr0 ffff");
-	instval("imm addr1", MAIN_X);
-	inst("imm ramall 08c0");
-	inst("imm addr0 ffff");
-	instval("imm addr1", MAIN_Y);
-	inst("imm ramall 0690");
-	render(MAIN_RESULT, MAIN_Y, MAIN_X);
-	inst("imm addr0 ffff");
-	instval("imm addr1", MAIN_RESULT);
-	inst("imm out0 ffff");
-	inst("ram out1 0000");
-	//delay
+	unsigned short delayaddr, loopaddr;
+
+	//lcd init
+	inst("imm dir1 ffff");
+	inst("imm out1 ffff");
+	inst("imm out0 1000");
+	//delay for reset
 	inst("imm gen1 ffff");
 	delayaddr = addr;
 	inst("dnc noop 0000");
@@ -776,9 +811,94 @@ void main(int argc, char**argv) {
 	inst("dnc noop 0000");
 	makeaddrodd();
 	inst("gen jzor ffff");
-	instnxt("dnc noop 0000", 0x0000);
+	instnxt("dnc noop 0000", addr+2);
 	instnxt("dnc noop 0000", delayaddr);
+	inst("imm out1 1000");
+	//more delay for reset
+	inst("imm gen1 ffff");
+	delayaddr = addr;
+	inst("dnc noop 0000");
+	genpred16();
+	inst("dnc noop 0000");
+	makeaddrodd();
+	inst("gen jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", delayaddr);
+	//various commands
+	inst("imm out0 0c00"); //cs and rs low
+	buswrite(0x38); //out of idle
+	buswrite(0x11); //out of sleep
+	buswrite(0x13); //normal display mode
+	buswrite(0x20); //inversion is off
+	buswrite(0x29); //display is on
+	comm1dat(0x0c, 0xe6); //set COLMOD
+	comm4dat(0x2a, 0x00, 0x00, 0x00, 0xef); //set column min-max
+	comm4dat(0x2b, 0x00, 0x00, 0x01, 0x3f); //set page min-max
+	buswrite(0x2c); //begin frame write
+	inst("imm out1 0400"); //RS high
+	
+	//init values
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_X);
+	inst("imm ramall 1000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_Y);
+	inst("imm ramall e980");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_DX);
+	inst("imm ramall ffd0");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_DY);
+	inst("imm ramall 0030");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_XLIMN);
+	inst("imm ramall 2c00");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_YLIMN);
+	inst("imm ramall e980");
+	//print the values of x and y to ensure they are correct
+	loopaddr = addr;
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_X);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	buswritegen();
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_Y);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	buswritegen();
+	buswritegen();
+	//increment column
+	calladd(MAIN_Y, MAIN_Y, MAIN_DY);
+	//test column value
+	calladd(MAIN_TEMP, MAIN_Y, MAIN_YLIMN);
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_TEMP);
+	makeaddrodd();
+	inst("ram jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", loopaddr);
+	//increment row and reset column
+	calladd(MAIN_X, MAIN_X, MAIN_DX);
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_Y);
+	inst("imm ramall e980");
+	//test row value
+	calladd(MAIN_TEMP, MAIN_X, MAIN_XLIMN);
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_TEMP);
+	makeaddrodd();
+	inst("ram jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", loopaddr);
+	
+	//end lcd write
+	inst("imm out0 0400"); //RS low
+	buswrite(0x00); //nop to end the write
+	instnxt("dnc noop 0000", addr); //halt
 
+	//code for functions
 	mulcode();
 	addcode();
 
