@@ -102,6 +102,7 @@ void mulcode() {
 	unsigned short addrdone, pointer, firstloopaddr;
 	unsigned short doneaddr, carryaddr, noncarryaddr;
 	unsigned short newnoncarryaddr, newcarryaddr;
+	unsigned short fulladdaddr;
 	int i;
 	unsigned short mask;
 
@@ -199,10 +200,19 @@ void mulcode() {
 	addrpred4();
 	inst("dnc noop 0000");
 	//see if you can skip this address
+	//still have to rotate, even if skipping
 	makeaddrodd();
 	inst("ram jzor ffff");
-	instnxt("dnc noop 0000", firstloopaddr);
+	instnxt("dnc noop 0000", addr+2);
 	//do the rotation addition
+	fulladdaddr = addr+0x0008;
+	instnxt("dnc noop 0000", fulladdaddr);
+	inst("ror ramall 0000");
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	//can't have the lsb rotating to be the msb
+	instnxt("imm gen0 8000", firstloopaddr);
+	addr = fulladdaddr;
 	inst("dnc noop 0000");
 	makeaddrodd();
 	//the following estimates need to be even
@@ -451,10 +461,10 @@ void main(int argc, char**argv) {
 	//quick test
 	inst("imm addr0 ffff");
 	inst("imm addr1 0000");
-	inst("imm ramall 0780");
+	inst("imm ramall 1840");
 	inst("imm addr0 ffff");
 	inst("imm addr1 0001");
-	inst("imm ramall 0780");
+	inst("imm ramall 38f0");
 	callmul(2, 0, 1);
 	inst("imm addr0 ffff");
 	inst("imm addr1 0002");
