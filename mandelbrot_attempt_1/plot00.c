@@ -35,6 +35,7 @@ FILE* fd;
 #define MAIN_ZRS 0x4203
 #define MAIN_ZI0 0x4204
 #define MAIN_ZR0 0x4205
+#define MAIN_TEMP 0x4206
 
 void inst(char*op) {
 	fprintf(fd, "%04x %s %04x\n", addr, op, addr+1);
@@ -654,9 +655,10 @@ void main(int argc, char**argv) {
 	}
 	fd = fopen(argv[1], "w");
 	addr = 0;
-	unsigned short startaddr;
+	unsigned short startaddr, delayaddr;
 	
 	//test a point that should gradually blow up
+	//init
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_ZI0);
 	inst("imm ramall 03c0");
@@ -670,9 +672,53 @@ void main(int argc, char**argv) {
 	instval("imm addr1", MAIN_ZR);
 	inst("imm ramall 0000");
 	startaddr = addr;
+	//calculate squares
 	callmul(MAIN_ZIS, MAIN_ZI, MAIN_ZI);
 	callmul(MAIN_ZRS, MAIN_ZR, MAIN_ZR);
-/**/
+	//calculate the iterated imaginary
+	callmul(MAIN_ZI, MAIN_ZI, MAIN_ZR);
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ZI);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	inst("imm gen0 8000");
+	inst("rol ramall 0000");
+	calladd(MAIN_ZI, MAIN_ZI, MAIN_ZI0);
+	//calculate iterated real
+	//get the twos complement of previous imaginary square
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ZIS);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	genpred16();
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_TEMP);
+	inst("gen ramall 0000");
+	inst("imm gen1 ffff");
+	inst("ram gen0 0000");
+	inst("gen ramall 0000");
+	//calculate iterated real for real now (hahaha get it)
+	calladd(MAIN_ZR, MAIN_ZRS, MAIN_TEMP);
+	calladd(MAIN_ZR, MAIN_ZR, MAIN_ZR0);
+	//print values
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ZR);
+	inst("imm dir0 ffff");
+	inst("ram dir1 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ZI);
+	inst("imm out0 ffff");
+	inst("ram out1 0000");
+	//delay then iterate again
+	inst("imm gen1 ffff");
+	delayaddr = addr;
+	inst("dnc noop 0000");
+	genpred16();
+	inst("dnc noop 0000");
+	makeaddrodd();
+	inst("gen jzor ffff");
+	instnxt("dnc noop 0000", startaddr);
+	instnxt("dnc noop 0000", delayaddr);
 
 	mulcode();
 	addcode();
