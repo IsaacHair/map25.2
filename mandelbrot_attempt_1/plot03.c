@@ -37,6 +37,11 @@ FILE* fd;
 #define MAIN_ZR0 0x4205
 #define MAIN_TEMP 0x4206
 #define MAIN_COUNTER 0x4207
+#define MAIN_Y 0x4208
+#define MAIN_X 0x4209
+#define MAIN_DY 0x420a
+#define MAIN_DX 0x420b
+#define MAIN_RESULT 0x420c
 
 void inst(char*op) {
 	fprintf(fd, "%04x %s %04x\n", addr, op, addr+1);
@@ -649,23 +654,23 @@ void calladd(unsigned short point_sum, unsigned short point_a0, unsigned short p
 	inst("gen ramall 0000");
 }	
 
-void main(int argc, char**argv) {
-	if (argc != 2) {
-		printf("need target\n");
-		exit(0x01);
-	}
-	fd = fopen(argv[1], "w");
-	addr = 0;
-	unsigned short startaddr, delayaddr, printaddr;
-	
-	//see what colors you would give to some random points
+void render(unsigned short point_count, unsigned short point_zi0, unsigned short point_zr0) {
+	unsigned short startaddr, printaddr;
 	//init
 	inst("imm addr0 ffff");
+	instval("imm addr1", point_zi0);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_ZI0);
-	inst("imm ramall 04c0");
+	inst("gen ramall 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", point_zr0);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_ZR0);
-	inst("imm ramall 0690");
+	inst("gen ramall 0000");
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_ZI);
 	inst("imm ramall 0000");
@@ -732,10 +737,35 @@ void main(int argc, char**argv) {
 	inst("ram jzor ffe0");
 	instnxt("dnc noop 0000", startaddr);
 	instnxt("dnc noop 0000", printaddr);
-	//print
 	addr = printaddr;
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_COUNTER);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", point_count);
+	inst("gen ramall 0000");
+}
+
+void main(int argc, char**argv) {
+	if (argc != 2) {
+		printf("need target\n");
+		exit(0x01);
+	}
+	fd = fopen(argv[1], "w");
+	addr = 0;
+	unsigned short delayaddr;
+	
+	//see what colors you would give to some random points
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_X);
+	inst("imm ramall 08c0");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_Y);
+	inst("imm ramall 0690");
+	render(MAIN_RESULT, MAIN_Y, MAIN_X);
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_RESULT);
 	inst("imm out0 ffff");
 	inst("ram out1 0000");
 	//delay
