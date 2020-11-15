@@ -654,11 +654,25 @@ void main(int argc, char**argv) {
 	}
 	fd = fopen(argv[1], "w");
 	addr = 0;
-	unsigned short testloopaddr, startaddr;
+	unsigned short startaddr;
 	
+	//test a point that should gradually blow up
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ZI0);
+	inst("imm ramall 03c0");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ZR0);
+	inst("imm ramall 0690");
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_ZI);
-/**/	instval("
+	inst("imm ramall 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ZR);
+	inst("imm ramall 0000");
+	startaddr = addr;
+	callmul(MAIN_ZIS, MAIN_ZI, MAIN_ZI);
+	callmul(MAIN_ZRS, MAIN_ZR, MAIN_ZR);
+/**/
 
 	mulcode();
 	addcode();
