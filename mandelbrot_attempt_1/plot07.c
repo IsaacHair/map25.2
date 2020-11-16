@@ -5,7 +5,7 @@
  * Creates a rendering of the mandelbrot set.
  * Integers are simply stored as 16 bit integers.
  * "Floating points" are stored as follows:
- * The upper bit is the sign, 3 after that are int part, 12 after are fraction.
+ * The upper bit is the sign, 4 after that are int part, 11 after are fraction.
  * Note: this program expects \n to constitute only ONE character;
  * this is relevant when re-writing nxt addresses.
  * Note: FUNCTIONS DO NOT SUPPORT RECURSION.
@@ -167,6 +167,7 @@ void mulcode() {
 	unsigned short newnoncarryaddr, newcarryaddr;
 	unsigned short fulladdaddr;
 	unsigned short originaladdr;
+	unsigned short ramaddrmask;
 	int i;
 	unsigned short mask;
 
@@ -210,7 +211,7 @@ void mulcode() {
 	inst("ram gen1 0000");
 	//part that doesn't shift up
 	//uses all 16 bits
-	for (i = 0xb, mask = 0x0001; i != 0xe;
+	for (i = 0xa, mask = 0x0001; i != 0xe;
 	     ((i==0) ? i = 0xf : i--), mask = mask<<1) {
 		inst("imm addr0 ffff");
 		instval("imm addr1", MUL_F1);
@@ -226,7 +227,7 @@ void mulcode() {
 	//part that does shift up (shifts before buffering value)
 	//also destroys gen
 	//uses all 16 bits
-	for (i = 0xe, mask = 0x2000; i >= 0xd;
+	for (i = 0xe, mask = 0x1000; i >= 0xc;
 	     i--, mask = mask<<1) {
 		inst("imm gen0 8000");
 		inst("imm addr0 ffff");
@@ -250,7 +251,7 @@ void mulcode() {
 	//init
 	inst("imm gen0 ffff");
 	inst("imm addr0 ffff");
-	instval("imm addr1", MUL_ARRAY|0xc);
+	instval("imm addr1", MUL_ARRAY|0xb);
 	//next block address (for the very end of this one)
 	doneaddr = addr+0x0480;
 	//loop that actually does the addition
@@ -335,199 +336,73 @@ void mulcode() {
 		noncarryaddr = newnoncarryaddr;
 	}
 
-	addr = doneaddr;
-	//add MUL_ARRAY|0xf without rotation
-	//use gen as is; no gen init
-	inst("imm addr0 ffff");
-	instval("imm addr1", MUL_ARRAY|0xf);
-	//next code block approx location
-	doneaddr = addr+0x0480;
-	//see if you can skip this address
-	makeaddrodd();
-	inst("ram jzor ffff");
-	instnxt("dnc noop 0000", doneaddr);
-	//do the addition
-	inst("dnc noop 0000");
-	makeaddrodd();
-	//the following estimates need to be even
-	noncarryaddr = addr+0x0021;
-	carryaddr = addr+0x0041;
-	instnxt("ram jzor 0001", noncarryaddr);
-	for (mask = 0x0001; mask; mask = mask<<1) {
+	//add partial products without rotation
+	for (ramaddrmask = 0xf; ramaddrmask >= 0xc; ramaddrmask--) {
+		addr = doneaddr;
+		//use gen as is; no gen init
+		inst("imm addr0 ffff");
+		instval("imm addr1", MUL_ARRAY|ramaddrmask);
+		//next code block approx location
+		doneaddr = addr+0x0480;
+		//see if you can skip this address
+		makeaddrodd();
+		inst("ram jzor ffff");
+		instnxt("dnc noop 0000", doneaddr);
+		//do the addition
+		inst("dnc noop 0000");
+		makeaddrodd();
 		//the following estimates need to be even
-		addr = noncarryaddr;
-		newnoncarryaddr = (addr/2*2)+0x0040;
-		newcarryaddr = (addr/2*2)+0x0060;
-		instvalnxt("gen jzor", mask, addr+2);
-		instvalnxt("gen jzor", mask, addr+3);
-		if (mask != 0x8000) {
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
+		noncarryaddr = addr+0x0021;
+		carryaddr = addr+0x0041;
+		instnxt("ram jzor 0001", noncarryaddr);
+		for (mask = 0x0001; mask; mask = mask<<1) {
+			//the following estimates need to be even
+			addr = noncarryaddr;
+			newnoncarryaddr = (addr/2*2)+0x0040;
+			newcarryaddr = (addr/2*2)+0x0060;
+			instvalnxt("gen jzor", mask, addr+2);
+			instvalnxt("gen jzor", mask, addr+3);
+			if (mask != 0x8000) {
+				instvalnxt("imm gen0", mask, addr+4);
+				instvalnxt("imm gen1", mask, addr+4);
+				instvalnxt("imm gen1", mask, addr+4);
+				instvalnxt("imm gen0", mask, addr+4);
+				instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
+				instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
+				instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
+				instvalnxt("ram jzor", mask<<1, newcarryaddr);
+			}
+			else {
+				instvalnxt("imm gen0", mask, doneaddr);
+				instvalnxt("imm gen1", mask, doneaddr);
+				instvalnxt("imm gen1", mask, doneaddr);
+				instvalnxt("imm gen0", mask, doneaddr);
+			}
+			addr = carryaddr;
+			instvalnxt("gen jzor", mask, addr+2);
+			instvalnxt("gen jzor", mask, addr+3);
+			if (mask != 0x8000) {
+				instvalnxt("imm gen1", mask, addr+4);
+				instvalnxt("imm gen0", mask, addr+4);
+				instvalnxt("imm gen0", mask, addr+4);
+				instvalnxt("imm gen1", mask, addr+4);
+				instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
+				instvalnxt("ram jzor", mask<<1, newcarryaddr);
+				instvalnxt("ram jzor", mask<<1, newcarryaddr);
+				instvalnxt("ram jzor", mask<<1, newcarryaddr);
+			}
+			else {
+				instvalnxt("imm gen1", mask, doneaddr);
+				instvalnxt("imm gen0", mask, doneaddr);
+				instvalnxt("imm gen0", mask, doneaddr);
+				instvalnxt("imm gen1", mask, doneaddr);
+			}
+			carryaddr = newcarryaddr;
+			noncarryaddr = newnoncarryaddr;
 		}
-		else {
-			instvalnxt("imm gen0", mask, doneaddr);
-			instvalnxt("imm gen1", mask, doneaddr);
-			instvalnxt("imm gen1", mask, doneaddr);
-			instvalnxt("imm gen0", mask, doneaddr);
-		}
-		addr = carryaddr;
-		instvalnxt("gen jzor", mask, addr+2);
-		instvalnxt("gen jzor", mask, addr+3);
-		if (mask != 0x8000) {
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
-		}
-		else {
-			instvalnxt("imm gen1", mask, doneaddr);
-			instvalnxt("imm gen0", mask, doneaddr);
-			instvalnxt("imm gen0", mask, doneaddr);
-			instvalnxt("imm gen1", mask, doneaddr);
-		}
-		carryaddr = newcarryaddr;
-		noncarryaddr = newnoncarryaddr;
 	}
 
-	addr = doneaddr;
-	//add MUL_ARRAY|0xe without rotation
-	//use gen as is; no gen init
-	inst("imm addr0 ffff");
-	instval("imm addr1", MUL_ARRAY|0xe);
-	//next code block approx location
-	doneaddr = addr+0x0480;
-	//see if you can skip this address
-	makeaddrodd();
-	inst("ram jzor ffff");
-	instnxt("dnc noop 0000", doneaddr);
-	//do the addition
-	inst("dnc noop 0000");
-	makeaddrodd();
-	//the following estimates need to be even
-	noncarryaddr = addr+0x0021;
-	carryaddr = addr+0x0041;
-	instnxt("ram jzor 0001", noncarryaddr);
-	for (mask = 0x0001; mask; mask = mask<<1) {
-		//the following estimates need to be even
-		addr = noncarryaddr;
-		newnoncarryaddr = (addr/2*2)+0x0040;
-		newcarryaddr = (addr/2*2)+0x0060;
-		instvalnxt("gen jzor", mask, addr+2);
-		instvalnxt("gen jzor", mask, addr+3);
-		if (mask != 0x8000) {
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
-		}
-		else {
-			instvalnxt("imm gen0", mask, doneaddr);
-			instvalnxt("imm gen1", mask, doneaddr);
-			instvalnxt("imm gen1", mask, doneaddr);
-			instvalnxt("imm gen0", mask, doneaddr);
-		}
-		addr = carryaddr;
-		instvalnxt("gen jzor", mask, addr+2);
-		instvalnxt("gen jzor", mask, addr+3);
-		if (mask != 0x8000) {
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
-		}
-		else {
-			instvalnxt("imm gen1", mask, doneaddr);
-			instvalnxt("imm gen0", mask, doneaddr);
-			instvalnxt("imm gen0", mask, doneaddr);
-			instvalnxt("imm gen1", mask, doneaddr);
-		}
-		carryaddr = newcarryaddr;
-		noncarryaddr = newnoncarryaddr;
-	}
-
-	addr = doneaddr;
-	//add MUL_ARRAY|0xd without rotation
-	//use gen as is; no gen init
-	inst("imm addr0 ffff");
-	instval("imm addr1", MUL_ARRAY|0xd);
-	//next code block approx location
-	doneaddr = addr+0x0480;
-	//see if you can skip this address
-	makeaddrodd();
-	inst("ram jzor ffff");
-	instnxt("dnc noop 0000", doneaddr);
-	//do the addition
-	inst("dnc noop 0000");
-	makeaddrodd();
-	//the following estimates need to be even
-	noncarryaddr = addr+0x0021;
-	carryaddr = addr+0x0041;
-	instnxt("ram jzor 0001", noncarryaddr);
-	for (mask = 0x0001; mask; mask = mask<<1) {
-		//the following estimates need to be even
-		addr = noncarryaddr;
-		newnoncarryaddr = (addr/2*2)+0x0040;
-		newcarryaddr = (addr/2*2)+0x0060;
-		instvalnxt("gen jzor", mask, addr+2);
-		instvalnxt("gen jzor", mask, addr+3);
-		if (mask != 0x8000) {
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
-		}
-		else {
-			instvalnxt("imm gen0", mask, doneaddr);
-			instvalnxt("imm gen1", mask, doneaddr);
-			instvalnxt("imm gen1", mask, doneaddr);
-			instvalnxt("imm gen0", mask, doneaddr);
-		}
-		addr = carryaddr;
-		instvalnxt("gen jzor", mask, addr+2);
-		instvalnxt("gen jzor", mask, addr+3);
-		if (mask != 0x8000) {
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
-		}
-		else {
-			instvalnxt("imm gen1", mask, doneaddr);
-			instvalnxt("imm gen0", mask, doneaddr);
-			instvalnxt("imm gen0", mask, doneaddr);
-			instvalnxt("imm gen1", mask, doneaddr);
-		}
-		carryaddr = newcarryaddr;
-		noncarryaddr = newnoncarryaddr;
-	}
-
-	//correct for sign (weird shit see notes)
+	//correct for sign and overflow with %32
 	addr = doneaddr;
 	inst("gen dir1 0000");
 	doneaddr = addr+0x0100;
@@ -760,11 +635,11 @@ void render(unsigned short point_count, unsigned short point_zi0, unsigned short
 	inst("imm gen1 ffff");
 	inst("ram gen0 ffff");
 	inst("gen ramall 0000");
-	//test if escape due to OLD square sum being >= 3
+	//test if escape due to OLD square sum being >= 4
 	//squares are guarunteed positive
 	//allowing for overflow into sign bit
 	//dividing squares by 2 to prevent overflow
-	//and testing if >= 1.5
+	//and testing if >= 2
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_ZRS);
 	inst("imm gen0 ffff");
@@ -782,22 +657,14 @@ void render(unsigned short point_count, unsigned short point_zi0, unsigned short
 	instval("imm addr1", MAIN_TEMP);
 	makeaddrodd();
 	printaddr = addr+0x0020;
-	inst("ram jzor e000");
-	instnxt("dnc noop 0000", addr+3);
-	instnxt("dnc noop 0000", printaddr);
-	addr++;
-	inst("ram jzor 1000");
-	instnxt("dnc noop 0000", addr+6);
-	instnxt("dnc noop 0000", addr+2);
-	addr++;
-	inst("ram jzor 0800");
+	inst("ram jzor f000");
 	instnxt("dnc noop 0000", addr+2);
 	instnxt("dnc noop 0000", printaddr);
-	//test if counter is >= max (32)
+	//test if counter is >= max (16)
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_COUNTER);
 	makeaddrodd();
-	inst("ram jzor ffe0");
+	inst("ram jzor fff0");
 	instnxt("dnc noop 0000", startaddr);
 	instnxt("dnc noop 0000", printaddr);
 	addr = printaddr;
@@ -860,22 +727,22 @@ void main(int argc, char**argv) {
 	//init values
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_X);
-	inst("imm ramall 1000");
+	inst("imm ramall 0800");
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_Y);
-	inst("imm ramall e980");
+	inst("imm ramall f4c0");
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_DX);
-	inst("imm ramall ffd0");
+	inst("imm ramall ffe8");
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_DY);
-	inst("imm ramall 0030");
+	inst("imm ramall 0018");
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_XLIMN);
-	inst("imm ramall 2c00");
+	inst("imm ramall 1600");
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_YLIMN);
-	inst("imm ramall e980");
+	inst("imm ramall f4c0");
 	//print the rendering for the pixel you are at
 	loopaddr = addr;
 	//get rendering and load it into gen
@@ -884,8 +751,9 @@ void main(int argc, char**argv) {
 	instval("imm addr1", MAIN_RESULT);
 	inst("imm gen0 ffff");
 	inst("ram gen1 0000");
-	//shift the rendering up 3 spaces (1 becomes almost black)
+	//shift the rendering by *16 (1 becomes almost black)
 	//use addr as register helper
+	//don't need to account for last bit wrap around
 	inst("imm addr0 ffff");
 	inst("rol addr1 0000");
 	inst("imm gen0 ffff");
@@ -898,11 +766,15 @@ void main(int argc, char**argv) {
 	inst("rol addr1 0000");
 	inst("imm gen0 ffff");
 	inst("addr gen1 0000");
-	//make it black if MAIN_RESULT is max (32)
+	inst("imm addr0 ffff");
+	inst("rol addr1 0000");
+	inst("imm gen0 ffff");
+	inst("addr gen1 0000");
+	//make it black if MAIN_RESULT is max (16)
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_RESULT);
 	makeaddrodd();
-	inst("ram jzor ffe0");
+	inst("ram jzor fff0");
 	instnxt("dnc noop 0000", addr+2);
 	instnxt("imm gen0 ffff", addr+1);
 	buswritegen();
@@ -923,7 +795,7 @@ void main(int argc, char**argv) {
 	calladd(MAIN_X, MAIN_X, MAIN_DX);
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_Y);
-	inst("imm ramall e980");
+	inst("imm ramall f4c0");
 	//test row value
 	calladd(MAIN_TEMP, MAIN_X, MAIN_XLIMN);
 	inst("imm addr0 ffff");
