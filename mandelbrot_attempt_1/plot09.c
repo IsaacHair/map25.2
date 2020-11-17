@@ -781,9 +781,9 @@ void main(int argc, char**argv) {
 	inst("imm gen0 ffff");
 	inst("addr gen1 0000");
 	buswritegen(); //blue
-	//shift the rendering by *4 again (total of *32)
-	//MAIN_RESULT%8 corresponds to red, should look cool
-	//again, 32 rolls over to black automatically
+	//shift the rendering by *32
+	//if >= 8, make bright green
+	//if = 32, make it black
 	//use addr as register helper
 	//don't need to account for last bit wrap around
 	inst("imm addr0 ffff");
@@ -794,6 +794,14 @@ void main(int argc, char**argv) {
 	inst("rol addr1 0000");
 	inst("imm gen0 ffff");
 	inst("addr gen1 0000");
+	makeaddrodd();
+	inst("gen jzor 0700");
+	instnxt("dnc noop 0000", addr+3);
+	instnxt("imm gen1 00ff", addr+2);
+	addr++;
+	inst("gen jzor 0400");
+	instnxt("dnc noop 0000", addr+2);
+	inst("imm gen0 00ff");
 	buswritegen(); //green
 	inst("imm gen0 ffff");
 	buswritegen(); //red
