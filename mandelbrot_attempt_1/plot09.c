@@ -760,14 +760,14 @@ void main(int argc, char**argv) {
 	loopaddr = addr;
 	//get rendering and load it into gen
 	render(MAIN_RESULT, MAIN_Y, MAIN_X);
-	inst("imm addr0 ffff");
-	instval("imm addr1", MAIN_RESULT);
-	inst("imm gen0 ffff");
-	inst("ram gen1 0000");
 	//shift the rendering by *8
 	//1 becomes almost black, 31 is light blue, 32 rolls over to black
 	//use addr as register helper
 	//don't need to account for last bit wrap around
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_RESULT);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
 	inst("imm addr0 ffff");
 	inst("rol addr1 0000");
 	inst("imm gen0 ffff");
@@ -781,8 +781,6 @@ void main(int argc, char**argv) {
 	inst("imm gen0 ffff");
 	inst("addr gen1 0000");
 	buswritegen(); //blue
-	inst("imm gen0 ffff");
-	buswritegen(); //green
 	//shift the rendering by *4 again (total of *32)
 	//MAIN_RESULT%8 corresponds to red, should look cool
 	//again, 32 rolls over to black automatically
@@ -796,6 +794,8 @@ void main(int argc, char**argv) {
 	inst("rol addr1 0000");
 	inst("imm gen0 ffff");
 	inst("addr gen1 0000");
+	buswritegen(); //green
+	inst("imm gen0 ffff");
 	buswritegen(); //red
 	//increment column
 	calladd(MAIN_Y, MAIN_Y, MAIN_DY);
