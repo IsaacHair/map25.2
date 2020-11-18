@@ -207,7 +207,7 @@
 00d0 imm ramall 08f1 00d1
 00d1 imm addr0 ffff 00d2
 00d2 imm addr1 420e 00d3
-00d3 imm ramall 0923 00d4
+00d3 imm ramall 0973 00d4
 00d4 imm addr0 ffff 00d5
 00d5 imm addr1 4208 00d6
 00d6 imm gen0 ffff 00d7

@@ -22,7 +22,7 @@ FILE* fd;
 #define VALUE_XLIMN 0x08f1
 #define VALUE_YSTART 0xf59d
 #define VALUE_DY 0x0001
-#define VALUE_YLIMN 0x0923
+#define VALUE_YLIMN 0x0973
 
 //pointers (all are for ram except *_LOC, which is for rom)
 #define MUL_ARRAY 0xa900
