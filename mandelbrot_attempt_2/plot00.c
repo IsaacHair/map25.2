@@ -161,22 +161,18 @@ void genpred16() {
 		instvalnxt("imm gen0", mask, addr+i);
 }
 
-void addrpred4_1() {
+void addrpred5_1() {
 	//must have a preceding instruction that is the only one feeding to it
 	//must feed to instruction directly after
 	makeaddrodd();
 	instnxt("addr jzor 0006", addr+1);
 	instnxt("addr jzor 000e", addr+2);
 	instnxt("addr jzor 0002", addr+3);
-	instnxt("addr jzor 001e", addr+4);
-	instnxt("imm addr1 0006", addr+6);
-	instnxt("imm addr1 0002", addr+6);
-	instnxt("imm addr0 0002", addr+6);
-	instnxt("imm addr1 001e", addr+5);
-	instnxt("imm addr1 000e", addr+1);
-	instnxt("imm addr0 0010", addr+3);
-	instnxt("imm addr0 0008", addr+2);
-	instnxt("imm addr0 0004", addr+1);
+	instnxt("addr jzor 001e", last jzor);
+	instnxt("imm addr0 0008", /asdf/);
+	instnxt("imm addr0 0004", );
+	instnxt("imm addr0 0002", end);
+	instnxt("
 }
 
 void mulcode() {
@@ -224,13 +220,22 @@ void mulcode() {
 		makeaddrodd();
 		addrhalfdone = addr+0x0080; //estimate
 		inst("ram jzor ffff");
-		instnxt("dnc noop 0000", addr+2);
-		instnxt("dnc noop 0000", addrhalfdone);
+		instnxt("dnc noop 0000", addr+6);
+		inst("imm addr0 ffff");
+		instval("imm addr1", pointer|0x0001);
+		inst("imm gen1 ffff");
+		inst("ram gen0 0000");
+		instnxt("gen ramall 0000", addrhalfdone);
 		inst("imm addr0 ffff");
 		instval("imm addr1", pointer|0x0001);
 		inst("imm gen0 ffff");
+		inst("ram gen1 0000");
+		genpred16();
+		inst("gen ramall 0000");
 		inst("imm gen1 ffff");
-		//
+		inst("ram gen0 0000");
+		instnxt("gen ramall 0000", addrhalfdone);
+		addr = addrhalfdone;
 		inst("imm addr0 ffff");
 		instval("imm addr1", pointer|0x0001);
 		makeaddrodd();
