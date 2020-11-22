@@ -1,7 +1,8 @@
 Writing a map25.2 program to create a mandelbrot set rendering.
 Just starting entirely from scratch for plot01.c and onwards.
 
-32 bit precision, with formatting: 1 sign bit, 4 int bits, 27 fraction bits.
+32 bit precision, with formatting for "fixed point numbers":
+1 sign bit, 4 int bits, 27 fraction bits.
 Use two's complement for negative numbers.
 Pointers work as follows (the pointer points to the lower word of the
 number and the successor to the pointer points to the upper word):
@@ -154,3 +155,10 @@ that each value is split across two ram addresses.
 	3. Add partial products that require ROTATION when adding.
 	4. Add partial products that require NO ROTATION when adding.
 	5. Correct for sign.
+
+Actual mandelbrot rendering notes:
+Addition and multiplication DO NOT HAVE GOOD OVERFLOW BEHAVIOR, so
+make sure that the expected result is within the range [-16, 16).
+Yes, this is set notation.
+Negative number results are truncated UP to the nearest representation
+and positive number results are truncated DOWN.

@@ -3,22 +3,30 @@
 
 /*
  * Mandelbrot set rendering with 32 bit precision.
- * Viewing window CANNOT be dynamically resized.
+ * "Fixed point" numbers are of the form: upper bit is sign,
+ * next 4 bits are int part, next 27 bits are fraction part.
+ * The "point" is "fixed" and does not float.
+ * "Integer" numbers are of the form: all bits for int part.
+ * Each of these data types take up 2 words in ram.
+ * Pointers are constants and point to the even part of the address
+ * for the corresponding number, which is the lower word.
+ * The upper word is stored at the address (pointer+1).
  */
 
 unsigned short addr;
 FILE* fd;
 
 //window definitions
-//these are constants, not pointers
-#define VALUE_XSTART 0xf84f0000
-#define VALUE_DX 0xffff0000
-#define VALUE_XLIMN 0x08f10000
-#define VALUE_YSTART 0xf55d0000
-#define VALUE_DY 0x00010000
-#define VALUE_YLIMN 0x09b30000
+//These are constants, not pointers, and they can be changed to any value
+//that makes sense.
+#define VALUE_XSTART 0xfb9a2fff
+#define VALUE_DX 0xfffffff0
+#define VALUE_XLIMN 0x0465e401
+#define VALUE_YSTART 0x0502a76a
+#define VALUE_DY 0x00000010
+#define VALUE_YLIMN 0xfafd4996
 
-//pointers (all are for ram except *_LOC, which is for rom)
+//pointers (all are for ram except *_LOC and *_RET, which is for rom)
 #define MUL_ARRAY 0xa900
 #define MUL_F0 0xaa00
 #define MUL_F1 0xaa02
@@ -34,19 +42,13 @@ FILE* fd;
 
 #define MAIN_ZI 0x4200
 #define MAIN_ZR 0x4202
-#define MAIN_ZIS 0x4204
-#define MAIN_ZRS 0x4206
-#define MAIN_ZI0 0x4208
-#define MAIN_ZR0 0x420a
-#define MAIN_TEMP 0x420c
-#define MAIN_COUNTER 0x420e
-#define MAIN_Y 0x4210
-#define MAIN_X 0x4212
-#define MAIN_DY 0x4214
-#define MAIN_DX 0x4216
-#define MAIN_RESULT 0x4218
-#define MAIN_XLIMN 0x421a
-#define MAIN_YLIMN 0x421c
+#define MAIN_COUNTER 0x4204
+#define MAIN_Y 0x4206
+#define MAIN_X 0x4208
+#define MAIN_DY 0x420a
+#define MAIN_DX 0x420c
+#define MAIN_XLIMN 0x420e
+#define MAIN_YLIMN 0x4210
 
 void inst(char*op) {
 	fprintf(fd, "%04x %s %04x\n", addr, op, addr+1);
@@ -155,8 +157,8 @@ void addrpred5_1() {
 }
 
 void mul32code() {
-	//FUNCTION, not macro, that multiplies two 32 bit numbers of the
-	//1-4-27 sign-integer-fraction form
+	//Multiplies two "Fixed Point" numbers.
+	//This function has BAD OVERFLOW BEHAVIOR, so don't exceed [-16, 16)
 	
 	//correct for sign
 	
