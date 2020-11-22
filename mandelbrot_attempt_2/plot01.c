@@ -11,6 +11,7 @@
  * Pointers are constants and point to the even part of the address
  * for the corresponding number, which is the lower word.
  * The upper word is stored at the address (pointer+1).
+ * As usual, RECURSION IS NOT SUPPORTED.
  */
 
 unsigned short addr;
@@ -158,13 +159,14 @@ void addrpred5_1() {
 	addr = endaddr;
 }
 
-void mul32code() {
+void mul32fx() {
 	//Multiplies two "Fixed Point" numbers.
 	//This function has BAD OVERFLOW BEHAVIOR, so don't exceed [-16, 16)
 	//destroys current value of addr
 	int i;
 	unsigned short pointer, doneaddr, subdoneaddr;
 
+	//start writing at the function address
 	addr = MUL_LOC;
 	
 	//initialize MUL_PROD sign
@@ -178,7 +180,7 @@ void mul32code() {
 		//is the factor negative?
 		makeaddrodd();
 		doneaddr = addr+0x0100; //estimate
-		subdoneaddr = addr+0x0080; //estimate
+		subdoneaddr = addr+0x00f0; //estimate
 		inst("ram jzor 8000");
 		instnxt("dnc noop 0000", doneaddr);
 		//if so, do the rest of this stuff
@@ -191,10 +193,16 @@ void mul32code() {
 		inst("imm ramall 0000");
 		//do the predecessor on the lower part of factor
 		inst("imm addr0 ffff");
-		instval("imm addr1", factor);
+		instval("imm addr1", pointer);
 		inst("imm gen0 ffff");
 		inst("ram gen1 0000");
 		genpred16();
+		inst("gen ramall 0000");
+		//do the one's complement on the lower part
+		inst("imm addr0 ffff");
+		instval("imm addr1", pointer);
+		inst("imm gen1 ffff");
+		inst("ram gen0 0000");
 		inst("gen ramall 0000");
 		//do the predecessor on the upper part too if needed
 		makeaddrodd();
@@ -202,24 +210,55 @@ void mul32code() {
 		instnxt("dnc noop 0000", addr+2);
 		instnxt("dnc noop 0000", subdoneaddr);
 		inst("imm addr0 ffff");
-		instval("imm addr1", factor|0x0001);
+		instval("imm addr1", pointer|0x0001);
 		inst("imm gen0 ffff");
 		inst("ram gen1 0000");
 		genpred16();
 		instnxt("gen ramall 0000", subdoneaddr);
+		//next block
 		addr = subdoneaddr;
-		//do the one's complement on the predecessor
-		//(eg two's complement)
+		//do the one's complement on the upper part
 		inst("imm addr0 ffff");
-		instval("imm addr1", factor);
-		inst("imm gen1 ffff");
-		inst("ram gen0 0000");
-		inst("gen ramall 0000");
-		inst("imm addr0 ffff");
-		instval("imm addr1", factor|0x0001);
+		instval("imm addr1", pointer|0x0001);
 		inst("imm gen1 ffff");
 		inst("ram gen0 0000");
 		instnxt("gen ramall 0000", doneaddr);
+		//next block
 		addr = doneaddr;
 	}
+
+	//return to address called from
+	inst("imm addr0 ffff");
+	instval("imm addr1", MUL_RET);
+	inst("ram asnx 0000");
 }	
+
+void main(int argc, char** argv) {
+	if (argc != 2) {
+		printf("target needed\n");
+		exit(0x01);
+	}
+	fd = fopen(argv[1], "w");
+	addr = 0x0000;
+
+	//quick test for sign inversion
+	inst("imm addr0 ffff");
+	instval("imm addr1", MUL_F1);
+	inst("imm ramall 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MUL_F1|0x0001);
+	inst("imm ramall ffff");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MUL_RET);
+	instvalnxt("imm ramall", addr+1, MUL_LOC);
+	inst("imm addr0 ffff");
+	instval("imm addr1", MUL_F1);
+	inst("imm out0 ffff");
+	inst("ram out1 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MUL_F1|0x0001);
+	inst("imm dir0 ffff");
+	instnxt("ram dir1 0000", addr);
+
+	mul32fx();
+}
