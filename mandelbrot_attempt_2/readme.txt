@@ -1,5 +1,5 @@
-Honestly, instead of copying the old program (which is what I did for plot00.c),
-I am going to just rewrite the entire thing from scratch.
+Writing a map25.2 program to create a mandelbrot set rendering.
+Just starting entirely from scratch for plot01.c and onwards.
 
 32 bit precision, with formatting: 1 sign bit, 4 int bits, 27 fraction bits.
 Use two's complement for negative numbers.
