@@ -28,7 +28,7 @@ FILE* fd;
 
 //pointers (all are for ram except *_LOC, which is for rom, and
 //*_RET, which is a pointer to ram and the value at ram is a pointer
-//to rom (eg its a double pointer))
+//to rom (eg it's a double pointer))
 #define MUL_ARRAY 0xa900
 #define MUL_F0 0xaa00
 #define MUL_F1 0xaa02
@@ -161,6 +161,65 @@ void addrpred5_1() {
 void mul32code() {
 	//Multiplies two "Fixed Point" numbers.
 	//This function has BAD OVERFLOW BEHAVIOR, so don't exceed [-16, 16)
+	//destroys current value of addr
+	int i;
+	unsigned short pointer, doneaddr, subdoneaddr;
+
+	addr = MUL_LOC;
 	
-	//correct for sign
+	//initialize MUL_PROD sign
+	inst("imm addr0 ffff");
+	instval("imm addr1", MUL_PROD|0x0001);
+	inst("imm ramall 0000");
+	//correct for sign and update MUL_PROD sign
+	for (i = 0, pointer = MUL_F0; i < 2; pointer = MUL_F1, i++) {
+		inst("imm addr0 ffff");
+		instval("imm addr1", pointer|0x0001);
+		//is the factor negative?
+		makeaddrodd();
+		doneaddr = addr+0x0100; //estimate
+		subdoneaddr = addr+0x0080; //estimate
+		inst("ram jzor 8000");
+		instnxt("dnc noop 0000", doneaddr);
+		//if so, do the rest of this stuff
+		//invert MUL_PROD sign
+		inst("imm addr0 ffff");
+		instval("imm addr1", MUL_PROD|0x0001);
+		makeaddrodd();
+		inst("ram jzor 8000");
+		instnxt("imm ramall 8000", addr+2);
+		inst("imm ramall 0000");
+		//do the predecessor on the lower part of factor
+		inst("imm addr0 ffff");
+		instval("imm addr1", factor);
+		inst("imm gen0 ffff");
+		inst("ram gen1 0000");
+		genpred16();
+		inst("gen ramall 0000");
+		//do the predecessor on the upper part too if needed
+		makeaddrodd();
+		inst("ram jzor ffff");
+		instnxt("dnc noop 0000", addr+2);
+		instnxt("dnc noop 0000", subdoneaddr);
+		inst("imm addr0 ffff");
+		instval("imm addr1", factor|0x0001);
+		inst("imm gen0 ffff");
+		inst("ram gen1 0000");
+		genpred16();
+		instnxt("gen ramall 0000", subdoneaddr);
+		addr = subdoneaddr;
+		//do the one's complement on the predecessor
+		//(eg two's complement)
+		inst("imm addr0 ffff");
+		instval("imm addr1", factor);
+		inst("imm gen1 ffff");
+		inst("ram gen0 0000");
+		inst("gen ramall 0000");
+		inst("imm addr0 ffff");
+		instval("imm addr1", factor|0x0001);
+		inst("imm gen1 ffff");
+		inst("ram gen0 0000");
+		instnxt("gen ramall 0000", doneaddr);
+		addr = doneaddr;
+	}
 }	
