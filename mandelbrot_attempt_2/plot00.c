@@ -165,12 +165,8 @@ void addrpred5_1() {
 	//must have a preceding instruction that is the only one feeding to it
 	//must feed to instruction directly after
 	makeaddrodd();
-	instnxt("addr jzor 0006", addr+1);
-	instnxt("addr jzor 000e", addr+2);
-	instnxt("addr jzor 0002", addr+3);
-	instnxt("addr jzor 001e", last jzor);
-	instnxt("imm addr0 0008", /asdf/);
-	instnxt("imm addr0 0004", );
+	instnxt("addr jzor 0002", addr+1);
+	instnxt("imm addr");
 	instnxt("imm addr0 0002", end);
 	instnxt("
 }
