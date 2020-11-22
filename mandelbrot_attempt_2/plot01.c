@@ -26,7 +26,9 @@ FILE* fd;
 #define VALUE_DY 0x00000010
 #define VALUE_YLIMN 0xfafd4996
 
-//pointers (all are for ram except *_LOC and *_RET, which is for rom)
+//pointers (all are for ram except *_LOC, which is for rom, and
+//*_RET, which is a pointer to ram and the value at ram is a pointer
+//to rom (eg its a double pointer))
 #define MUL_ARRAY 0xa900
 #define MUL_F0 0xaa00
 #define MUL_F1 0xaa02
@@ -161,4 +163,4 @@ void mul32code() {
 	//This function has BAD OVERFLOW BEHAVIOR, so don't exceed [-16, 16)
 	
 	//correct for sign
-	
+}	
