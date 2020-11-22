@@ -164,11 +164,18 @@ void genpred16() {
 void addrpred5_1() {
 	//must have a preceding instruction that is the only one feeding to it
 	//must feed to instruction directly after
+	//not the FASTEST protocol, but it is not the limiting factor at all
+	unsigned short mask;
+	unsigned short endaddr;
 	makeaddrodd();
-	instnxt("addr jzor 0002", addr+1);
-	instnxt("imm addr");
-	instnxt("imm addr0 0002", end);
-	instnxt("
+	endaddr = addr+19;
+	for (mask = 0x0002; mask <= 0x0020; mask = mask<<1) {
+		instnxt("addr jzor 0002", addr+1);
+		instnxt("imm addr1 0002", addr+3);
+		instnxt("imm addr0 0002", endaddr);
+		addr++;
+	}
+	addr = endaddr;
 }
 
 void mulcode() {
@@ -186,11 +193,9 @@ void mulcode() {
 	originaladdr = addr;
 	addr = MUL_LOC;
 
-	//initialize MUL_PROD to 0x0000 (yes this is necessary)
+	//initialize MUL_PROD upper to 0x0000 (necessary for sign)
 	inst("imm addr0 ffff");
-	instval("imm addr1", MUL_PROD);
-	inst("imm ramall 0000");
-	instval("imm addr1", 0x0001);
+	instval("imm addr1", MUL_PROD|0x0001);
 	inst("imm ramall 0000");
 	
 	//make both factors positive and record the answer sign in MUL_PROD
@@ -242,12 +247,33 @@ void mulcode() {
 	}
 
 	//explicitly define the procedure for recording partial products
-	inst("imm addr0 ffff");
+	//LOWER
+	//part that doesn't shift up (eg the entire 16 bits)
+	//uses all 16 bits
+	inst("imm addr0 ffff"); /**/
 	instval("imm addr1", MUL_F0);
 	inst("imm gen0 ffff");
 	inst("ram gen1 0000");
+	for (i = 0xb, mask = 0x0001; i != 0xe;
+	     ((i==0) ? i = 0xf : i--), mask = mask<<1) {
+		inst("imm addr0 ffff");
+		instval("imm addr1", MUL_F1);
+		makeaddrodd();
+		instval("ram jzor", mask);
+		instnxt("imm addr0 ffff", addr+2);
+		instnxt("imm addr0 ffff", addr+2);
+		instvalnxt("imm addr1", MUL_ARRAY|i, addr+2);
+		instvalnxt("imm addr1", MUL_ARRAY|i, addr+2);
+		instnxt("imm ramall 0000", addr+2);
+		instnxt("gen ramall 0000", addr+1);
+	}
+	//UPPER
 	//part that doesn't shift up
 	//uses all 16 bits
+	inst("imm addr0 ffff");
+	instval("imm addr1", MUL_F0|0x0001);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
 	for (i = 0xb, mask = 0x0001; i != 0xe;
 	     ((i==0) ? i = 0xf : i--), mask = mask<<1) {
 		inst("imm addr0 ffff");
