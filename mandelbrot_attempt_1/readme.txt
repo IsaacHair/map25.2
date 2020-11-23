@@ -47,3 +47,7 @@ In this paradigm, the only functions needed to render a mandelbrot set are:
 Yeah this thing is still failing, I need to try some different things.
 I'm gonna stop jumping ahead and just test the program as I go to ensure
 that it works well.
+
+
+Most of the plot programs actually work now. The precision is rather low at
+only 16 bits.
