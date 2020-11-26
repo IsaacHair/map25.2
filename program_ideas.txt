@@ -9,3 +9,5 @@ Langton's ant
 Video phase shifts
 Weird flashing video stuff
 Pac man
+Weird audio effects for shits
+Bosconian
