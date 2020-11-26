@@ -1,13 +1,33 @@
+* = completed
+
 Lunar lander
 Conway's game of life
 Text editor
 Ssh protocol
 Tetris
 Newton Lite (that game from like 2011)
-Factal generator <complete>
+*Factal generator
 Langton's ant
 Video phase shifts
 Weird flashing video stuff
 Pac man
 Weird audio effects for shits
 Bosconian
+Virtual machine
+Ackerman's function
+Test "undefined behavior" like "ror gen0 0000" stuff
+Poker
+Shuffle animation program (maybe just with out/dir lights, not VMA412)
+An actual library for instructions and next assignment (or just create a language)
+PWM and led strip driver
+Serial/I2C/USB/ethernet interfaces
+Oscilloscope
+CNC machine controller (this would be HELLA AWESOME)
+Dice simulator
+Random number generator
+TV remote simulator (eg IR signaling with that 14kHz frq thing)
+Snake
+Load cell punching bag
+Pong
+EEPROM programmer (inception lookin ass)
+Graph polynomials, etc
