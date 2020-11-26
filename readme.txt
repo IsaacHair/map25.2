@@ -144,3 +144,14 @@ address is set to the value of the lower byte of the bus)
 address is set to the value of the upper byte of the bus)
 0xf => "rall", "ramall", "f" (ram upper and lower byte at address register
 address is set to the value of the bus)
+
+
+COMPLETED PROGRAM LIST:
+/mandelbrot_attempt_1/plot16.c is the final version of the mandelbrot set
+renderer for 16 bit precision (mandelbrot_attempt_2 is for 32 bit precision
+but is unfinished). Pretty much all files from plot04.c and up in
+mandelbrot_attempt_1 work and are just variations on the mandelbrot set
+rendering.
+
+pacman is not finished because I would rather do lunar lander first (it is
+easier and, in my opinion, cooler)

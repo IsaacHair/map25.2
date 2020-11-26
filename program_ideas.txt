@@ -1,0 +1,11 @@
+Lunar lander
+Conway's game of life
+Text editor
+Ssh protocol
+Tetris
+Newton Lite (that game from like 2011)
+Factal generator <complete>
+Langton's ant
+Video phase shifts
+Weird flashing video stuff
+Pac man
