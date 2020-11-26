@@ -4,8 +4,6 @@
 unsigned short addr;
 FILE* fd;
 
-void replaceaddr()
-
 void main(int argc, char** argv) {
 	if (argc != 2) {
 		printf("need target assembly file\n");
