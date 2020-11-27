@@ -61,8 +61,13 @@ void makeaddrodd() {
 	}
 }
 
-void removex88() {
-	//remove that stuff
+void removex88(char* filepath) {
+	FILE* newfd = fopen(filepath, "w");
+	int c;
+	fseek(fd, 0, SEEK_SET);
+	for (c = fgetc(fd); c != EOF; c = fgetc(fd))
+		if (c != 0x88)
+			fprintf(newfd, "%c", c);
 }
 
 void addrpred16() {
@@ -116,5 +121,5 @@ void main(int argc, char** argv) {
 	addrpred16();
 	genpred16();
 
-	removex88();
+	removex88(argv[1]);
 }
