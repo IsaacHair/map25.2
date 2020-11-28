@@ -112,6 +112,10 @@ void addrpred16() {
 		instvalnxt("imm addr0", mask, addr+i);
 }
 
+void makeaddr_addrpred16() {
+	makeaddrodd();
+}
+
 void genpred16() {
 	unsigned short mask, addrshift;
 	int i;
@@ -129,6 +133,10 @@ void genpred16() {
 	instvalnxt("imm gen1", 0x7fff, addr+1);
 	for (mask = 0x8000, i = 15; mask >= 0x0002; mask = mask>>1, i--)
 		instvalnxt("imm gen0", mask, addr+i);
+}
+
+void makeaddr_genpred16() {
+	makeaddrodd();
 }
 
 void addgenram() {
