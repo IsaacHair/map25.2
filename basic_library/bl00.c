@@ -24,7 +24,17 @@ void instvalnxt(char*op, unsigned short val, unsigned short nxt) {
 	addr++;
 }
 
-void replaceaddr(char* old, char* new) {
+void instexpnxt(char*op, char*nxt) {
+	fprintf(fd, "%04x %s \x88%s\n", addr, op, nxt);
+	addr++;
+}
+
+void instvalexpnxt(char*op, unsigned short val, char*nxt) {
+	fprintf(fd, "%04x %s %04x \x88%s\n", addr, op, val, nxt);
+	addr++;
+}
+
+void replacex88(char* old, char* new) {
 	//leaves \x88 identifier
 	int c;
 	char str[4];
@@ -51,12 +61,25 @@ void replaceaddr(char* old, char* new) {
 }
 
 void makeaddrodd() {
+	//works at 0x0000, but the lack of instruction at 0x0000 means
+	//the assembly code won't even run (as map25.2 resets to 0x0000)
 	char old[5];
 	char new[5];
 	if (addr%2 == 0) {
 		sprintf(old, "%04x", addr);
 		sprintf(new, "%04x", addr+1);
-		replaceaddr(old, new);
+		replacex88(old, new);
+		addr++;
+	}
+}
+
+void makeaddreven() {
+	char old[5];
+	char new[5];
+	if (addr%2 == 1) {
+		sprintf(old, "%04x", addr);
+		sprintf(new, "%04x", addr+1);
+		replacex88(old, new);
 		addr++;
 	}
 }
@@ -108,18 +131,88 @@ void genpred16() {
 		instvalnxt("imm gen0", mask, addr+i);
 }
 
+void addgenram() {
+	//adds values in ram and gen and puts answer in gen
+	//requires average of 40.5 clocks
+	//high efficiency rom packing (not perfect though)
+	unsigned short mask;
+	char str[5];
+
+	//do the addition
+	makeaddrodd();
+	instexpnxt("ram jzor 0001", "N_NC");
+	for (mask = 0x0001; mask; mask = mask<<1) {
+		replacex88("N_NC", "__NC");
+		replacex88("N__C", "___C");
+		makeaddreven();
+		sprintf(str, "%04x", addr);
+		replacex88("__NC", str);
+		instvalnxt("gen jzor", mask, addr+2);
+		instvalnxt("gen jzor", mask, addr+3);
+		if (mask != 0x8000) {
+			instvalexpnxt("ram jzor", mask<<1, "N_NC");
+			instvalexpnxt("ram jzor", mask<<1, "N_NC");
+			instvalnxt("imm gen1", mask, addr+2);
+			instvalnxt("imm gen0", mask, addr+2);
+			instvalexpnxt("ram jzor", mask<<1, "N_NC");
+			instvalexpnxt("ram jzor", mask<<1, "N__C");
+		}
+		else {
+			instvalexpnxt("imm gen0", mask, "DONE");
+			instvalexpnxt("imm gen1", mask, "DONE");
+			instvalexpnxt("imm gen1", mask, "DONE");
+			instvalexpnxt("imm gen0", mask, "DONE");
+		}
+		makeaddreven();
+		sprintf(str, "%04x", addr);
+		replacex88("___C", str);
+		instvalnxt("gen jzor", mask, addr+2);
+		instvalnxt("gen jzor", mask, addr+3);
+		if (mask != 0x8000) {
+			instvalnxt("imm gen1", mask, addr+4);
+			instvalnxt("imm gen0", mask, addr+4);
+			instvalexpnxt("ram jzor", mask<<1, "N__C");
+			instvalexpnxt("ram jzor", mask<<1, "N__C");
+			instvalexpnxt("ram jzor", mask<<1, "N_NC");
+			instvalexpnxt("ram jzor", mask<<1, "N__C");
+		}
+		else {
+			instvalexpnxt("imm gen1", mask, "DONE");
+			instvalexpnxt("imm gen0", mask, "DONE");
+			instvalexpnxt("imm gen0", mask, "DONE");
+			instvalexpnxt("imm gen1", mask, "DONE");
+		}
+	}
+	sprintf(str, "%04x", addr);
+	replacex88("DONE", str);
+}
+
+void makeaddr_addgenram() {
+	makeaddrodd();
+}
+
 void main(int argc, char** argv) {
+	//this is just a quick test program
 	if (argc != 3) {
 		printf("need buffer, target\n");
 		exit(0x01);
 	}
 	addr = 0;
 	fd = fopen(argv[2], "w+");
+	unsigned short loopstartaddr;
+	char str0[5];
+	char str1[5];
 
 	inst("dnc noop 0000");
 	inst("dnc noop 0000");
 	addrpred16();
 	genpred16();
+	inst("imm ramall 0001");
+	makeaddr_addgenram();
+	sprintf(str0, "%04x", addr);
+	addgenram();
+	sprintf(str1, "%04x", addr);
+	replacex88(str1, str0);
 
 	removex88(argv[1]);
 }
