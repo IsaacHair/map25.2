@@ -115,20 +115,20 @@ void buswirteout() {
 }
 
 void comm1dat(int a, int b) {
+	inst("imm out0 0400");
 	buswrite(a);
 	inst("imm out1 0400");
 	buswrite(b);
-	inst("imm out0 0400");
 }
 
 void comm4dat(int a, int b, int c, int d, int e) {
+	inst("imm out0 0400");
 	buswrite(a);
 	inst("imm out1 0400");
 	buswrite(b);
 	buswrite(c);
 	buswrite(d);
 	buswrite(e);
-	inst("imm out0 0400");
 }
 
 void addrpred16() {
@@ -237,25 +237,103 @@ void makeaddr_addgenram() {
 	makeaddrodd();
 }
 
-void lcdinit() {//destroys addr and gen}
+void lcdinit() {
+	//destroys out, gen, and dir
+	unsigned short delayaddr;
+	
+	inst("imm dir1 ffff");
+	inst("imm out1 ffff");
+	inst("imm out0 1000");
+	//delay for reset
+	inst("imm gen1 ffff");
+	makeaddr_genpred16();
+	delayaddr = addr;
+	genpred16();
+	makeaddrodd();
+	inst("gen jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", delayaddr);
+	inst("imm out1 1000");
+	//more delay for reset
+	inst("imm gen1 ffff");
+	makeaddr_genpred16();
+	delayaddr = addr;
+	genpred16();
+	makeaddrodd();
+	inst("gen jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", delayaddr);
+	//various commands
+	inst("imm out0 0c00"); //cs and rs low
+	buswrite(0x38); //out of idle
+	buswrite(0x11); //out of sleep
+	buswrite(0x13); //normal display mode
+	buswrite(0x20); //inversion is off
+	buswrite(0x29); //display is on
+	comm1dat(0x0c, 0xe6); //set COLMOD
+	comm4dat(0x2a, 0x00, 0x00, 0x00, 0xef); //set column min-max
+/**/	comm4dat(0x2b, 0x00, 0x00, 0x00, 0x3f); //set page min-max
+}
 
-void lcdstartframe() {}
+void lcdstartframe() {
+	inst("imm out0 0400"); //RS low
+	buswrite(0x2c); //begin frame write
+	inst("imm out1 0400"); //RS high
+}
 
-void lcdendframe() {}
+void lcdendframe() {
+	inst("imm out0 0400"); //RS low
+	buswrite(0x00); //nop to end the write
+}
 
-void lcdsizeframe(int startx, int endx, int starty, int endy) {}
+void lcdsizeframe(int startcol, int endcol, int startpage, int endpage) {
+	comm4dat(0x2a, (startcol/256)%256, startcol%256,
+		 (endcol/256)%256, endcol%256); //set column min-max
+	comm4dat(0x2b, (startpage/256)%256, startpage%256,
+		 (endpage/256)%256, endpage%256); //set page min-max
+}
+
+void lcdbox(int blue, int green, int red,
+	    int startcol, int endcol, int startpage, int endpage) {
+	//destroys addr, gen, out
+	unsigned short loopaddr;
+	lcdsizeframe(startcol, endcol, startpage, endpage);
+	//double up on writes for speed and to fit in 16 bit counter
+	//ok if write 1 extra pixel b/c just box
+	//use addr register as helper
+	inst("imm addr0 ffff");
+	instval("imm addr1", ((endcol-startcol+1)*(endpage-startpage+1)+1)/2);
+	lcdstartframe();
+	makeaddr_addrpred16();
+	loopaddr = addr;
+	addrpred16();
+	buswrite((blue<<2)%256);
+	buswrite((green<<2)%256);
+	buswrite((red<<2)%256);
+	buswrite((blue<<2)%256);
+	buswrite((green<<2)%256);
+	buswrite((red<<2)%256);
+	makeaddrodd();
+	inst("addr jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", loopaddr);
+	lcdendframe();
+}
 
 void main(int argc, char** argv) {
-	//this is just a quick test program
+	//this is just a quick test
 	if (argc != 3) {
-		printf("need buffer, target\n");
+		printf("need <target> <buffer>\n");
 		exit(0x01);
 	}
 	addr = 0;
 	fd = fopen(argv[2], "w+");
-	unsigned short loopstartaddr;
-	char str0[5];
-	char str1[5];
+
+	lcdinit();
+	lcdbox(63, 0, 0,  0, 239, 0, 319);
+	lcdbox(11, 11, 11,  33, 44, 33, 44);
+	lcdbox(0, 50, 0,  1, 100, 50, 70);
+	instnxt("dnc noop 0000", addr);
 
 	removex88(argv[1]);
 }
