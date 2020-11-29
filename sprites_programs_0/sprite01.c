@@ -239,6 +239,7 @@ void makeaddr_addgenram() {
 
 void lcdinit() {
 	//destroys out, gen, and dir
+	//should have more commands to properly set everything
 	unsigned short delayaddr;
 	
 	inst("imm dir1 ffff");
@@ -271,17 +272,23 @@ void lcdinit() {
 	buswrite(0x20); //inversion is off
 	buswrite(0x29); //display is on
 	comm1dat(0x0c, 0xe6); //set COLMOD
-	comm4dat(0x2a, 0x00, 0x00, 0x00, 0xef); //set column min-max
-/**/	comm4dat(0x2b, 0x00, 0x00, 0x00, 0x3f); //set page min-max
+/**/	comm4dat(0x2a, 0x00, 0x00, 0x00, /*0xef*/ 0x40); //set column min-max
+/**/	comm4dat(0x2b, 0x00, 0x00, /*0x01*/ 0x00, 0x3f); //set page min-max
 }
 
-void lcdstartframe() {
+void lcdresetframe() {
 	inst("imm out0 0400"); //RS low
 	buswrite(0x2c); //begin frame write
 	inst("imm out1 0400"); //RS high
 }
 
-void lcdendframe() {
+void lcdcontinueframe() {
+	inst("imm out0 0400"); //RS low
+	buswrite(0x3c); //begin frame write
+	inst("imm out1 0400"); //RS high
+}
+
+void lcdpauseframe() {
 	inst("imm out0 0400"); //RS low
 	buswrite(0x00); //nop to end the write
 }
@@ -297,13 +304,14 @@ void lcdbox(int blue, int green, int red,
 	    int startcol, int endcol, int startpage, int endpage) {
 	//destroys addr, gen, out
 	unsigned short loopaddr;
+	lcdpauseframe();
 	lcdsizeframe(startcol, endcol, startpage, endpage);
+	lcdcontinueframe();
 	//double up on writes for speed and to fit in 16 bit counter
 	//ok if write 1 extra pixel b/c just box
 	//use addr register as helper
 	inst("imm addr0 ffff");
 	instval("imm addr1", ((endcol-startcol+1)*(endpage-startpage+1)+1)/2);
-	lcdstartframe();
 	makeaddr_addrpred16();
 	loopaddr = addr;
 	addrpred16();
@@ -317,7 +325,7 @@ void lcdbox(int blue, int green, int red,
 	inst("addr jzor ffff");
 	instnxt("dnc noop 0000", addr+2);
 	instnxt("dnc noop 0000", loopaddr);
-	lcdendframe();
+	lcdpauseframe();
 }
 
 void main(int argc, char** argv) {
@@ -330,9 +338,11 @@ void main(int argc, char** argv) {
 	fd = fopen(argv[2], "w+");
 
 	lcdinit();
+	lcdresetframe();
 	lcdbox(63, 0, 0,  0, 239, 0, 319);
 	lcdbox(11, 11, 11,  33, 44, 33, 44);
 	lcdbox(0, 50, 0,  1, 100, 50, 70);
+	lcdpauseframe();
 	instnxt("dnc noop 0000", addr);
 
 	removex88(argv[1]);
