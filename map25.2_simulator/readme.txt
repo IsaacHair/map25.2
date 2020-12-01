@@ -21,3 +21,11 @@ position.
 Simulator program:
 Just starts at address zero and reads the instructions as they come. Prints
 values of registers and delta clocks continuously to terminal.
+
+Note: I am coverting plot16.up. There is nothing significant about this file
+per se, its just an easy example file that I know works. It will also allow
+me to create an accurate measurement of the clock speed on the map25.2 because
+the program takes 2,830.2 seconds to fully render all 76,800 pixels of the
+mandelbrot set. The simulator will tell me the exact number of clock cycles
+this took, and from there it is a simple matter of division to get instructions
+per second.
