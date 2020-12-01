@@ -15,21 +15,21 @@ void main(int argc, char** argv) {
 	}
 	FILE* source = fopen(argv[1], "r");
 	FILE* target = fopen(argv[2], "w");
-	int page = 0x0000;
-	int line = 0x00;
-	int deltaclocks = 0;
 	int mode = PAGE;
 	int chip = 0;
 	int shift = 8;
-	char c;
+	char program[655360];
+	int page;
+	int line;
+	int data;
+	int c;
 	int i;
 
 	for (i = 0; i < 655360; i++)
-		fprintf(target, "f");
-	fseek(target, 0, SEEK_SET);
+		program[i] = 'f';
 
 	c = fgetc(source);
-	while (1) {
+	while (c != EOF) {
 		if (c == 'x')
 			mode = PAGE;
 		else if (c == 'z')
@@ -39,22 +39,47 @@ void main(int argc, char** argv) {
 				chip++;
 				shift -= 2;
 				mode = PAGE;
-				if (chip > 4)
-					exit(0x00);
 				c = fgetc(source);
-				break;
+				if (c == 4)
+					break;
+				//dont break
 			case PAGE:
+				c = fgetc(source);
+				if (c == 'z')
+					break;
 				for (page = 0, i = 0; i < 4;
-				     i++, page = (i < 3 ? page*16 : page)) {
+				     i++, page = (i < 4 ? page*16 : page)) {
+					if (c >= 'a' && c <= 'f')
+						page += c-'a'+10;
+					else
+						page += c-'0';
 					c = fgetc(source);
-					if (c == 
+				}
+				mode = LINE;
 				break;
 			case LINE:
+				for (line = 0, i = 0; i < 2;
+				     i++, line = (i < 2 ? line*16 : line)) {
+					if (c >= 'a' && c <= 'f')
+						line += c-'a'+10;
+					else
+						line += c-'0';
+					c = fgetc(source);
+				}
+				mode = DATA;
 				break;
 			case DATA:
+				program[((page&0xff80)|line)*10+shift] = c;
+				c = fgetc(source);
+				program[((page&0xff80)|line)*10+shift+1] = c;
+				c = fgetc(source);
+				mode = LINE;
 				break;
 		}
 	}
+
+	for (i = 0; i < 655360; i++)
+		fprintf(target, "%c", program[i]);
 
 	fclose(source);
 	fclose(target);
