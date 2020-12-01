@@ -9,4 +9,8 @@ void main(int argc, char** argv) {
 	FILE* source;
 	FILE* target;
 	char program[655360];
-	
+	int i;
+
+	for (i = 0; i < 655360; i++)
+		program[i] = 'f';
+}
