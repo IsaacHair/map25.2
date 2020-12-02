@@ -1,5 +1,3 @@
-Version 0:
-
 Simple machine to simulate the map25.2 cpu inside whatever machine
 you use to compile the program.
 
@@ -10,7 +8,7 @@ for that space in rom. If ask for input, it will throw an error because
 there is no input for this version. It will put the bus to 0xffff if there
 is a dnc instruction, just like on the actual map 25.2.
 
-Converter program:
+Converter program v0:
 The rom takes the form
 of a single line of 655,560 hex characters. First, the file is filled with "f"
 as this is the default for gls29ee010 EEPROMS.
@@ -18,7 +16,7 @@ Then, instructions (which are 10 nibbles long
 each and thus take up 10 hex characters) are inserted in the corresponding
 position.
 
-Simulator program:
+Simulator program v0:
 Just starts at address zero and reads the instructions as they come. Prints
 values of registers and delta clocks continuously to terminal.
 
@@ -28,9 +26,20 @@ me to create an accurate measurement of the clock speed on the map25.2 because
 the program takes 2,830.2 seconds to fully render all 76,800 pixels of the
 mandelbrot set. The simulator will tell me the exact number of clock cycles
 this took, and from there it is a simple matter of division to get instructions
-per second.
+per second. Note that the measurement of 2,830.2 seconds was recorded with:
+	Vpp = 2.825 +/- 0.025 volts
+	Temperature = 70 degrees F +/- 2 degrees F
 
-Version 1:
+Plot16_copy results (decimal values): Delta_t on the map25.2 is 2830.2 seconds.
+delta_clocks on the simulation is exactly 1,290,638,025 instructions (this is
+the count of total instructions, starting with address 0x0000, for the curr
+register to equal the address of the "halt" location on the phase where nxt is
+written. This means that the speed based on this test is 456.02 kHz average.
+However, I suspect that it fluxuates up and down by as much as 1 percent
+because the not gate oscillator is not very stable. The measurement of 456 kHz
+from the P2 Oscilloscope was suprisingly accurate.
+
+Converter v1:
 
 The .up file has the following transistions in the data it is transmitting:
 START -> PAGE ADDRESS
@@ -46,3 +55,5 @@ Page address to next page indicator since a page address is only provided if
 it contains data.
 
 This version will basically create a state machine.
+I don't know if it is safe to call functions several thousand layers deep but
+whatevs it seems to work.

@@ -174,11 +174,7 @@ void main(int argc, char** argv) {
 	nxt = 0x0000;
 	initscreen();
 	while (1) {
-		if (curr == 0x032d) {
-			printregisters();
-			printf("halt address reached\n");
-			exit(0x01);
-		}
+		//do the simulation
 		if (!sampleclocks)
 			printregisters();
 		fetchandbus();
@@ -188,5 +184,11 @@ void main(int argc, char** argv) {
 			sampleclocks = (rand()%256)*256+(rand()%256);
 		else
 			sampleclocks--;
+		//halt test specific to plot16_copy
+		if (curr == 0x032d) {
+			printregisters();
+			printf("halt address reached\n");
+			exit(0x01);
+		}
 	}
 }
