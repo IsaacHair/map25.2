@@ -29,3 +29,20 @@ the program takes 2,830.2 seconds to fully render all 76,800 pixels of the
 mandelbrot set. The simulator will tell me the exact number of clock cycles
 this took, and from there it is a simple matter of division to get instructions
 per second.
+
+Version 1:
+
+The .up file has the following transistions in the data it is transmitting:
+START -> PAGE ADDRESS
+PAGE ADDRESS -> LINE AND DATA
+LINE AND DATA -> LINE AND DATA
+LINE AND DATA -> NEXT PAGE INDICATOR
+NEXT PAGE INDICATOR -> PAGE ADDRESS
+NEXT PAGE INDICATOR -> NEXT CHIP INDICATOR
+NEXT CHIP INDICATOR -> PAGE ADDRESS
+NEXT CHIP INDICATOR -> EOF
+
+Page address to next page indicator since a page address is only provided if
+it contains data.
+
+This version will basically create a state machine.

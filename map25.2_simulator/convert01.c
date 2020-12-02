@@ -11,6 +11,17 @@ void main(int argc, char** argv) {
 	char program[655360];
 	int i;
 
+	source = fopen(argv[1], "r");
+	target = fopen(argv[2], "w");
+
 	for (i = 0; i < 655360; i++)
 		program[i] = 'f';
+
+	for (
+
+	for (i = 0; i < 655360; i++)
+		fprintf(target, "%c", program[i]);
+
+	fclose(source);
+	fclose(target);
 }
