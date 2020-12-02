@@ -28,7 +28,7 @@ mandelbrot set. The simulator will tell me the exact number of clock cycles
 this took, and from there it is a simple matter of division to get instructions
 per second. Note that the measurement of 2,830.2 seconds was recorded with:
 	Vpp = 2.825 +/- 0.025 volts
-	Temperature = 70 degrees F +/- 2 degrees F
+	Temperature = 70. degrees F +/- 2 degrees F
 
 Plot16_copy results (decimal values): Delta_t on the map25.2 is 2830.2 seconds.
 delta_clocks on the simulation is exactly 1,290,638,025 instructions (this is

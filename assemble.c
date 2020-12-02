@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
   FILE *clean = fopen(argv[3], "w");
   assemble(source, clean);
   fclose(clean);
-  fopen(argv[3], "r");
+  clean = fopen(argv[3], "r");
   page(clean, target);
   return (0);
 }
