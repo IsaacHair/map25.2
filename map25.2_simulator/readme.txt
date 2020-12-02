@@ -32,7 +32,7 @@ per second. Note that the measurement of 2,830.2 seconds was recorded with:
 
 Plot16_copy results (decimal values): Delta_t on the map25.2 is 2830.2 seconds.
 delta_clocks on the simulation is exactly 1,290,638,025 instructions (this is
-the count of total instructions, starting with address 0x0000, for the curr
+the count of total instructions, starting with curr 0x0000, for the curr
 register to equal the address of the "halt" location on the phase where nxt is
 written. This means that the speed based on this test is 456.02 kHz average.
 However, I suspect that it fluxuates up and down by as much as 1 percent
