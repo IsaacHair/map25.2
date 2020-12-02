@@ -15,8 +15,6 @@ int chip;
 char program[655360];
 int c;
 
-#define fgetc(source) fgetc(source+0); printf("char:%c\n", c);
-
 void nextchipindicator() {
 	chip++;
 
@@ -54,7 +52,6 @@ void lineanddata() {
 		c = fgetc(source);
 	}
 	for (i = 0; i < 2; i++) {
-		printf("lineanddata @%x,%x(%x):%c\n", page, line, ((page&0xff80)|(line&0x007f))*10+8-(2*chip)+i, c);
 		program[((page&0xff80)|(line&0x007f))*10+8-(2*chip)+i] = c;
 		c = fgetc(source);
 	}
@@ -80,7 +77,6 @@ void pageaddress() {
 			page |= (c-'a'+10)*shift;
 		c = fgetc(source);
 	}
-	printf("page:%x\n", page);
 
 	lineanddata();
 }
