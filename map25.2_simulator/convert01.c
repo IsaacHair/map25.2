@@ -48,7 +48,7 @@ void lineanddata() {
 		if (c >= '0' && c <= '9')
 			line |= (c-'0')*shift;
 		else
-			line |= (c-'0'+10)*shift;
+			line |= (c-'a'+10)*shift;
 		c = fgetc(source);
 	}
 	for (i = 0; i < 2; i++) {
