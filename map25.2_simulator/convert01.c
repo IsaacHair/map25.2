@@ -83,7 +83,7 @@ void pageaddress() {
 
 void main(int argc, char** argv) {
 	if (argc != 3) {
-		printf("need <source> <target>");
+		printf("need <source> <target>\n");
 		exit (0x01);
 	}
 	int i;
