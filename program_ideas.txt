@@ -31,3 +31,4 @@ Load cell punching bag
 Pong
 EEPROM programmer (inception lookin ass)
 Graph polynomials, etc
+Electric piano or synthesizer
