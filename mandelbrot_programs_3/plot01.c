@@ -4,10 +4,8 @@
 /*
  * Creates a rendering of the mandelbrot set.
  * Integers are simply stored as 16 bit integers.
- * "Floating points" are stored as follows:
+ * "Fixed points" are stored as follows:
  * The upper bit is the sign, 3 after that are int part, 12 after are fraction.
- * Note: this program expects \n to constitute only ONE character;
- * this is relevant when re-writing nxt addresses.
  * Note: FUNCTIONS DO NOT SUPPORT RECURSION.
  */
 
@@ -133,29 +131,6 @@ void removex88(char* filepath) {
 		if (c != 0x88)
 			fprintf(newfd, "%c", c);
 	fclose(newfd);
-}
-
-void addrpred16() {
-	unsigned short mask, addrshift;
-	int i;
-	
-	makeaddrodd();
-	for (i = 16; i >= 2; i = i>>1)
-		for (mask = 0xffff>>(i/2), addrshift = 16/i;
-		     mask; mask = mask>>i, addrshift++)
-			instvalnxt("addr jzor", mask, addr+addrshift);
-	instvalnxt("addr jzor", 0xffff, addr+16);
-	for (mask = 0x3fff; mask; mask = mask>>1)
-		instvalnxt("imm addr1", mask, addr+18);
-	instvalnxt("imm addr0", 0x0001, addr+18);
-	instvalnxt("imm addr1", 0xffff, addr+17);
-	instvalnxt("imm addr1", 0x7fff, addr+1);
-	for (mask = 0x8000, i = 15; mask >= 0x0002; mask = mask>>1, i--)
-		instvalnxt("imm addr0", mask, addr+i);
-}
-
-void makeaddr_addrpred16() {
-	makeaddrodd();
 }
 
 void genpred16() {
@@ -318,6 +293,11 @@ void addgenramdwn() {
 
 void makeaddr_addgenramdwn() {
 	makeaddrodd();
+}
+
+void buswriteout() {
+	inst("imm out0 0200");
+	inst("imm out1 0200");
 }
 
 void buswrite(int val) {
@@ -502,22 +482,19 @@ void mulcode() {
 	makeaddrodd();
 	firstloopaddr = addr;
 	inst("addr jzor 0002");
+	instnxt("addr jzor 0001", addr+2);
 	instnxt("dnc noop 0000", addr+3);
-	instnxt("dnc noop 0000", addr+5);
-	addr++;
-	inst("addr jzor 0001");
 	instnxt("dnc noop 0000", addr+2);
 	instexpnxt("dnc noop 0000", "BLOC");
 	//address predecessor
+	inst("dnc noop 0000");
 	addrpred4();
 	//see if you can skip this address
 	makeaddrodd();
 	inst("ram jzor ffff");
-	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", firstloopaddr);
 	//do the rotation addition
 	instexpnxt("dnc noop 0000", "FULL");
-	//skip
-	instnxt("dnc noop 0000", firstloopaddr);
 	//actual addition
 	makeaddr_addgenram();
 	sprintf(str, "%04x", addr);
@@ -580,15 +557,9 @@ void callmul(unsigned int point_prod, unsigned int point_f0, unsigned int point_
 }
 
 void addcode() {
-	//preserves progaddr
+	//destroys progaddr
 	//destroys gen and addr
-	unsigned short mask;
-	unsigned short carryaddr, noncarryaddr;
-	unsigned short newcarryaddr, newnoncarryaddr;
-	unsigned short doneaddr;
-	unsigned short originaladdr;
 
-	originaladdr = addr;
 	addr = ADD_LOC;
 
 	//charge gen with value at ADD_ADDEND0 and set addr to ADD_ADDEND1
@@ -598,71 +569,17 @@ void addcode() {
 	inst("ram gen1 0000");
 	inst("imm addr0 ffff");
 	instval("imm addr1", ADD_ADDEND1);
-	//next code block approx location
-	doneaddr = addr+0x0480;
-	//do the addition
-	makeaddrodd();
-	//the following estimates need to be even
-	noncarryaddr = addr+0x0021;
-	carryaddr = addr+0x0041;
-	instnxt("ram jzor 0001", noncarryaddr);
-	for (mask = 0x0001; mask; mask = mask<<1) {
-		//the following estimates need to be even
-		addr = noncarryaddr;
-		newnoncarryaddr = (addr/2*2)+0x0040;
-		newcarryaddr = (addr/2*2)+0x0060;
-		instvalnxt("gen jzor", mask, addr+2);
-		instvalnxt("gen jzor", mask, addr+3);
-		if (mask != 0x8000) {
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
-		}
-		else {
-			instvalnxt("imm gen0", mask, doneaddr);
-			instvalnxt("imm gen1", mask, doneaddr);
-			instvalnxt("imm gen1", mask, doneaddr);
-			instvalnxt("imm gen0", mask, doneaddr);
-		}
-		addr = carryaddr;
-		instvalnxt("gen jzor", mask, addr+2);
-		instvalnxt("gen jzor", mask, addr+3);
-		if (mask != 0x8000) {
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("imm gen0", mask, addr+4);
-			instvalnxt("imm gen1", mask, addr+4);
-			instvalnxt("ram jzor", mask<<1, newnoncarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
-			instvalnxt("ram jzor", mask<<1, newcarryaddr);
-		}
-		else {
-			instvalnxt("imm gen1", mask, doneaddr);
-			instvalnxt("imm gen0", mask, doneaddr);
-			instvalnxt("imm gen0", mask, doneaddr);
-			instvalnxt("imm gen1", mask, doneaddr);
-		}
-		carryaddr = newcarryaddr;
-		noncarryaddr = newnoncarryaddr;
-	}
+	addgenram();
 
 	//transfer sum
-	addr = doneaddr;
 	inst("imm addr0 ffff");
 	instval("imm addr1", ADD_SUM);
 	inst("gen ramall 0000");
+
 	//return
 	inst("imm addr0 ffff");
 	instval("imm addr1", ADD_RET);
 	inst("ram asnx 0000");
-
-	addr = originaladdr;
 }	
 
 void calladd(unsigned short point_sum, unsigned short point_a0, unsigned short point_a1) {
@@ -694,7 +611,8 @@ void calladd(unsigned short point_sum, unsigned short point_a0, unsigned short p
 }	
 
 void render(unsigned short point_count, unsigned short point_zi0, unsigned short point_zr0) {
-	unsigned short startaddr, printaddr;
+	unsigned short startaddr;
+	char str[5];
 	//init
 	inst("imm addr0 ffff");
 	instval("imm addr1", point_zi0);
@@ -765,18 +683,18 @@ void render(unsigned short point_count, unsigned short point_zi0, unsigned short
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_TEMP);
 	makeaddrodd();
-	printaddr = addr+0x0020;
 	inst("ram jzor c000");
 	instnxt("dnc noop 0000", addr+2);
-	instnxt("dnc noop 0000", printaddr);
+	instexpnxt("dnc noop 0000", "PRNT");
 	//test if counter is >= max (32)
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_COUNTER);
 	makeaddrodd();
 	inst("ram jzor ffe0");
 	instnxt("dnc noop 0000", startaddr);
-	instnxt("dnc noop 0000", printaddr);
-	addr = printaddr;
+	instexpnxt("dnc noop 0000", "PRNT");
+	sprintf(str, "%04x", addr);
+	replacex88("PRNT", str);
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_COUNTER);
 	inst("imm gen0 ffff");
@@ -835,21 +753,18 @@ void main(int argc, char**argv) {
 	inst("imm out0 0400"); //RS low
 	buswrite(0x2c); //begin frame write
 	inst("imm out1 0400"); //RS high
-	//use addr as helper register
-	inst("imm addr0 ffff");
-	inst("imm addr1 9600");
 	inst("imm gen0 ffff");
-	inst("imm gen1 007f");
+	inst("imm gen1 9600");
+	inst("imm out0 00ff");
+	inst("imm out1 007f");
 	delayaddr = addr;
-	buswritegen();
-	buswritegen();
-	buswritegen();
-	buswritegen();
-	buswritegen();
-	buswritegen();
-	inst("dnc noop 0000");
-	addrpred16();
-	inst("dnc noop 0000");
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	genpred16();
 	makeaddrodd();
 	inst("addr jzor ffff");
 	instnxt("dnc noop 0000", addr+2);
