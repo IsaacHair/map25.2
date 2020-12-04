@@ -32,3 +32,5 @@ Pong
 EEPROM programmer (inception lookin ass)
 Graph polynomials, etc
 Electric piano or synthesizer
+Ear rape producer for audio files
+Picture deep frier
