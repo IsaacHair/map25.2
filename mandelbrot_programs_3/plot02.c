@@ -769,7 +769,7 @@ void main(int argc, char**argv) {
 	buswriteout();
 	genpred16();
 	makeaddrodd();
-	inst("addr jzor ffff");
+	inst("gen jzor ffff");
 	instnxt("dnc noop 0000", addr+2);
 	instnxt("dnc noop 0000", delayaddr);
 	//end lcd write

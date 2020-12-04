@@ -255,7 +255,7 @@
 0100 imm gen0 0008 ˆ0103
 0101 imm gen0 0004 ˆ0103
 0102 imm gen0 0002 ˆ0103
-0103 addr jzor ffff ˆ0104
+0103 gen jzor ffff ˆ0104
 0104 dnc noop 0000 ˆ0106
 0105 dnc noop 0000 ˆ00c7
 0106 imm out0 0400 ˆ0107
