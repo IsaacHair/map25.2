@@ -123,10 +123,15 @@ void comm1dat(int a, int b) {
 
 void comm4dat(int a, int b, int c, int d, int e) {
 	//handles cs as well (assumes low to begin with and leaves low at end)
+	inst("imm out1 0100"); //RDX
+	inst("imm out1 0800"); //CSX
+	inst("imm out1 0200"); //WRX
+	inst("imm out1 0400"); //D/CX
+	inst("imm out0 0800"); //CSX
 	inst("imm out0 0400"); //D/CX
-	inst("imm out1 0b00"); //WRX, RDX, CSX
 	buswrite(a);
-	inst("imm out1 0c00");
+	inst("imm out1 0400");
+	inst("imm out1 0800");
 	inst("imm out0 0800");
 	buswrite(b);
 	buswrite(c);
@@ -135,7 +140,6 @@ void comm4dat(int a, int b, int c, int d, int e) {
 	buswrite(d);
 	buswrite(e);
 	inst("imm out1 0800");
-	inst("imm out0 0800");
 }
 
 void addrpred16() {
