@@ -289,7 +289,7 @@ void lcdinit() {
 	instnxt("dnc noop 0000", addr+2);
 	instnxt("dnc noop 0000", delayaddr);
 	buswrite(0x38); //out of idle
-	buswrite(0x12); //partial display mode (hopefully this allows frame resizes)
+	buswrite(0x13); //regular display mode
 	buswrite(0x20); //inversion is off
 	buswrite(0x29); //display is on
 	comm1dat(0x0c, 0xe6); //set COLMOD
