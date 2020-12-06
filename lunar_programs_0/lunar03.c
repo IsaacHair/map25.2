@@ -699,6 +699,8 @@ void keygen() {
 	inst("imm gen1 0020");
 	inst("in jzor 0001");
 	inst("imm gen1 0010");
+
+	inst("imm dir0 e000");
 }
 
 void lcdinit() {
