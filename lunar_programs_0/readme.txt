@@ -11,5 +11,10 @@ replaced was also tweaked a bit so that functions can call each other.
 I HAVE NOT CREATED A STACK SO RECURSION IS STILL UNSAFE.
 
 Version 1:
+More tweaks to check stuff, also used definitions for pinouts.
+
+Version 2:
 This will just move a lunar lander sprite around on a black screen
-using arrow key inputs from the arduino number pad.
+using arrow key inputs from the arduino number pad. Arrow keys map as
+follows: -> is key "4", <- is key "6", v is key "5", and ^ is key "8".
+They keypad is meant to be used upside down.
