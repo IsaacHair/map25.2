@@ -175,3 +175,7 @@ Here is a "thesis" I am working on to document some of the important shit I have
 
 Here are all of the notes:
 *insert here*
+
+Note: basic_library/<insert latest version> should be a collection of all
+functions and drivers written so far, but it is not updated as of now
+because I am still writing the keypad drivers in lunar_programs_*
