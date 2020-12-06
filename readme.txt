@@ -144,3 +144,23 @@ address is set to the value of the lower byte of the bus)
 address is set to the value of the upper byte of the bus)
 0xf => "rall", "ramall", "f" (ram upper and lower byte at address register
 address is set to the value of the bus)
+
+
+Wow, it has been a while since I updated the root readme.txt. Well,
+what I have done since then is invent some more complex assembly code
+procedures. Also note that the VMA412 is being used as a display
+and a peripheral graphics card. I might actually get a gtx1060 or
+whatevery the bois are using these days and add that to the output
+bus just to make arithmatic operations stupidly fast. A USB card
+might also be useful.
+
+The core paradigm is as follows:
+	-CPU: MAP 25.2, obviously, with its 2,861 beautiful transistors
+	and entirely discrete construction. It includes a clock, reset
+	interrupt handler, input bus, tri-state output bus, and internal
+	registers and circuitry to do shit.
+	-RAM: Cypress Semiconductor CY62126EV30LL-45ZSXI, which is integrated
+	-ROM: Greenliant GLS29EE010, which is integrated
+Peripherals currently in use:
+	-Display: VMA412, which uses the ILI9341 "video card"
+	-Keyboard: 4x3 Matrix Array 12 Key Membrane Switch Keyboard Keypad

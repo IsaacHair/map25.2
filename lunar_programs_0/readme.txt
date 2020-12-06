@@ -1,0 +1,15 @@
+As you would expect, this will create a version of the lunar lander
+game. It is to be used with the vma412 and the arduino number pad.
+
+Version 0:
+This was basically where i just copied in most of the code
+from previous programs that I think I will need. These include
+code to define what instructions are, how to write to the lcd,
+variations on the edge-detection predecessor macro, and of course
+the multiply and add functions. The order in which addresses is
+replaced was also tweaked a bit so that functions can call each other.
+I HAVE NOT CREATED A STACK SO RECURSION IS STILL UNSAFE.
+
+Version 1:
+This will just move a lunar lander sprite around on a black screen
+using arrow key inputs from the arduino number pad.
