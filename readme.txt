@@ -164,3 +164,5 @@ The core paradigm is as follows:
 Peripherals currently in use:
 	-Display: VMA412, which uses the ILI9341 "video card"
 	-Keyboard: 4x3 Matrix Array 12 Key Membrane Switch Keyboard Keypad
+	-Speaker: Literally just connect output to speaker channel thru
+	a resistor and ensure common ground.
