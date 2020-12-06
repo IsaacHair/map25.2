@@ -166,3 +166,12 @@ Peripherals currently in use:
 	-Keyboard: 4x3 Matrix Array 12 Key Membrane Switch Keyboard Keypad
 	-Speaker: Literally just connect output to speaker channel thru
 	a resistor and ensure common ground.
+
+Here is a datasheet I have created for the cpu:
+*insert here*
+
+Here is a "thesis" I am working on to document some of the important shit I have invented:
+*insert here*
+
+Here are all of the notes:
+*insert here*
