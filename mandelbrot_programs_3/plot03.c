@@ -2,53 +2,47 @@
 #include <stdio.h>
 
 /*
- * Creates a version of the classic lunar lander game.
- * Note: There is NO STACK in this version, so functions
- * do not support recursion.
+ * Creates a rendering of the mandelbrot set.
+ * Integers are simply stored as 16 bit integers.
+ * "Fixed points" are stored as follows:
+ * The upper bit is the sign, 3 after that are int part, 12 after are fraction.
+ * Note: FUNCTIONS DO NOT SUPPORT RECURSION.
+ * Note: upper 3 values of bus are left at high-z so that
+ * something can be connected to that part of the bus without worry
+ * (eg a keypad or something).
  */
+
+#define MUL_ARRAY 0xa900
+#define MUL_F0 0xaa00
+#define MUL_F1 0xaa01
+#define MUL_PROD 0xaa02
+#define MUL_RET 0xaa03
+
+#define ADD_ADDEND0 0x6900
+#define ADD_ADDEND1 0x6901
+#define ADD_SUM 0x6902
+#define ADD_RET 0x6903
+
+#define MAIN_ZI 0x4200
+#define MAIN_ZR 0x4201
+#define MAIN_ZIS 0x4202
+#define MAIN_ZRS 0x4203
+#define MAIN_ZI0 0x4204
+#define MAIN_ZR0 0x4205
+#define MAIN_TEMP 0x4206
+#define MAIN_COUNTER 0x4207
+#define MAIN_Y 0x4208
+#define MAIN_X 0x4209
+#define MAIN_DY 0x420a
+#define MAIN_DX 0x420b
+#define MAIN_RESULT 0x420c
+#define MAIN_XLIMN 0x420d
+#define MAIN_YLIMN 0x420e
+#define MAIN_RISUM 0x420f
+#define MAIN_RIDIFF 0x4210
 
 unsigned short addr;
 FILE* fd;
-
-#define _KEY_R1 0x8000 //input
-#define _KEY_R2 0x4000 //input
-#define _KEY_R3 0x2000 //input
-#define _KEY_R4 0x1000 //input
-#define _KEY_C1 0x8000 //output (thru a 100ohm resistor with 1k pull up)
-#define _KEY_C2 0x4000 //output (thru a 100ohm resistor with 1k pull up)
-#define _KEY_C3 0x2000 //output (thru a 100ohm resistor with 1k pull up)
-
-#define _LCD_RST 0x1000 //output (thru a 100ohm resistor)
-#define _LCD_CS 0x0800 //output (thru a 100ohm resistor)
-#define _LCD_RS 0x0400 //output (thru a 100ohm resistor)
-#define _LCD_WR 0x0200 //output (thru a 100ohm resistor)
-#define _LCD_RD 0x0100 //output (thru a 100ohm resistor)
-
-/*
- * Data bus:
- * _LCD_Dn corresponds to output 0xn (thru a 100ohm resistor)
- * where "n" is the number data bit.
- * Note that output 0xn refers to the position of the bit
- * on the output bus using little endian enumeration.
- * This is not defined because it is easier to just remember
- * that the lower half of the output bus is LCD data.
- * The use of 100ohm resistors is just to protect the map25.2
- */
-
-#define ADD_ADDEND0 0x0000
-#define ADD_ADDEND1 0x0001
-#define ADD_SUM 0x0002
-#define ADD_RET 0x0003
-unsigned short add_loc;
-
-#define MUL_ARRAY 0x0010
-#define MUL_F0 0x0004
-#define MUL_F1 0x0005
-#define MUL_PROD 0x0006
-#define MUL_RET 0x0007
-unsigned short mul_loc;
-
-#define PAD_VALUES 0x0008
 
 void inst(char*op) {
 	fprintf(fd, "%04x %s \x88%04x\n", addr, op, addr+1);
@@ -137,67 +131,7 @@ void removex88(char* filepath) {
 	for (c = fgetc(fd); c != EOF; c = fgetc(fd))
 		if (c != 0x88)
 			fprintf(newfd, "%c", c);
-}
-
-void buswrite(int val) {
-	inst("imm out0 00ff");
-	instval("imm out1", val%256);
-	instval("imm out0", _LCD_WR);
-	instval("imm out1", _LCD_WR);
-}
-
-void buswritegen() {
-	//destroys upper part of gen
-	inst("imm out0 00ff");
-	inst("imm gen0 ff00");
-	inst("gen out1 0000");
-	instval("imm out0", _LCD_WR);
-	instval("imm out1", _LCD_WR);
-}
-
-void buswirteout() {
-	instval("imm out0", _LCD_WR);
-	instval("imm out1", _LCD_WR);
-}
-
-void comm1dat(int a, int b) {
-	instval("imm out0", _LCD_RS);
-	buswrite(a);
-	instval("imm out1", _LCD_RS);
-	buswrite(b);
-}
-
-void comm4dat(int a, int b, int c, int d, int e) {
-	instval("imm out0", _LCD_RS);
-	buswrite(a);
-	instval("imm out1", _LCD_RS);
-	buswrite(b);
-	buswrite(c);
-	buswrite(d);
-	buswrite(e);
-}
-
-void addrpred16() {
-	unsigned short mask, addrshift;
-	int i;
-	
-	makeaddrodd();
-	for (i = 16; i >= 2; i = i>>1)
-		for (mask = 0xffff>>(i/2), addrshift = 16/i;
-		     mask; mask = mask>>i, addrshift++)
-			instvalnxt("addr jzor", mask, addr+addrshift);
-	instvalnxt("addr jzor", 0xffff, addr+16);
-	for (mask = 0x3fff; mask; mask = mask>>1)
-		instvalnxt("imm addr1", mask, addr+18);
-	instvalnxt("imm addr0", 0x0001, addr+18);
-	instvalnxt("imm addr1", 0xffff, addr+17);
-	instvalnxt("imm addr1", 0x7fff, addr+1);
-	for (mask = 0x8000, i = 15; mask >= 0x0002; mask = mask>>1, i--)
-		instvalnxt("imm addr0", mask, addr+i);
-}
-
-void makeaddr_addrpred16() {
-	makeaddrodd();
+	fclose(newfd);
 }
 
 void genpred16() {
@@ -362,6 +296,46 @@ void makeaddr_addgenramdwn() {
 	makeaddrodd();
 }
 
+void buswriteout() {
+	inst("imm out0 0200");
+	inst("imm out1 0200");
+}
+
+void buswrite(int val) {
+	int i;
+	inst("imm out0 00ff");
+	instval("imm out1", val%256);
+	inst("imm out0 0200");
+	inst("imm out1 0200");
+}
+
+void buswritegen() {
+	//destroys upper part of gen
+	int i;
+	inst("imm out0 00ff");
+	inst("imm gen0 ff00");
+	inst("gen out1 0000");
+	inst("imm out0 0200");
+	inst("imm out1 0200");
+}
+
+void comm1dat(int a, int b) {
+	buswrite(a);
+	inst("imm out1 0400");
+	buswrite(b);
+	inst("imm out0 0400");
+}
+
+void comm4dat(int a, int b, int c, int d, int e) {
+	buswrite(a);
+	inst("imm out1 0400");
+	buswrite(b);
+	buswrite(c);
+	buswrite(d);
+	buswrite(e);
+	inst("imm out0 0400");
+}
+
 void addrpred4() {
 	//must have a preceding instruction that is the only one feeding to it
 	//must feed to instruction directly after
@@ -380,22 +354,18 @@ void addrpred4() {
 	instnxt("imm addr0 0002", addr+1);
 }
 
-void makeaddr_addrpred4() {
-	makeaddrodd();
-}
-
 void mulcode() {
 	//destroys *MUL_F0 and *MUL_F1
-	//note that this multiplies two fixed points of the form:
-	//(1)sign,(3)int,(12)fraction
+	//destroys progaddr (eg the global variable "addr")
 	unsigned short firstloopaddr;
 	unsigned short pointer;
 	int i;
 	unsigned short mask;
 	char str[5], str1[5];
 
-	//record location
-	mul_loc = addr;
+	//replace previous pointers (it can no longer be called after this is done)
+	sprintf(str, "%04x", addr);
+	replacex88("MULL", str);
 
 	//initialize MUL_PROD sign
 	inst("imm addr0 ffff");
@@ -539,7 +509,7 @@ void mulcode() {
 	replacex88("BLOC", str1);
 
 	//correct for sign
-	inst("gen dir1 0000");
+	inst("dnc noop 0000");
 	inst("imm addr0 ffff");
 	instval("imm addr1", MUL_PROD);
 	makeaddrodd();
@@ -589,18 +559,14 @@ void callmul(unsigned int point_prod, unsigned int point_f0, unsigned int point_
 	inst("gen ramall 0000");
 }
 
-void replacemulcall() {
-	char str[5];
-	sprintf(str, "%04x", mul_loc);
-	replacex88("MULL", str);
-}
-
 void addcode() {
+	//destroys progaddr
 	//destroys gen and addr
 	char str[5];
 
-	//record location
-	add_loc = addr;
+	//can no longer be called with "ADDL" after this is done
+	sprintf(str, "%04x", addr);
+	replacex88("ADDL", str);
 
 	//charge gen with value at ADD_ADDEND0 and set addr to ADD_ADDEND1
 	inst("imm addr0 ffff");
@@ -650,150 +616,258 @@ void calladd(unsigned short point_sum, unsigned short point_a0, unsigned short p
 	inst("gen ramall 0000");
 }	
 
-void replaceaddcall() {
+void render(unsigned short point_count, unsigned short point_zi0, unsigned short point_zr0) {
+	unsigned short startaddr;
 	char str[5];
-	sprintf(str, "%04x", add_loc);
-	replacex88("ADDL", str);
-}
-
-void lcdinit() {
-	//destroys out, gen, and dir
-	//should set everything
-	unsigned short delayaddr;
-	
-	inst("imm dir1 ffff");
-	inst("imm out1 ffff");
-	instval("imm out0", _LCD_RST); //rst
-	//delay for reset
-	inst("imm gen1 ffff");
-	makeaddr_genpred16();
-	delayaddr = addr;
-	genpred16();
-	makeaddrodd();
-	inst("gen jzor ffff");
-	instnxt("dnc noop 0000", addr+2);
-	instnxt("dnc noop 0000", delayaddr);
-	instval("imm out1", _LCD_RST); //!rst
-	//more delay for reset
-	inst("imm gen1 ffff");
-	makeaddr_genpred16();
-	delayaddr = addr;
-	genpred16();
-	makeaddrodd();
-	inst("gen jzor ffff");
-	instnxt("dnc noop 0000", addr+2);
-	instnxt("dnc noop 0000", delayaddr);
-	//various commands
-	instval("imm out0", _LCD_CS|_LCD_RS); //cs and rs low
-	buswrite(0x01); //software reset
-	//delay
-	inst("imm gen0 ffff");
-	inst("imm gen1 1000");
-	makeaddr_genpred16();
-	delayaddr = addr;
-	genpred16();
-	makeaddrodd();
-	inst("gen jzor ffff");
-	instnxt("dnc noop 0000", addr+2);
-	instnxt("dnc noop 0000", delayaddr);
-	buswrite(0x11); //out of sleep
-	//delay
-	inst("imm gen0 ffff");
-	inst("imm gen1 1000");
-	makeaddr_genpred16();
-	delayaddr = addr;
-	genpred16();
-	makeaddrodd();
-	inst("gen jzor ffff");
-	instnxt("dnc noop 0000", addr+2);
-	instnxt("dnc noop 0000", delayaddr);
-	buswrite(0x38); //out of idle
-	buswrite(0x29); //display is on
-	buswrite(0x13); //regular display mode
-	buswrite(0x20); //inversion is off
-	buswrite(0x34); //tearing effect line off
-	comm1dat(0x36, 0x00); //set MADCTL
-	comm1dat(0x3a, 0x66); //set COLMOD
-	comm1dat(0x53, 0x2c); //set WRCTRLD
-	comm1dat(0x55, 0x00); //set WRCABC
-	comm1dat(0x51, 0xff); //set brightness to max
-	comm4dat(0x2a, 0x00, 0x00, 0x00, 0xef); //set column min-max
-	comm4dat(0x2b, 0x00, 0x00, 0x01, 0x3f); //set page min-max
-}
-
-void lcdresetframe() {
-	instval("imm out0", _LCD_RS); //RS low
-	buswrite(0x2c); //begin frame write
-	instval("imm out1", _LCD_RS); //RS high
-}
-
-void lcdcontinueframe() {
-	instval("imm out0", _LCD_RS); //RS low
-	buswrite(0x3c); //continue frame write
-	instval("imm out1", _LCD_RS); //RS high
-}
-
-void lcdpauseframe() {
-	instval("imm out0", _LCD_RS); //RS low
-	buswrite(0x00); //nop to end the write
-}
-
-void lcdsizeframe(int startcol, int endcol, int startpage, int endpage) {
-	comm4dat(0x2a, (startcol/256)%256, startcol%256,
-		 (endcol/256)%256, endcol%256); //set column min-max
-	comm4dat(0x2b, (startpage/256)%256, startpage%256,
-		 (endpage/256)%256, endpage%256); //set page min-max
-}
-
-void lcdboximm(int blue, int green, int red,
-	    int startcol, int endcol, int startpage, int endpage) {
-	//destroys addr, gen, out
-	unsigned short loopaddr;
-	lcdpauseframe();
-	lcdsizeframe(startcol, endcol, startpage, endpage);
-	lcdresetframe();
-	//double up on writes for speed and to fit in 16 bit counter
-	//ok if write 1 extra pixel b/c just box
-	//use addr register as helper
+	//init
 	inst("imm addr0 ffff");
-	instval("imm addr1", ((endcol-startcol+1)*(endpage-startpage+1)+1)/2);
-	makeaddr_addrpred16();
-	loopaddr = addr;
-	addrpred16();
-	buswrite((blue<<2)%256);
-	buswrite((green<<2)%256);
-	buswrite((red<<2)%256);
-	buswrite((blue<<2)%256);
-	buswrite((green<<2)%256);
-	buswrite((red<<2)%256);
+	instval("imm addr1", point_zi0);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ZI0);
+	inst("gen ramall 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ZI);
+	inst("gen ramall 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", point_zr0);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ZR0);
+	inst("gen ramall 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ZR);
+	inst("gen ramall 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_COUNTER);
+	inst("imm ramall 0000");
+	startaddr = addr;
+	//calculate squares
+	callmul(MAIN_ZIS, MAIN_ZI, MAIN_ZI);
+	callmul(MAIN_ZRS, MAIN_ZR, MAIN_ZR);
+	//calculate the iterated imaginary
+	callmul(MAIN_ZI, MAIN_ZI, MAIN_ZR);
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ZI);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	inst("imm gen0 8000");
+	inst("rol ramall 0000");
+	calladd(MAIN_ZI, MAIN_ZI, MAIN_ZI0);
+	//calculate iterated real
+	//get the twos complement of previous imaginary square
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ZIS);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	genpred16();
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_TEMP);
+	inst("gen ramall 0000");
+	inst("imm gen1 ffff");
+	inst("ram gen0 0000");
+	inst("gen ramall 0000");
+	//calculate iterated real for real now (hahaha get it)
+	calladd(MAIN_ZR, MAIN_ZRS, MAIN_TEMP);
+	calladd(MAIN_ZR, MAIN_ZR, MAIN_ZR0);
+	//increment counter
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_COUNTER);
+	inst("imm gen1 ffff");
+	inst("ram gen0 0000");
+	genpred16();
+	inst("gen ramall 0000");
+	inst("imm gen1 ffff");
+	inst("ram gen0 ffff");
+	inst("gen ramall 0000");
+	//test if escape due to OLD square sum being >=4
+	//squares are guarunteed positive
+	//allowing for overflow into sign bit
+	calladd(MAIN_TEMP, MAIN_ZRS, MAIN_ZIS);
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_TEMP);
 	makeaddrodd();
-	inst("addr jzor ffff");
+	inst("ram jzor c000");
 	instnxt("dnc noop 0000", addr+2);
-	instnxt("dnc noop 0000", loopaddr);
-	lcdpauseframe();
+	instexpnxt("dnc noop 0000", "PRNT");
+	//test if counter is >= max (32)
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_COUNTER);
+	makeaddrodd();
+	inst("ram jzor ffe0");
+	instnxt("dnc noop 0000", startaddr);
+	instexpnxt("dnc noop 0000", "PRNT");
+	sprintf(str, "%04x", addr);
+	replacex88("PRNT", str);
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_COUNTER);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", point_count);
+	inst("gen ramall 0000");
 }
 
-void main(int argc, char** argv) {
-	//this is just a quick test
+void main(int argc, char**argv) {
 	if (argc != 3) {
 		printf("need <target> <buffer>\n");
 		exit(0x01);
 	}
 	addr = 0;
 	fd = fopen(argv[2], "w+");
+	unsigned short delayaddr, loopaddr;
 
-	lcdinit();
-	lcdboximm(63, 0, 0,  0, 239, 0, 319);
-	lcdboximm(11, 11, 11,  33, 44, 33, 44);
-	lcdboximm(0, 50, 0,  1, 100, 50, 70);
-	lcdboximm(0, 0, 0,  144, 200, 200, 310);
-	callmul(0xf000, 0xf001, 0xf002);
-	calladd(0xf002, 0xf000, 0xf001);
-	instnxt("dnc noop 0000", addr);
+	//lcd init
+	inst("imm dir1 1fff");
+	inst("imm dir0 e000");
+	inst("imm out1 ffff");
+	inst("imm out0 1000");
+	//delay for reset
+	inst("imm gen1 ffff");
+	delayaddr = addr;
+	inst("dnc noop 0000");
+	genpred16();
+	inst("dnc noop 0000");
+	makeaddrodd();
+	inst("gen jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", delayaddr);
+	inst("imm out1 1000");
+	//more delay for reset
+	inst("imm gen1 ffff");
+	delayaddr = addr;
+	inst("dnc noop 0000");
+	genpred16();
+	inst("dnc noop 0000");
+	makeaddrodd();
+	inst("gen jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", delayaddr);
+	//various commands
+	inst("imm out0 0c00"); //cs and rs low
+	buswrite(0x38); //out of idle
+	buswrite(0x11); //out of sleep
+	buswrite(0x13); //normal display mode
+	buswrite(0x20); //inversion is off
+	buswrite(0x29); //display is on
+	comm1dat(0x0c, 0xe6); //set COLMOD
+	comm4dat(0x2a, 0x00, 0x00, 0x00, 0xef); //set column min-max
+	comm4dat(0x2b, 0x00, 0x00, 0x01, 0x3f); //set page min-max
 
+	//make screen grey
+	inst("imm out0 0400"); //RS low
+	buswrite(0x2c); //begin frame write
+	inst("imm out1 0400"); //RS high
+	inst("imm gen0 ffff");
+	inst("imm gen1 9600");
+	inst("imm out0 00ff");
+	inst("imm out1 007f");
+	delayaddr = addr;
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	genpred16();
+	makeaddrodd();
+	inst("gen jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", delayaddr);
+	//end lcd write
+	inst("imm out0 0400"); //RS low
+	buswrite(0x00); //nop to end the write
+	
+	//display mandelbrot set
+	//init lcd
+	inst("imm out0 0400"); //RS low
+	buswrite(0x2c); //begin frame write
+	inst("imm out1 0400"); //RS high
+	//init values
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_X);
+	inst("imm ramall 1000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_Y);
+	inst("imm ramall e980");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_DX);
+	inst("imm ramall ffd0");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_DY);
+	inst("imm ramall 0030");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_XLIMN);
+	inst("imm ramall 2c00");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_YLIMN);
+	inst("imm ramall e980");
+	//print the rendering for the pixel you are at
+	loopaddr = addr;
+	//get rendering and load it into gen
+	render(MAIN_RESULT, MAIN_Y, MAIN_X);
+	inst("imm gen0 ffff");
+	buswritegen();
+	buswritegen();
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_RESULT);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	//shift the rendering value up 3 spaces; becomes redder
+	//with increasing value until 32, which rolls over to zero
+	//use addr as register helper
+	//Write this last so that it is visible in the state of out_reg
+	inst("imm addr0 ffff");
+	inst("rol addr1 0000");
+	inst("imm gen0 ffff");
+	inst("addr gen1 0000");
+	inst("imm addr0 ffff");
+	inst("rol addr1 0000");
+	inst("imm gen0 ffff");
+	inst("addr gen1 0000");
+	inst("imm addr0 ffff");
+	inst("rol addr1 0000");
+	inst("imm gen0 ffff");
+	inst("addr gen1 0000");
+	buswritegen();
+	//increment column
+	calladd(MAIN_Y, MAIN_Y, MAIN_DY);
+	//test column value
+	calladd(MAIN_TEMP, MAIN_Y, MAIN_YLIMN);
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_TEMP);
+	makeaddrodd();
+	inst("ram jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", loopaddr);
+	//increment row and reset column
+	calladd(MAIN_X, MAIN_X, MAIN_DX);
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_Y);
+	inst("imm ramall e980");
+	//test row value
+	calladd(MAIN_TEMP, MAIN_X, MAIN_XLIMN);
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_TEMP);
+	makeaddrodd();
+	inst("ram jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", loopaddr);
+	
+	//end lcd write
+	inst("imm out0 0400"); //RS low
+	buswrite(0x00); //nop to end the write
+	instnxt("dnc noop 0000", addr); //halt
+
+	//code for functions
 	mulcode();
 	addcode();
-	replacemulcall();
-	replaceaddcall();
+
+	//finish
 	removex88(argv[1]);
+
+	//close
+	fclose(fd);
 }
