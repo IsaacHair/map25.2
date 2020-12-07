@@ -25,10 +25,13 @@ I should write more macros instead of doing everything line by
 line in assembly (so I bailed half way thru writing the program).
 
 Version 5:
+Just cleaned up the functions and everything should be set up better.
+
+Version 6 (not created yet):
 Just a white box that only moves up and down. Has gravity and one
 thruster that can go up.
 
-Version 6 (have not created this yet but plan to create it):
+Version 7 (have not created this yet but plan to create it):
 This will just move a lunar lander sprite around on a black screen
 using arrow key inputs from the arduino number pad. Arrow keys map as
 follows: -> is key "4", <- is key "6", v is key "5", and ^ is key "8".
