@@ -20,10 +20,15 @@ Version 3:
 Just echos the value in the keypad to gen_reg.
 
 Version 4:
+Started working on a frame rendering protocol but realized that
+I should write more macros instead of doing everything line by
+line in assembly (so I bailed half way thru writing the program).
+
+Version 5:
 Just a white box that only moves up and down. Has gravity and one
 thruster that can go up.
 
-Version 5:
+Version 6 (have not created this yet but plan to create it):
 This will just move a lunar lander sprite around on a black screen
 using arrow key inputs from the arduino number pad. Arrow keys map as
 follows: -> is key "4", <- is key "6", v is key "5", and ^ is key "8".
