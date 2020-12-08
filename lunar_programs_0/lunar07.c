@@ -169,7 +169,7 @@ void buswritegen() {
 	instval("imm out1", _LCD_WR);
 }
 
-void buswirteout() {
+void buswriteout() {
 	instval("imm out0", _LCD_WR);
 	instval("imm out1", _LCD_WR);
 }
