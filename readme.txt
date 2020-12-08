@@ -1,3 +1,6 @@
+**The readme.txt's in this repo will also act as changelog.txt's so that
+everything is visible easily**
+
 map25.2 assembly:
 This is basically just machine code.
 instruction looks like: XXXX <pneumonic> XXXX XXXX
