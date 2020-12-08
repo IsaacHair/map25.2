@@ -30,6 +30,8 @@ Just cleaned up the functions and everything should be set up better.
 Version 6 (not created yet):
 Just a white box that only moves up and down. Has gravity and one
 thruster that can go up. Uses integer to store position, not fixed point.
+Note that the screen in this version is treated as 512x512 even though
+visible area is only 240x320.
 
 Version 7 (have not created this yet but plan to create it):
 This will just move a lunar lander sprite around on a black screen

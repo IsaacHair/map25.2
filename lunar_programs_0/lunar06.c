@@ -206,6 +206,7 @@ void comm2_2datpointcut(int comm, unsigned short spoint, unsigned short epoint) 
 	inst("imm gen0 ffff");
 	makeaddrodd();
 	inst("ram jzor 0100");
+	instnxt("dnc noop 0000", addr+2);
 	inst("imm gen1 0001");
 	buswritegen();
 	inst("imm addr0 ffff");
@@ -218,6 +219,7 @@ void comm2_2datpointcut(int comm, unsigned short spoint, unsigned short epoint) 
 	inst("imm gen0 ffff");
 	makeaddrodd();
 	inst("ram jzor 0100");
+	instnxt("dnc noop 0000", addr+2);
 	inst("imm gen1 0001");
 	buswritegen();
 	inst("imm addr0 ffff");
@@ -895,7 +897,7 @@ void lcdboximmpointimm(int blue, int green, int red,
 	//of the pixels in the box, not the index of pixels, so start counting at 1!
 	unsigned short loopaddr;
 	lcdpauseframe();
-	lcdsizeframeimm(0x0040, 0x0049, 0x0040, 0x0049);
+	lcdsizeframepoint(scpoint, ecpoint, sppoint, eppoint);
 	lcdresetframe();
 	//double up on writes for speed and to fit in 16 bit counter
 	//ok if write 1 extra pixel b/c just box
@@ -953,7 +955,7 @@ void main(int argc, char** argv) {
 
 	//init values
 	setimmimm(MAIN_X, 0x0080);
-	setimmimm(MAIN_Y, 0x0100);
+	setimmimm(MAIN_Y, 0x0008);
 	setimmimm(MAIN_DX, 0x0000);
 	setimmimm(MAIN_DY, 0x0000);
 	setimmimm(MAIN_DDX, 0x0000);
@@ -987,16 +989,20 @@ void main(int argc, char** argv) {
 	replacex88("MA_N", str);
 	calladd(MAIN_DX, MAIN_DDX, MAIN_DX);
 	calladd(MAIN_X, MAIN_DX, MAIN_X);
+	calladd(MAIN_DY, MAIN_DDY, MAIN_DY);
+	calladd(MAIN_Y, MAIN_DY, MAIN_Y);
 	setimmimm(MAIN_XEND, 0x0009);
 	setimmimm(MAIN_YEND, 0x0009);
 	calladd(MAIN_XEND, MAIN_XEND, MAIN_X);
 	calladd(MAIN_YEND, MAIN_YEND, MAIN_Y);
 	lcdboximmpointimm(0, 0, 0,  MAIN_XOLD, MAIN_XENDOLD, MAIN_YOLD, MAIN_YENDOLD, 100);
-	lcdboximmpointimm(50, 50, 50, MAIN_X, MAIN_XEND, MAIN_Y, MAIN_YEND, 100);
+	lcdboximmpointimm(63, 63, 63, MAIN_X, MAIN_XEND, MAIN_Y, MAIN_YEND, 100);
+	inst("dnc noop 0000");
 	sprintf(str, "%04x", addr);
 	sprintf(str1, "%04x", loopaddr);
 	replacex88(str, str1);
 
+	//only write the code for the functions you use
 	//mfpcode();
 	addcode();
 	//replacemfpcall();
