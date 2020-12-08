@@ -27,7 +27,7 @@ line in assembly (so I bailed half way thru writing the program).
 Version 5:
 Just cleaned up the functions and everything should be set up better.
 
-Version 6 (not created yet):
+Version 6:
 Just a white box that only moves up and down. Has gravity and one
 thruster that can go up. Uses integer to store position, not fixed point.
 Note that the screen in this version is treated as 512x512 even though
