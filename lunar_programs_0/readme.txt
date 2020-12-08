@@ -33,7 +33,11 @@ thruster that can go up. Uses integer to store position, not fixed point.
 Note that the screen in this version is treated as 512x512 even though
 visible area is only 240x320.
 
-Version 7 (have not created this yet but plan to create it):
+Version 7:
+Just a white box going up and down, but with speed improvements and general
+improvements.
+
+Version 8 (have not created this yet but plan to create it):
 This will just move a lunar lander sprite around on a black screen
 using arrow key inputs from the arduino number pad. Arrow keys map as
 follows: -> is key "4", <- is key "6", v is key "5", and ^ is key "8".
