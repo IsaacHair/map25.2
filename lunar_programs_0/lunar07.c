@@ -867,10 +867,10 @@ void lcdboximmimm(int blue, int green, int red,
 	lcdsizeframeimm(startcol, endcol, startpage, endpage);
 	lcdresetframe();
 	//double up on writes for speed and to fit in 16 bit counter
-	//ok if write 1 extra pixel b/c just box
+	//ok if write 3 extra pixel b/c just box
 	//use addr register as helper
 	inst("imm addr0 ffff");
-	instval("imm addr1", ((endcol-startcol+1)*(endpage-startpage+1)+1)/2);
+	instval("imm addr1", ((endcol-startcol+1)*(endpage-startpage+1)+3)/4);
 	makeaddr_addrpred16();
 	loopaddr = addr;
 	addrpred16();
@@ -880,6 +880,53 @@ void lcdboximmimm(int blue, int green, int red,
 	buswrite((blue<<2)%256);
 	buswrite((green<<2)%256);
 	buswrite((red<<2)%256);
+	buswrite((blue<<2)%256);
+	buswrite((green<<2)%256);
+	buswrite((red<<2)%256);
+	buswrite((blue<<2)%256);
+	buswrite((green<<2)%256);
+	buswrite((red<<2)%256);
+	makeaddrodd();
+	inst("addr jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", loopaddr);
+	lcdpauseframe();
+}
+
+void lcdboxgreyimm(int shade,
+		  int startcol, int endcol, int startpage, int endpage) {
+	//Start-end range is INCLUSIVE.
+	//Column range is 0 to 239 and is written pixel by pixel
+	//Page range is 0 to 319 and is written column by column
+	//Color range is 0 to 63
+	//creates a box using all immediate values
+	//destroys addr, gen, out
+	unsigned short loopaddr;
+	lcdpauseframe();
+	lcdsizeframeimm(startcol, endcol, startpage, endpage);
+	lcdresetframe();
+	//double up on writes for speed and to fit in 16 bit counter
+	//ok if write 3 extra pixels b/c just box
+	//use addr register as helper
+	inst("imm addr0 ffff");
+	instval("imm addr1", ((endcol-startcol+1)*(endpage-startpage+1)+3)/4);
+	inst("imm out0 00ff");
+	instval("imm out1", (shade<<2)%256);
+	makeaddr_addrpred16();
+	loopaddr = addr;
+	addrpred16();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
 	makeaddrodd();
 	inst("addr jzor ffff");
 	instnxt("dnc noop 0000", addr+2);
@@ -903,7 +950,7 @@ void lcdboximmpointimm(int blue, int green, int red,
 	//ok if write 3 extra pixels b/c just box
 	//use addr register as helper
 	inst("imm addr0 ffff");
-	instval("imm addr1", (size+3)/2);
+	instval("imm addr1", (size+3)/4);
 	makeaddr_addrpred16();
 	loopaddr = addr;
 	addrpred16();
@@ -919,6 +966,47 @@ void lcdboximmpointimm(int blue, int green, int red,
 	buswrite((blue<<2)%256);
 	buswrite((green<<2)%256);
 	buswrite((red<<2)%256);
+	makeaddrodd();
+	inst("addr jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", loopaddr);
+	lcdpauseframe();
+}
+
+void lcdboxgreypointimm(int shade,
+		       unsigned short scpoint, unsigned short ecpoint,
+		       unsigned short sppoint, unsigned short eppoint,
+		       int size) {
+	//Start-end range is INCLUSIVE.
+	//Creates a box using immediate color, pointers to endpoints, and immediate size.
+	//Size can be up to 76,800 (decimal), must be > 0, and is the COUNT
+	//of the pixels in the box, not the index of pixels, so start counting at 1!
+	unsigned short loopaddr;
+	lcdpauseframe();
+	lcdsizeframepoint(scpoint, ecpoint, sppoint, eppoint);
+	lcdresetframe();
+	//double up on writes for speed and to fit in 16 bit counter
+	//ok if write 3 extra pixels b/c just box
+	//use addr register as helper
+	inst("imm addr0 ffff");
+	instval("imm addr1", (size+3)/4);
+	inst("imm out0 00ff");
+	instval("imm out1", (shade<<2)%256);
+	makeaddr_addrpred16();
+	loopaddr = addr;
+	addrpred16();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
+	buswriteout();
 	makeaddrodd();
 	inst("addr jzor ffff");
 	instnxt("dnc noop 0000", addr+2);
@@ -960,14 +1048,14 @@ void main(int argc, char** argv) {
 	lcdinit();
 
 	//init values
-	setimmimm(MAIN_X, 0x0080);
-	setimmimm(MAIN_Y, 0x0008);
+	setimmimm(MAIN_X, 0x0069);
+	setimmimm(MAIN_Y, 0x0069);
 	setimmimm(MAIN_DX, 0x0000);
 	setimmimm(MAIN_DY, 0x0000);
 	setimmimm(MAIN_DDX, 0x0000);
 	setimmimm(MAIN_DDY, 0x0000);
 	//init screen
-	lcdboximmimm(0, 0, 0,  0, 239, 0, 319);
+	lcdboxgreyimm(0,  0, 239, 0, 319);
 	//loop to move ship
 	loopaddr = addr;
 	//delay
@@ -997,12 +1085,12 @@ void main(int argc, char** argv) {
 	calladd(MAIN_X, MAIN_DX, MAIN_X);
 	calladd(MAIN_DY, MAIN_DDY, MAIN_DY);
 	calladd(MAIN_Y, MAIN_DY, MAIN_Y);
-	setimmimm(MAIN_XEND, 0x0009);
-	setimmimm(MAIN_YEND, 0x0009);
+	setimmimm(MAIN_XEND, 5-1);
+	setimmimm(MAIN_YEND, 5-1);
 	calladd(MAIN_XEND, MAIN_XEND, MAIN_X);
 	calladd(MAIN_YEND, MAIN_YEND, MAIN_Y);
-	lcdboximmpointimm(0, 0, 0,  MAIN_XOLD, MAIN_XENDOLD, MAIN_YOLD, MAIN_YENDOLD, 100);
-	lcdboximmpointimm(63, 63, 63, MAIN_X, MAIN_XEND, MAIN_Y, MAIN_YEND, 100);
+	lcdboxgreypointimm(0,  MAIN_XOLD, MAIN_XENDOLD, MAIN_YOLD, MAIN_YENDOLD, 25);
+	lcdboxgreypointimm(63,  MAIN_X, MAIN_XEND, MAIN_Y, MAIN_YEND, 25);
 	inst("dnc noop 0000");
 	sprintf(str, "%04x", addr);
 	sprintf(str1, "%04x", loopaddr);
@@ -1014,4 +1102,5 @@ void main(int argc, char** argv) {
 	//replacemfpcall();
 	replaceaddcall();
 	removex88(argv[1]);
+	fclose(fd);
 }
