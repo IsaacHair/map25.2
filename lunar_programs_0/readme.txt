@@ -37,7 +37,78 @@ Version 7:
 Just a white box going up and down, but with speed improvements and general
 improvements.
 
-Version 8 (have not created this yet but plan to create it):
+Version 8:
+Same as version 7, but I fixed \x88 to work with strings of any length
+and made other general improvements.
+
+Switched argument order on transimmimm() to match the other functions
+(eg the thing changed is the first argument).
+
+Note that the protocol
+now for labels and immediate pointers is to put the name of the parent
+function in front to avoid collisions. Ex: If mul(a, b) and add(a, b)
+both use a variable (lets call it "buffer"), they will need definitions
+for the address of this variable. The "buffer" for mul might be at address
+0x6942, so this address will be referred to using the definition MUL_BUFFER.
+Similary, the "buffer" for add might be at address 0x0999, so this address
+will be referred to as ADD_BUFFER. These functions might also use the
+address label "END" to refer to the end of a loop. In order to prevent
+replacex88 from replacing the "END" in mul() with a value from add() and vice
+versa, the "END" in mul() is called "MUL_END" and the "END" in add() is
+called "ADD_END". This naturally prevents collisions because c forbids two
+functions with the same name, so you will never have a case where two
+labels or variable addresses have the same prefix (note: this is why the "_"
+is important; only use this between the function name and variable name
+to ensure 0 collisions; otherwise a function with name a() and variable "BC"
+would collide with a function named ab() with variable "C" because both
+would create variable definitions of "ABC"). Also, use values that are ouside
+of the '0' to '9' range or 'a' to 'f' range because these are used for
+actual numbers.
+
+*Problem: This method does not work well for labels (variable pointers are fine).
+This method requires the length of the file to change dynamically.
+It is possible to decide on a fixed length for identifiers, which is
+basically what is already happening (the length is 4), or just pad
+with a shit load of spaces and then remove when removing the \x88's.
+
+*Better method: Make the names of the identifiers just 4 character arrays
+in the c program itself.
+Or 5 if you are using sprintf() and need the \0 to go somewhere but you
+get the idea. Create a function to allocate unique identifiers
+for these arrays, starting from "AAAA" and counting up using the
+capital letters. This gives 26^4 possible labels for the assembly
+\x88 file and allows you to refer to each of those labels using
+an intelligible and unique name. Ex: You create char mul_end[4]
+to serve as the identifier for the end of a loop. You send it to
+function makelabel(char* str), which allocates it to "AAAF" because
+that is the next label based on a global variable that counts up
+to keep track of where you are. Now, when using that label, just
+type mul_end and it will be used as "AAAF".
+
+Also, with allocation being done this way, you don't have to do the "FX_"
+prefix because the string itself can just be declared within the function
+and gcc can handle not having collisions when it is compiled.
+
+Note: I could store the address pointers as strings instead of numbers,
+which would simplify the writing of code and allow you to not have
+to replace the function calls at the end because the value would just
+be some placeholder like "AABB" and then it would get replaced with the
+actual location like "a09c". However, leaving them as numbers is a good
+way to check that you aren't mixing addresses and labels together
+because it will throw a warning if you try to use an unsigned short
+where the replacex88() function is expecting a pointer or vice versa.
+Therefore, I will not replace with strings immediately.
+
+Also added "booster" option (if you press "0" it will multiply the acceleration
+by 0x3.744. Note that the current fixed point algorithm will actually
+work fine for this; just input the acceleration value and then multiply
+by 0x3744. Even though it treats the acceleration as a tiny number instead of an
+int, it will still scale by a factor of 0x3.744 which is what you want.
+This also serves as a way to test that the mfp function is working.
+Note that gravity is also accelerated, so really this is like time warping by
+0x3.744.
+
+Version 9 (have not created this yet but plan to create it):
 This will just move a lunar lander sprite around on a black screen
 using arrow key inputs from the arduino number pad. Arrow keys map as
 follows: -> is key "4", <- is key "6", v is key "5", and ^ is key "8".

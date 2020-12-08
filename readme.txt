@@ -197,3 +197,7 @@ File types are as follows:
 		with pneumonics replaced and comments removed (pages have not been re-ordered yet)
 	.eeprom is the converted version of the .up file FOR USE WITH THE VIRTUAL MACHINE
 		(this file is meant to emulate the contents of the eeproms on the real machine)
+
+Labels need to have the function name and then an _ to prevent collions. See
+lunar_programs_0/readme.txt for a full explanation (it will be under version 8).
+Labels are actually served using the function makelabel(), again see version 8.
