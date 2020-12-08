@@ -179,3 +179,18 @@ Here are all of the notes:
 Note: basic_library/<insert latest version> should be a collection of all
 functions and drivers written so far, but it is not updated as of now
 because I am still writing the keypad drivers in lunar_programs_*
+
+Note: DO NOT PRESS DOWN ON KEYS ON THE KEYPAD UNTIL DIR REGISTER IS SET.
+
+File types are as follows:
+	.c is the c file which is used to create the assembly file
+	(no extension) is the executable of the c file, which creates the .x88 and .asm files
+	.x88 is the assembly file with \x88 identifiers still present
+	.asm is the assembly file with just clean map25.2 assembly (maybe comments too)
+	.up is the "upload code" which is just the assembly file but with the pneumonics replaced
+		and re-ordered into pages for writing to the eeproms. Only actual pages with data
+		are included in the write instructions
+	.buff is just the buffer file for the upload code, basically it is the .up file but only
+		with pneumonics replaced and comments removed (pages have not been re-ordered yet)
+	.eeprom is the converted version of the .up file FOR USE WITH THE VIRTUAL MACHINE
+		(this file is meant to emulate the contents of the eeproms on the real machine)
