@@ -143,3 +143,8 @@ are mixed in this program, so it is kind of messy. Also, the values become somew
 innacurate if you scale down to extremely slow speeds because, for example, an
 acceleration of 0x0111 would get cut off to an acceleration of 0x0001 when scaled
 down by time warp.
+
+In future versions, it might be better to perform time warps in a different way.
+Right now, time warping means scaling the velocity and acceleration scalor
+during the warp, and, once it is done, the acceleration is constantly
+scaled by the acceleration scalor.
