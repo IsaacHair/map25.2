@@ -131,3 +131,15 @@ if the rocket goes off screen, it will simply loop back around.
 
 Version 10:
 Same as version 9, except the screen is used fully and it loops around immediately.
+
+Version 11:
+Moves a 5x5 spaceship around on the screen, looping around if it goes off screen.
+It has thrusters in all directions and it has timescale (eg you can adjust
+"timewarp" like in kerbal space program). <up> is "8", <down> is "0", <right> is "7",
+<left> is "9", <increase warp> is "#", <decrease warp> is "*". Note that time
+warp exists on a logarithmic scale. You can also set the time to 0 if you want and
+it can still recover. Note that the data types of (1,9,6) and (1,3,12) and (0,16,0)
+are mixed in this program, so it is kind of messy. Also, the values become somewhat
+innacurate if you scale down to extremely slow speeds because, for example, an
+acceleration of 0x0111 would get cut off to an acceleration of 0x0001 when scaled
+down by time warp.
