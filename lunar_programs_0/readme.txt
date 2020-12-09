@@ -115,8 +115,16 @@ Note that gravity is also accelerated, so really this is like time warping by
 
 Note: Mark string variables with "_" in front to easily tell what they are.
 
-Version 9 (have not created this yet but plan to create it):
+Version 9:
 This will just move a lunar lander sprite around on a black screen
-using arrow key inputs from the arduino number pad. Arrow keys map as
-follows: -> is key "4", <- is key "6", v is key "5", and ^ is key "8".
+using arrow key inputs from the arduino number pad.
+Arrow keys map as follows: <right> is key "7", <left> is key "9",
+<up> is key "8", and <down> is key "0". Acceleration boost is key "#".
+Note that the up and down are inverted on purpose because this is how
+it is on an airplane/rocket.
 They keypad is meant to be used upside down.
+Numbers are stored as fixed points where the integer part is the upper 7
+bits and the fraction part is the lower 9 bits, and there is no sign.
+mfp() still operates on the presumption that the form is 1,3,12 not 7,9.
+Only the corner 128 pixels in the x and y direction are used, and,
+if the rocket goes off screen, it will simply loop back around.
