@@ -201,3 +201,8 @@ File types are as follows:
 Labels need to have the function name and then an _ to prevent collions. See
 lunar_programs_0/readme.txt for a full explanation (it will be under version 8).
 Labels are actually served using the function makelabel(), again see version 8.
+
+Note about copying files into the /bin folder of the linux computer to use them on the terminal:
+when doing this, I will ommit the file version for clarity, so collisioncheck3 becomes
+just collisioncheck. However, I will maintain the version number in the main folder of the
+repo to ensure that it is updated to the latest version.

@@ -67,3 +67,7 @@ it contains data.
 This version will basically create a state machine.
 I don't know if it is safe to call functions several thousand layers deep but
 whatevs it seems to work.
+
+Makerom v1:
+This is an exact copy of converter v1, just under a more unique name so that
+it can be put in the /bin folder.
