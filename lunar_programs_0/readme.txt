@@ -1,6 +1,11 @@
 As you would expect, this will create a version of the lunar lander
 game. It is to be used with the vma412 and the arduino number pad.
 
+Note that lunar_0_XX and lunarXX refer to the same thing;
+its just that lunar_0_XX is more specific if the file is moved
+to a different location so you know that it came from the zeroth set
+of programs (eg the index of this lunar folder as a whole).
+
 Version 0:
 This was basically where i just copied in most of the code
 from previous programs that I think I will need. These include
@@ -33,7 +38,7 @@ thruster that can go up. Uses integer to store position, not fixed point.
 Note that the screen in this version is treated as 512x512 even though
 visible area is only 240x320.
 
-Version 7:
+Version 7: (lunar_0_07* is an exact copy of lunar07*)
 Just a white box going up and down, but with speed improvements and general
 improvements.
 
