@@ -128,3 +128,6 @@ bits and the fraction part is the lower 9 bits, and there is no sign.
 mfp() still operates on the presumption that the form is 1,3,12 not 7,9.
 Only the corner 128 pixels in the x and y direction are used, and,
 if the rocket goes off screen, it will simply loop back around.
+
+Version 10:
+Same as version 9, except the screen is used fully and it loops around immediately.
