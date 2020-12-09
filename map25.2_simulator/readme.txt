@@ -1,3 +1,13 @@
+convert01 is convert and vm03 is vm
+These bois will be added to the /bin folder so they can be used
+from anywhere in the terminal.
+Actually, on second thought, this is very dangerous because
+I will inevitably forget to update the files and it will take
+15 minutes to figure out why the hell vm isn't executing properly
+when I "clearly updated it" -- you know how it goes.
+I'm just going to put convert01 and vm03 in the /bin folder
+and the root folder of this repo as well.
+
 Simple machine to simulate the map25.2 cpu inside whatever machine
 you use to compile the program.
 
