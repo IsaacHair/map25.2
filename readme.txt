@@ -206,3 +206,11 @@ Note about copying files into the /bin folder of the linux computer to use them 
 when doing this, I will ommit the file version for clarity, so collisioncheck3 becomes
 just collisioncheck. However, I will maintain the version number in the main folder of the
 repo to ensure that it is updated to the latest version.
+
+Note that, at this point, lunar_0_08.c is the most advanced version of any file; it actually
+has proper label allocation, it fully initializes the lcd, and it includes mfp() and add().
+
+Quick sidebar: mfp() can actually be used as regular multiply as long as the factors are shifted
+up a total of twelve bits between the two of them. So, you could shift factor0 up by 8 (displacement,
+not enumeration) and factor1 up by 4 (again displacement) and get the correct result as long
+as the factors don't end up being truncated.
