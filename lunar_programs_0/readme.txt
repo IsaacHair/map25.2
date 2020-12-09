@@ -108,6 +108,8 @@ This also serves as a way to test that the mfp function is working.
 Note that gravity is also accelerated, so really this is like time warping by
 0x3.744.
 
+Note: Mark string variables with "_" in front to easily tell what they are.
+
 Version 9 (have not created this yet but plan to create it):
 This will just move a lunar lander sprite around on a black screen
 using arrow key inputs from the arduino number pad. Arrow keys map as

@@ -43,7 +43,7 @@ long labelcount;
 #define ADD_SUM 0x0002
 #define ADD_RET 0x0003
 unsigned short add_loc;
-char add_loc_label[4];
+char _add_loc_label[5];
 
 #define MFP_ARRAY 0x0010
 #define MFP_F0 0x0004
@@ -51,7 +51,7 @@ char add_loc_label[4];
 #define MFP_PROD 0x0006
 #define MFP_RET 0x0007
 unsigned short mfp_loc;
-char mfp_loc_label[4];
+char _mfp_loc_label[5];
 
 //values stored as (16)int for now, but will need more accuracy in future
 #define MAIN_X 0x0008 //lowest corner position
@@ -99,10 +99,11 @@ void instvalexpnxt(char*op, unsigned short val, char*nxt) {
 }
 
 void makelabel(char* str) {
-	//str only needs to be 4 characters long; no need for '\0'
+	//str needs to be 5 characters to ensure good behavior (tack on '\0')
 	int i, div;
-	for (i = 0, div = 1; i < 4; i++, div *= 26)
+	for (i = 3, div = 1; i >= 0; i--, div *= 26)
 		str[i] = (labelcount/div)%26+'A';
+	str[4] = '\0';
 	labelcount++;
 }
 
@@ -140,7 +141,7 @@ void replacex88immexp(unsigned short old, char* new) {
 
 void replacex88expimm(char* old, unsigned short new) {
 	char str[5];
-	sprintf(str, "%04x", old);
+	sprintf(str, "%04x", new);
 	replacex88expexp(old, str);
 }
 
@@ -305,58 +306,58 @@ void addgenram() {
 	//requires average of 40.5 clocks
 	//high efficiency rom packing (not perfect though)
 	unsigned short mask;
-	char new_noncarry[4], new_carry[4], noncarry[4], carry[4], done[4];
+	char _new_noncarry[5], _new_carry[5], _noncarry[5], _carry[5], _done[5];
 
-	makelabel(new_noncarry);
-	makelabel(new_carry);
-	makelabel(noncarry);
-	makelabel(carry);
-	makelabel(done);
+	makelabel(_new_noncarry);
+	makelabel(_new_carry);
+	makelabel(_noncarry);
+	makelabel(_carry);
+	makelabel(_done);
 
 	//do the addition
 	makeaddrodd();
-	instexpnxt("ram jzor 0001", new_noncarry);
+	instexpnxt("ram jzor 0001", _new_noncarry);
 	for (mask = 0x0001; mask; mask = mask<<1) {
-		replacex88expexp(new_noncarry, noncarry);
-		replacex88expexp(new_carry, carry);
+		replacex88expexp(_new_noncarry, _noncarry);
+		replacex88expexp(_new_carry, _carry);
 		makeaddreven();
-		replacex88expimm(noncarry, addr);
+		replacex88expimm(_noncarry, addr);
 		instvalnxt("gen jzor", mask, addr+2);
 		instvalnxt("gen jzor", mask, addr+3);
 		if (mask != 0x8000) {
-			instvalexpnxt("ram jzor", mask<<1, new_noncarry);
-			instvalexpnxt("ram jzor", mask<<1, new_noncarry);
+			instvalexpnxt("ram jzor", mask<<1, _new_noncarry);
+			instvalexpnxt("ram jzor", mask<<1, _new_noncarry);
 			instvalnxt("imm gen1", mask, addr+2);
 			instvalnxt("imm gen0", mask, addr+2);
-			instvalexpnxt("ram jzor", mask<<1, new_noncarry);
-			instvalexpnxt("ram jzor", mask<<1, new_carry);
+			instvalexpnxt("ram jzor", mask<<1, _new_noncarry);
+			instvalexpnxt("ram jzor", mask<<1, _new_carry);
 		}
 		else {
-			instvalexpnxt("imm gen0", mask, done);
-			instvalexpnxt("imm gen1", mask, done);
-			instvalexpnxt("imm gen1", mask, done);
-			instvalexpnxt("imm gen0", mask, done);
+			instvalexpnxt("imm gen0", mask, _done);
+			instvalexpnxt("imm gen1", mask, _done);
+			instvalexpnxt("imm gen1", mask, _done);
+			instvalexpnxt("imm gen0", mask, _done);
 		}
 		makeaddreven();
-		replacex88expimm(carry, addr);
+		replacex88expimm(_carry, addr);
 		instvalnxt("gen jzor", mask, addr+2);
 		instvalnxt("gen jzor", mask, addr+3);
 		if (mask != 0x8000) {
 			instvalnxt("imm gen1", mask, addr+4);
 			instvalnxt("imm gen0", mask, addr+4);
-			instvalexpnxt("ram jzor", mask<<1, new_carry);
-			instvalexpnxt("ram jzor", mask<<1, new_carry);
-			instvalexpnxt("ram jzor", mask<<1, new_noncarry);
-			instvalexpnxt("ram jzor", mask<<1, new_carry);
+			instvalexpnxt("ram jzor", mask<<1, _new_carry);
+			instvalexpnxt("ram jzor", mask<<1, _new_carry);
+			instvalexpnxt("ram jzor", mask<<1, _new_noncarry);
+			instvalexpnxt("ram jzor", mask<<1, _new_carry);
 		}
 		else {
-			instvalexpnxt("imm gen1", mask, done);
-			instvalexpnxt("imm gen0", mask, done);
-			instvalexpnxt("imm gen0", mask, done);
-			instvalexpnxt("imm gen1", mask, done);
+			instvalexpnxt("imm gen1", mask, _done);
+			instvalexpnxt("imm gen0", mask, _done);
+			instvalexpnxt("imm gen0", mask, _done);
+			instvalexpnxt("imm gen1", mask, _done);
 		}
 	}
-	replacex88expimm(done, addr);
+	replacex88expimm(_done, addr);
 }
 
 void makeaddr_addgenram() {
@@ -369,28 +370,28 @@ void addgenramdwn() {
 	//requires exactly 48 clocks
 	//high efficiency rom packing (not perfect though)
 	unsigned short mask;
-	char new_noncarry[4], new_carry[4], noncarry[4], carry[4], done[4];
+	char _new_noncarry[5], _new_carry[5], _noncarry[5], _carry[5], _done[5];
 
-	makelabel(new_noncarry);
-	makelabel(new_carry);
-	makelabel(noncarry);
-	makelabel(carry);
-	makelabel(done);
+	makelabel(_new_noncarry);
+	makelabel(_new_carry);
+	makelabel(_noncarry);
+	makelabel(_carry);
+	makelabel(_done);
 
 	//do the addition
 	makeaddrodd();
 	instnxt("ram jzor 0001", addr+1);
 	instnxt("gen jzor 0001", addr+2);
 	instnxt("gen jzor 0001", addr+3);
-	instexpnxt("ram jzor 0002", new_noncarry);
-	instexpnxt("ram jzor 0002", new_noncarry);
-	instexpnxt("ram jzor 0002", new_noncarry);
-	instexpnxt("ram jzor 0002", new_carry);
+	instexpnxt("ram jzor 0002", _new_noncarry);
+	instexpnxt("ram jzor 0002", _new_noncarry);
+	instexpnxt("ram jzor 0002", _new_noncarry);
+	instexpnxt("ram jzor 0002", _new_carry);
 	for (mask = 0x0002; mask; mask = mask<<1) {
-		replacex88expexp(new_noncarry, noncarry);
-		replacex88expexp(new_carry, carry);
+		replacex88expexp(_new_noncarry, _noncarry);
+		replacex88expexp(_new_carry, _carry);
 		makeaddreven();
-		replacex88expimm(noncarry, addr);
+		replacex88expimm(_noncarry, addr);
 		instvalnxt("gen jzor", mask, addr+2);
 		instvalnxt("gen jzor", mask, addr+3);
 		if (mask != 0x8000) {
@@ -398,23 +399,23 @@ void addgenramdwn() {
 			instvalnxt("imm gen1", mask>>1, addr+4);
 			instvalnxt("imm gen1", mask>>1, addr+4);
 			instvalnxt("imm gen0", mask>>1, addr+4);
-			instvalexpnxt("ram jzor", mask<<1, new_noncarry);
-			instvalexpnxt("ram jzor", mask<<1, new_noncarry);
-			instvalexpnxt("ram jzor", mask<<1, new_noncarry);
-			instvalexpnxt("ram jzor", mask<<1, new_carry);
+			instvalexpnxt("ram jzor", mask<<1, _new_noncarry);
+			instvalexpnxt("ram jzor", mask<<1, _new_noncarry);
+			instvalexpnxt("ram jzor", mask<<1, _new_noncarry);
+			instvalexpnxt("ram jzor", mask<<1, _new_carry);
 		}
 		else {
 			instvalnxt("imm gen0", mask>>1, addr+4);
 			instvalnxt("imm gen1", mask>>1, addr+4);
 			instvalnxt("imm gen1", mask>>1, addr+4);
 			instvalnxt("imm gen0", mask>>1, addr+4);
-			instvalexpnxt("imm gen0", mask, done);
-			instvalexpnxt("imm gen0", mask, done);
-			instvalexpnxt("imm gen0", mask, done);
-			instvalexpnxt("imm gen1", mask, done);
+			instvalexpnxt("imm gen0", mask, _done);
+			instvalexpnxt("imm gen0", mask, _done);
+			instvalexpnxt("imm gen0", mask, _done);
+			instvalexpnxt("imm gen1", mask, _done);
 		}
 		makeaddreven();
-		replacex88expimm(carry, addr);
+		replacex88expimm(_carry, addr);
 		instvalnxt("gen jzor", mask, addr+2);
 		instvalnxt("gen jzor", mask, addr+3);
 		if (mask != 0x8000) {
@@ -422,23 +423,23 @@ void addgenramdwn() {
 			instvalnxt("imm gen0", mask>>1, addr+4);
 			instvalnxt("imm gen0", mask>>1, addr+4);
 			instvalnxt("imm gen1", mask>>1, addr+4);
-			instvalexpnxt("ram jzor", mask<<1, new_noncarry);
-			instvalexpnxt("ram jzor", mask<<1, new_carry);
-			instvalexpnxt("ram jzor", mask<<1, new_carry);
-			instvalexpnxt("ram jzor", mask<<1, new_carry);
+			instvalexpnxt("ram jzor", mask<<1, _new_noncarry);
+			instvalexpnxt("ram jzor", mask<<1, _new_carry);
+			instvalexpnxt("ram jzor", mask<<1, _new_carry);
+			instvalexpnxt("ram jzor", mask<<1, _new_carry);
 		}
 		else {
 			instvalnxt("imm gen1", mask>>1, addr+4);
 			instvalnxt("imm gen0", mask>>1, addr+4);
 			instvalnxt("imm gen0", mask>>1, addr+4);
 			instvalnxt("imm gen1", mask>>1, addr+4);
-			instvalexpnxt("imm gen0", mask, done);
-			instvalexpnxt("imm gen1", mask, done);
-			instvalexpnxt("imm gen1", mask, done);
-			instvalexpnxt("imm gen1", mask, done);
+			instvalexpnxt("imm gen0", mask, _done);
+			instvalexpnxt("imm gen1", mask, _done);
+			instvalexpnxt("imm gen1", mask, _done);
+			instvalexpnxt("imm gen1", mask, _done);
 		}
 	}
-	replacex88expimm(done, addr);
+	replacex88expimm(_done, addr);
 }
 
 void makeaddr_addgenramdwn() {
@@ -475,11 +476,11 @@ void mfpcode() {
 	unsigned short pointer;
 	int i;
 	unsigned short mask;
-	char sectionend[4], blockend[4], full[4];
+	char _sectionend[5], _blockend[5], _full[5];
 
-	makelabel(sectionend);
-	makelabel(blockend);
-	makelabel(full);
+	makelabel(_sectionend);
+	makelabel(_blockend);
+	makelabel(_full);
 
 	//record location
 	mfp_loc = addr;
@@ -495,7 +496,7 @@ void mfpcode() {
 		instval("imm addr1", pointer);
 		makeaddrodd();
 		inst("ram jzor 8000");
-		instexpnxt("imm addr0 ffff", sectionend);
+		instexpnxt("imm addr0 ffff", _sectionend);
 		inst("imm gen0 ffff");
 		inst("ram gen1 0000");
 		genpred16();
@@ -507,9 +508,9 @@ void mfpcode() {
 		instval("imm addr1", MFP_PROD);
 		makeaddrodd();
 		inst("ram jzor 8000");
-		instexpnxt("imm ramall 8000", sectionend);
-		instexpnxt("imm ramall 0000", sectionend);
-		replacex88expimm(sectionend, addr);
+		instexpnxt("imm ramall 8000", _sectionend);
+		instexpnxt("imm ramall 0000", _sectionend);
+		replacex88expimm(_sectionend, addr);
 	}
 
 	//explicitly define the procedure for recording partial products
@@ -565,7 +566,7 @@ void mfpcode() {
 	makeaddrodd();
 	firstloopaddr = addr;
 	inst("addr jzor 000f");
-	instexpnxt("dnc noop 0000", blockend);
+	instexpnxt("dnc noop 0000", _blockend);
 	inst("dnc noop 0000");
 	//address predecessor
 	addrpred4();
@@ -575,7 +576,7 @@ void mfpcode() {
 	inst("ram jzor ffff");
 	instnxt("dnc noop 0000", addr+2);
 	//do the rotation addition
-	instexpnxt("dnc noop 0000", full);
+	instexpnxt("dnc noop 0000", _full);
 	//skip
 	inst("ror ramall 0000");
 	inst("imm gen0 ffff");
@@ -584,10 +585,10 @@ void mfpcode() {
 	instnxt("imm gen0 8000", firstloopaddr);
 	//actual addition
 	makeaddr_addgenramdwn();
-	replacex88expimm(full, addr);
+	replacex88expimm(_full, addr);
 	addgenramdwn();
 	replacex88immimm(addr, firstloopaddr);
-	replacex88expimm(blockend, addr);
+	replacex88expimm(_blockend, addr);
 
 	//add the partial products without rotation
 	//init (use gen as is)
@@ -601,7 +602,7 @@ void mfpcode() {
 	instnxt("addr jzor 0001", addr+2);
 	instnxt("dnc noop 0000", addr+3);
 	instnxt("dnc noop 0000", addr+2);
-	instexpnxt("dnc noop 0000", blockend);
+	instexpnxt("dnc noop 0000", _blockend);
 	//address predecessor
 	inst("dnc noop 0000");
 	addrpred4();
@@ -610,13 +611,13 @@ void mfpcode() {
 	inst("ram jzor ffff");
 	instnxt("dnc noop 0000", firstloopaddr);
 	//do the rotation addition
-	instexpnxt("dnc noop 0000", full);
+	instexpnxt("dnc noop 0000", _full);
 	//actual addition
 	makeaddr_addgenram();
-	replacex88expimm(full, addr);
+	replacex88expimm(_full, addr);
 	addgenram();
 	replacex88immimm(addr, firstloopaddr);
-	replacex88expimm(blockend, addr);
+	replacex88expimm(_blockend, addr);
 
 	//correct for sign
 	inst("dnc noop 0000");
@@ -624,14 +625,14 @@ void mfpcode() {
 	instval("imm addr1", MFP_PROD);
 	makeaddrodd();
 	inst("ram jzor 8000");
-	instexpnxt("gen ramall 0000", sectionend);
+	instexpnxt("gen ramall 0000", _sectionend);
 	inst("dnc noop 0000");
 	genpred16();
 	inst("gen ramall 0000");
 	inst("imm gen1 ffff");
 	inst("ram gen0 0000");
-	instexpnxt("gen ramall 0000", sectionend);
-	replacex88expimm(sectionend, addr);
+	instexpnxt("gen ramall 0000", _sectionend);
+	replacex88expimm(_sectionend, addr);
 
 	//go to return address
 	inst("imm addr0 ffff");
@@ -657,7 +658,7 @@ void callmfp(unsigned int point_prod, unsigned int point_f0, unsigned int point_
 	inst("gen ramall 0000");
 	inst("imm addr0 ffff");
 	instval("imm addr1", MFP_RET);
-	instvalexpnxt("imm ramall", addr+1, mfp_loc_label);
+	instvalexpnxt("imm ramall", addr+1, _mfp_loc_label);
 	//transfer answer
 	inst("imm addr0 ffff");
 	instval("imm addr1", MFP_PROD);
@@ -669,11 +670,11 @@ void callmfp(unsigned int point_prod, unsigned int point_f0, unsigned int point_
 }
 
 void replacemfpcall() {
-	replacex88expimm(mfp_loc_label, mfp_loc);
+	replacex88expimm(_mfp_loc_label, mfp_loc);
 }
 
 void makemfplabel() {
-	makelabel(mfp_loc_label);
+	makelabel(_mfp_loc_label);
 }
 
 void addcode() {
@@ -720,7 +721,7 @@ void calladd(unsigned short point_sum, unsigned short point_a0, unsigned short p
 	inst("gen ramall 0000");
 	inst("imm addr0 ffff");
 	instval("imm addr1", ADD_RET);
-	instvalexpnxt("imm ramall", addr+1, add_loc_label);
+	instvalexpnxt("imm ramall", addr+1, _add_loc_label);
 	//transfer sum
 	inst("imm addr0 ffff");
 	instval("imm addr1", ADD_SUM);
@@ -732,11 +733,11 @@ void calladd(unsigned short point_sum, unsigned short point_a0, unsigned short p
 }	
 
 void replaceaddcall() {
-	replacex88expimm(add_loc_label, add_loc);
+	replacex88expimm(_add_loc_label, add_loc);
 }
 
 void makeaddlabel() {
-	makelabel(add_loc_label);
+	makelabel(_add_loc_label);
 }
 
 void keygen() {
@@ -1068,7 +1069,7 @@ void transimmimm(unsigned short targetptr, unsigned short sourceptr) {
 void main(int argc, char** argv) {
 	//note that column index is X and page index is Y
 	int loopaddr, delayaddr;
-	char next[4];
+	char _next[5];
 	if (argc != 3) {
 		printf("need <target> <buffer>\n");
 		exit(0x01);
@@ -1078,7 +1079,7 @@ void main(int argc, char** argv) {
 	fd = fopen(argv[2], "w+");
 	makeaddlabel();
 	makemfplabel();
-	makelabel(next);
+	makelabel(_next);
 	inst("imm dir0 ffff");
 	lcdinit();
 
@@ -1113,15 +1114,15 @@ void main(int argc, char** argv) {
 	setimmimm(MAIN_DDX, 0xffff);
 	makeaddrodd();
 	inst("gen jzor 0200");
-	instexpnxt("dnc noop 0000", next);
+	instexpnxt("dnc noop 0000", _next);
 	setimmimm(MAIN_DDX, 0x0001);
-	replacex88expimm(next, addr);
+	replacex88expimm(_next, addr);
 	setimmimm(MAIN_BOOST, 0x1000); //this is one in fixed point
 	makeaddrodd();
 	inst("gen jzor 0100");
-	instexpnxt("dnc noop 0000", next);
+	instexpnxt("dnc noop 0000", _next);
 	setimmimm(MAIN_BOOST, 0x3744);
-	replacex88expimm(next, addr);
+	replacex88expimm(_next, addr);
 	//do the calculations
 	callmfp(MAIN_DDX, MAIN_DDX, MAIN_BOOST);
 	callmfp(MAIN_DDY, MAIN_DDY, MAIN_BOOST);
