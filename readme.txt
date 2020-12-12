@@ -3,15 +3,15 @@ everything is visible easily**
 
 map25.2 assembly:
 This is basically just machine code.
-instruction looks like: XXXX <pneumonic> XXXX XXXX
+instruction looks like: XXXX <mnemonic> XXXX XXXX
 The first set of X's is the address to store the instruction at.
 The second set of X's is the immediate value for the instruction.
 The third set of X's is the address for the next instruction.
-The pneumonic represents the op code without having to write
+The mnemonic represents the op code without having to write
 the op code out in raw binary or hex values.
 
 updated instruction:
-XXXX <bus connection pneumonic> <write/jump/no-op pneumonic> XXXX XXXX
+XXXX <bus connection mnemonic> <write/jump/no-op mnemonic> XXXX XXXX
 X's correspond to the same things as above.
 Also, a line with only "<" begins a comment (start the comment
 on the next line) and ">" ends the comment (put the ">" on its
@@ -19,7 +19,7 @@ own line and start the code after that line).
 Note: comment should not contain ">" in the actual content of
 the comment.
 
-bus pneumonics (upper nibble):
+bus mnemonics (upper nibble):
 0x0 imm
 0x1 adr
 0x2 gen
@@ -31,7 +31,7 @@ bus pneumonics (upper nibble):
 0x8 ram
 0x9-0xf (not used)
 
-write/jump/no-op pneumonics (lower nibble):
+write/jump/no-op mnemonics (lower nibble):
 0x0 jzor
 0x1 asnx
 0x2 out0
@@ -55,7 +55,7 @@ Using *.u25 for upload code for EEPROMS (ie a stream of hex digits with
 a page and data for that page).
 Using *.a25 for assembly code.
 
-Updated pneumonics:
+Updated mnemonics:
 Upper nibble
 0x0 imm
 0x1 adr
@@ -94,9 +94,9 @@ not three, so it defaults to 0xa)
 There is a command for d/c in the latest version,
 which corresponds to 0x9.
 
-Ok basically I'm going to update the pneumonics and then make a
-full list of pneumonics with functional descriptions.
-A single character is also considered a pneumonic and it just
+Ok basically I'm going to update the mnemonics and then make a
+full list of mnemonics with functional descriptions.
+A single character is also considered a mnemonic and it just
 directly corresponds to the machine code; ie typing "7" is the same
 as typing "dir1".
 
@@ -190,11 +190,11 @@ File types are as follows:
 	(no extension) is the executable of the c file, which creates the .x88 and .asm files
 	.x88 is the assembly file with \x88 identifiers still present
 	.asm is the assembly file with just clean map25.2 assembly (maybe comments too)
-	.up is the "upload code" which is just the assembly file but with the pneumonics replaced
+	.up is the "upload code" which is just the assembly file but with the mnemonics replaced
 		and re-ordered into pages for writing to the eeproms. Only actual pages with data
 		are included in the write instructions
 	.buff is just the buffer file for the upload code, basically it is the .up file but only
-		with pneumonics replaced and comments removed (pages have not been re-ordered yet)
+		with mnemonics replaced and comments removed (pages have not been re-ordered yet)
 	.eeprom is the converted version of the .up file FOR USE WITH THE VIRTUAL MACHINE
 		(this file is meant to emulate the contents of the eeproms on the real machine)
 
