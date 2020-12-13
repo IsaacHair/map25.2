@@ -47,25 +47,25 @@ long labelcount;
 #define ADD_ADDEND0 0x0000
 #define ADD_ADDEND1 0x0002
 #define ADD_SUM 0x0004
-#define ADD_RET 0x0005
+#define ADD_RET 0x0006
 unsigned short add_loc;
 char _add_loc_label[5];
 
 //values stored as fixed point (1,9,22) (sign, int, fraction):
-#define MAIN_X 0x0006 //lowest corner position
-#define MAIN_Y 0x0008 //lowest corner position
-#define MAIN_DX 0x000a //derivative of position (eg speed)
-#define MAIN_DY 0x000c //derivative of position (eg speed)
-#define MAIN_DDX 0x000e //2nd derivative of position (eg acceleration)
-#define MAIN_DDY 0x0010 //2nd derivative of position (eg acceleration)
-#define MAIN_XEND 0x0012 //upper corner position
-#define MAIN_YEND 0x0014 //upper corner position
-#define MAIN_XOLD 0x0016
-#define MAIN_YOLD 0x0018
-#define MAIN_XENDOLD 0x001a
-#define MAIN_YENDOLD 0x001c
+#define MAIN_X 0x0008 //lowest corner position
+#define MAIN_Y 0x000a //lowest corner position
+#define MAIN_DX 0x000c //derivative of position (eg speed)
+#define MAIN_DY 0x000e //derivative of position (eg speed)
+#define MAIN_DDX 0x0010 //2nd derivative of position (eg acceleration)
+#define MAIN_DDY 0x0012 //2nd derivative of position (eg acceleration)
+#define MAIN_XEND 0x0014 //upper corner position
+#define MAIN_YEND 0x0016 //upper corner position
+#define MAIN_XOLD 0x0018
+#define MAIN_YOLD 0x001a
+#define MAIN_XENDOLD 0x001c
+#define MAIN_YENDOLD 0x001e
 //amorphous values:
-#define MAIN_DUMMY 0x001e //just used as placeholder
+#define MAIN_DUMMY 0x0020 //just used as placeholder
 
 void inst(char*op) {
 	fprintf(fd, "%04x %s \x88%04x\n", addr, op, addr+1);
@@ -317,10 +317,38 @@ void comm2_2datpointdwn6cut(int comm, unsigned short spoint, unsigned short epoi
 	buswritegen();
 }
 
+void set32immimm(unsigned short ptr, unsigned int val) {
+	//set an immediate location in ram to an immediate value
+	//destroys addr
+	inst("imm addr0 ffff");
+	instval("imm addr1", ptr);
+	instval("imm ramall", val%65536);
+	inst("imm addr1 0001");
+	instval("imm ramall", (val/65536));
+}
+
+void trans32immimm(unsigned short targetptr, unsigned short sourceptr) {
+	//transfer value at sourceptr to targetptr
+	//destroys gen, addr
+	inst("imm addr0 ffff");
+	instval("imm addr1", sourceptr);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", targetptr);
+	inst("gen ramall 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", sourceptr|0x0001);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", targetptr|0x0001);
+	inst("gen ramall 0000");
+}
+
 void addrpred16() {
 	unsigned short mask, addrshift;
 	int i;
-	
 	makeaddrodd();
 	for (i = 16; i >= 2; i = i>>1)
 		for (mask = 0xffff>>(i/2), addrshift = 16/i;
@@ -504,31 +532,12 @@ void add32code() {
 }	
 
 void calladd32(unsigned short point_sum, unsigned short point_a0, unsigned short point_a1) {
-	inst("imm addr0 ffff");
-	instval("imm addr1", point_a0);
-	inst("imm gen0 ffff");
-	inst("ram gen1 0000");
-	inst("imm addr0 ffff");
-	instval("imm addr1", ADD_ADDEND0);
-	inst("gen ramall 0000");
-	inst("imm addr0 ffff");
-	instval("imm addr1", point_a1);
-	inst("imm gen0 ffff");
-	inst("ram gen1 0000");
-	inst("imm addr0 ffff");
-	instval("imm addr1", ADD_ADDEND1);
-	inst("gen ramall 0000");
+	trans32immimm(ADD_ADDEND0, point_a0);
+	trans32immimm(ADD_ADDEND1, point_a1);
 	inst("imm addr0 ffff");
 	instval("imm addr1", ADD_RET);
 	instvalexpnxt("imm ramall", addr+1, _add_loc_label);
-	//transfer sum
-	inst("imm addr0 ffff");
-	instval("imm addr1", ADD_SUM);
-	inst("imm gen0 ffff");
-	inst("ram gen1 0000");
-	inst("imm addr0 ffff");
-	instval("imm addr1", point_sum);
-	inst("gen ramall 0000");
+	trans32immimm(point_sum, ADD_SUM);
 }	
 
 void replaceadd32call() {
@@ -896,35 +905,6 @@ void lcdboxgreypointimm_dwn6(int shade,
 	lcdpauseframe();
 }
 
-void set32immimm(unsigned short ptr, unsigned int val) {
-	//set an immediate location in ram to an immediate value
-	//destroys addr
-	inst("imm addr0 ffff");
-	instval("imm addr1", ptr);
-	instval("imm ramall", val%65536);
-	inst("imm addr1 0001");
-	instval("imm ramall", (val/65536));
-}
-
-void trans32immimm(unsigned short targetptr, unsigned short sourceptr) {
-	//transfer value at sourceptr to targetptr
-	//destroys gen, addr
-	inst("imm addr0 ffff");
-	instval("imm addr1", sourceptr);
-	inst("imm gen0 ffff");
-	inst("ram gen1 0000");
-	inst("imm addr0 ffff");
-	instval("imm addr1", targetptr);
-	inst("gen ramall 0000");
-	inst("imm addr0 ffff");
-	instval("imm addr1", sourceptr|0x0001);
-	inst("imm gen0 ffff");
-	inst("ram gen1 0000");
-	inst("imm addr0 ffff");
-	instval("imm addr1", targetptr|0x0001);
-	inst("gen ramall 0000");
-}
-
 void main(int argc, char** argv) {
 	//note that column index is X and page index is Y
 	int loopaddr, delayaddr, checkloopaddr;
@@ -988,7 +968,7 @@ void main(int argc, char** argv) {
 	replacex88expimm(_next, addr);
 	//set MAIN_DDY
 	//start with zero
-	set32immimm(MAIN_DDY, 0x0000);
+	set32immimm(MAIN_DDY, 0x00000000);
 	//accelerate right (negative)
 	keygen();
 	makeaddrodd();
@@ -1015,7 +995,7 @@ void main(int argc, char** argv) {
 	//handle MAIN_X
 	checkloopaddr = addr;
 	inst("imm addr0 ffff");
-	instval("imm addr1", MAIN_X);
+	instval("imm addr1", MAIN_X|0x0001);
 	makeaddrodd();
 	inst("ram jzor 8000");
 	instexpnxt("dnc noop 0000", _next);
@@ -1027,7 +1007,7 @@ void main(int argc, char** argv) {
 	set32immimm(MAIN_DUMMY, (0x10000-((240-(5-1))<<6))<<16);
 	calladd32(MAIN_DUMMY, MAIN_DUMMY, MAIN_X);
 	inst("imm addr0 ffff");
-	instval("imm addr1", MAIN_DUMMY);
+	instval("imm addr1", MAIN_DUMMY|0x0001);
 	makeaddrodd();
 	inst("ram jzor 8000");
 	instnxt("dnc noop 0000", addr+2);
@@ -1038,7 +1018,7 @@ void main(int argc, char** argv) {
 	//handle MAIN_Y
 	checkloopaddr = addr;
 	inst("imm addr0 ffff");
-	instval("imm addr1", MAIN_Y);
+	instval("imm addr1", MAIN_Y|0x0001);
 	makeaddrodd();
 	inst("ram jzor 8000");
 	instexpnxt("dnc noop 0000", _next);
@@ -1050,7 +1030,7 @@ void main(int argc, char** argv) {
 	set32immimm(MAIN_DUMMY, (0x10000-((320-(5-1))<<6))<<16);
 	calladd32(MAIN_DUMMY, MAIN_DUMMY, MAIN_Y);
 	inst("imm addr0 ffff");
-	instval("imm addr1", MAIN_DUMMY);
+	instval("imm addr1", MAIN_DUMMY|0x0001);
 	makeaddrodd();
 	inst("ram jzor 8000");
 	instnxt("dnc noop 0000", addr+2);
