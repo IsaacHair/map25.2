@@ -214,3 +214,6 @@ Quick sidebar: mfp() can actually be used as regular multiply as long as the fac
 up a total of twelve bits between the two of them. So, you could shift factor0 up by 8 (displacement,
 not enumeration) and factor1 up by 4 (again displacement) and get the correct result as long
 as the factors don't end up being truncated.
+
+Ok now the most advanced file is lunar_0_11.c. Basically, until I update the "basic_library" folder,
+the most advanced file will be the latest lunar* file.
