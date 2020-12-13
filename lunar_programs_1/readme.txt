@@ -11,3 +11,7 @@ Note: This version will not have time warp.
 Note: This version will also not have screen wrapping; it will just reject values that go outside
 of the screen, instead setting the position to the edge of the screen in that direction (either x
 or y) and zeroing the speed in that direction (again either x or y).
+
+Version 0:
+This is basically just a copy of lunar_0_11 but without timewarp and with 32 bit precision and MUCH
+slower accelerations.

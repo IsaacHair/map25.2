@@ -363,22 +363,31 @@ void makeaddr_genpred16() {
 	makeaddrodd();
 }
 
-void addgenram() {
+void addgenram(int carryin, int carryout) {
 	//adds values in ram and gen and puts answer in gen
 	//requires average of 40.5 clocks
 	//high efficiency rom packing (not perfect though)
+	//If carryout is true, the value of carry is stored in positional
+	//ram (carry of zero = end program address, carry of one = 
+	//end program address + 1).
+	//Carryin is a CONSTANT, not a flag.
+	//Wastes some rom on the first cycle (it only needs one side of the carry/noncarry).
 	unsigned short mask;
-	char _new_noncarry[5], _new_carry[5], _noncarry[5], _carry[5], _done[5];
+	char _new_noncarry[5], _new_carry[5], _noncarry[5], _carry[5], _done[5], _done_carry1[5];
 
 	makelabel(_new_noncarry);
 	makelabel(_new_carry);
 	makelabel(_noncarry);
 	makelabel(_carry);
 	makelabel(_done);
+	makelabel(_done_carry1);
 
 	//do the addition
 	makeaddrodd();
-	instexpnxt("ram jzor 0001", _new_noncarry);
+	if (!carryin)
+		instexpnxt("ram jzor 0001", _new_noncarry);
+	else
+		instexpnxt("ram jzor 0001", _new_carry);
 	for (mask = 0x0001; mask; mask = mask<<1) {
 		replacex88expexp(_new_noncarry, _noncarry);
 		replacex88expexp(_new_carry, _carry);
@@ -395,10 +404,10 @@ void addgenram() {
 			instvalexpnxt("ram jzor", mask<<1, _new_carry);
 		}
 		else {
-			instvalexpnxt("imm gen0", mask, _done);
-			instvalexpnxt("imm gen1", mask, _done);
-			instvalexpnxt("imm gen1", mask, _done);
-			instvalexpnxt("imm gen0", mask, _done);
+			instvalexpnxt("imm gen0", mask, (carryout ? _done : _done));
+			instvalexpnxt("imm gen1", mask, (carryout ? _done : _done));
+			instvalexpnxt("imm gen1", mask, (carryout ? _done : _done));
+			instvalexpnxt("imm gen0", mask, (carryout ? _done_carry1 : _done));
 		}
 		makeaddreven();
 		replacex88expimm(_carry, addr);
@@ -413,98 +422,17 @@ void addgenram() {
 			instvalexpnxt("ram jzor", mask<<1, _new_carry);
 		}
 		else {
-			instvalexpnxt("imm gen1", mask, _done);
-			instvalexpnxt("imm gen0", mask, _done);
-			instvalexpnxt("imm gen0", mask, _done);
-			instvalexpnxt("imm gen1", mask, _done);
+			instvalexpnxt("imm gen1", mask, (carryout ? _done : _done));
+			instvalexpnxt("imm gen0", mask, (carryout ? _done_carry1 : _done));
+			instvalexpnxt("imm gen0", mask, (carryout ? _done_carry1 : _done));
+			instvalexpnxt("imm gen1", mask, (carryout ? _done_carry1 : _done));
 		}
 	}
 	replacex88expimm(_done, addr);
+	replacex88expimm(_done_carry1, addr+1);
 }
 
 void makeaddr_addgenram() {
-	makeaddrodd();
-}
-
-void addgenramdwn() {
-	//adds values in ram and gen and puts answer in gen
-	//shifts answer down the puts carry on highest bit
-	//requires exactly 48 clocks
-	//high efficiency rom packing (not perfect though)
-	unsigned short mask;
-	char _new_noncarry[5], _new_carry[5], _noncarry[5], _carry[5], _done[5];
-
-	makelabel(_new_noncarry);
-	makelabel(_new_carry);
-	makelabel(_noncarry);
-	makelabel(_carry);
-	makelabel(_done);
-
-	//do the addition
-	makeaddrodd();
-	instnxt("ram jzor 0001", addr+1);
-	instnxt("gen jzor 0001", addr+2);
-	instnxt("gen jzor 0001", addr+3);
-	instexpnxt("ram jzor 0002", _new_noncarry);
-	instexpnxt("ram jzor 0002", _new_noncarry);
-	instexpnxt("ram jzor 0002", _new_noncarry);
-	instexpnxt("ram jzor 0002", _new_carry);
-	for (mask = 0x0002; mask; mask = mask<<1) {
-		replacex88expexp(_new_noncarry, _noncarry);
-		replacex88expexp(_new_carry, _carry);
-		makeaddreven();
-		replacex88expimm(_noncarry, addr);
-		instvalnxt("gen jzor", mask, addr+2);
-		instvalnxt("gen jzor", mask, addr+3);
-		if (mask != 0x8000) {
-			instvalnxt("imm gen0", mask>>1, addr+4);
-			instvalnxt("imm gen1", mask>>1, addr+4);
-			instvalnxt("imm gen1", mask>>1, addr+4);
-			instvalnxt("imm gen0", mask>>1, addr+4);
-			instvalexpnxt("ram jzor", mask<<1, _new_noncarry);
-			instvalexpnxt("ram jzor", mask<<1, _new_noncarry);
-			instvalexpnxt("ram jzor", mask<<1, _new_noncarry);
-			instvalexpnxt("ram jzor", mask<<1, _new_carry);
-		}
-		else {
-			instvalnxt("imm gen0", mask>>1, addr+4);
-			instvalnxt("imm gen1", mask>>1, addr+4);
-			instvalnxt("imm gen1", mask>>1, addr+4);
-			instvalnxt("imm gen0", mask>>1, addr+4);
-			instvalexpnxt("imm gen0", mask, _done);
-			instvalexpnxt("imm gen0", mask, _done);
-			instvalexpnxt("imm gen0", mask, _done);
-			instvalexpnxt("imm gen1", mask, _done);
-		}
-		makeaddreven();
-		replacex88expimm(_carry, addr);
-		instvalnxt("gen jzor", mask, addr+2);
-		instvalnxt("gen jzor", mask, addr+3);
-		if (mask != 0x8000) {
-			instvalnxt("imm gen1", mask>>1, addr+4);
-			instvalnxt("imm gen0", mask>>1, addr+4);
-			instvalnxt("imm gen0", mask>>1, addr+4);
-			instvalnxt("imm gen1", mask>>1, addr+4);
-			instvalexpnxt("ram jzor", mask<<1, _new_noncarry);
-			instvalexpnxt("ram jzor", mask<<1, _new_carry);
-			instvalexpnxt("ram jzor", mask<<1, _new_carry);
-			instvalexpnxt("ram jzor", mask<<1, _new_carry);
-		}
-		else {
-			instvalnxt("imm gen1", mask>>1, addr+4);
-			instvalnxt("imm gen0", mask>>1, addr+4);
-			instvalnxt("imm gen0", mask>>1, addr+4);
-			instvalnxt("imm gen1", mask>>1, addr+4);
-			instvalexpnxt("imm gen0", mask, _done);
-			instvalexpnxt("imm gen1", mask, _done);
-			instvalexpnxt("imm gen1", mask, _done);
-			instvalexpnxt("imm gen1", mask, _done);
-		}
-	}
-	replacex88expimm(_done, addr);
-}
-
-void makeaddr_addgenramdwn() {
 	makeaddrodd();
 }
 
@@ -530,25 +458,43 @@ void makeaddr_addrpred4() {
 	makeaddrodd();
 }
 
-void addcode32() {
+void add32code() {
 	//destroys gen and addr
-/*XXX*/	char str[5];
+	char _nocarry[5], _carry[5];
+
+	makelabel(_nocarry);
+	makelabel(_carry);
 
 	//record location
 	add_loc = addr;
 
-	//charge gen with value at ADD_ADDEND0 and set addr to ADD_ADDEND1
 	inst("imm addr0 ffff");
 	instval("imm addr1", ADD_ADDEND0);
 	inst("imm gen0 ffff");
 	inst("ram gen1 0000");
 	inst("imm addr0 ffff");
 	instval("imm addr1", ADD_ADDEND1);
-	addgenram();
-
-	//transfer sum
+	addgenram(0, 1);
+	replacex88immexp(addr, _nocarry);
+	replacex88immexp(addr+1, _carry);
 	inst("imm addr0 ffff");
 	instval("imm addr1", ADD_SUM);
+	inst("gen ramall 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", ADD_ADDEND0|0x0001);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", ADD_ADDEND1|0x0001);
+	replacex88expimm(_nocarry, addr);
+	addgenram(0, 0);
+	inst("imm addr0 ffff");
+	instval("imm addr1", ADD_SUM|0x0001);
+	inst("gen ramall 0000");
+	replacex88expimm(_carry, addr);
+	addgenram(1, 0);
+	inst("imm addr0 ffff");
+	instval("imm addr1", ADD_SUM|0x0001);
 	inst("gen ramall 0000");
 
 	//return
@@ -950,7 +896,7 @@ void lcdboxgreypointimm_dwn6(int shade,
 	lcdpauseframe();
 }
 
-void setimmimm32(unsigned short ptr, unsigned int val) {
+void set32immimm(unsigned short ptr, unsigned int val) {
 	//set an immediate location in ram to an immediate value
 	//destroys addr
 	inst("imm addr0 ffff");
@@ -960,7 +906,7 @@ void setimmimm32(unsigned short ptr, unsigned int val) {
 	instval("imm ramall", (val/65536));
 }
 
-void transimmimm32(unsigned short targetptr, unsigned short sourceptr) {
+void trans32immimm(unsigned short targetptr, unsigned short sourceptr) {
 	//transfer value at sourceptr to targetptr
 	//destroys gen, addr
 	inst("imm addr0 ffff");
@@ -981,7 +927,7 @@ void transimmimm32(unsigned short targetptr, unsigned short sourceptr) {
 
 void main(int argc, char** argv) {
 	//note that column index is X and page index is Y
-/*XXX*/	int loopaddr, delayaddr, checkloopaddr;
+	int loopaddr, delayaddr, checkloopaddr;
 	char _next[5];
 	if (argc != 3) {
 		printf("need <target> <buffer>\n");
@@ -996,12 +942,12 @@ void main(int argc, char** argv) {
 	lcdinit();
 
 	//init values
-	setimmimm32(MAIN_X, 0x14200000);
-	setimmimm32(MAIN_Y, 0x16900000);
-	setimmimm32(MAIN_DX, 0x00000000);
-	setimmimm32(MAIN_DY, 0x00000000);
-	setimmimm32(MAIN_DDX, 0x00000000);
-	setimmimm32(MAIN_DDY, 0x00000000);
+	set32immimm(MAIN_X, 0x14200000);
+	set32immimm(MAIN_Y, 0x16900000);
+	set32immimm(MAIN_DX, 0x00000000);
+	set32immimm(MAIN_DY, 0x00000000);
+	set32immimm(MAIN_DDX, 0x00000000);
+	set32immimm(MAIN_DDY, 0x00000000);
 	//init screen
 	lcdboxgreyimm(0,  0, 239, 0, 319);
 	//loop to move ship
@@ -1017,84 +963,54 @@ void main(int argc, char** argv) {
 	instnxt("dnc noop 0000", addr+2);
 	instnxt("dnc noop 0000", delayaddr);
 	//log old values
-	transimmimm(MAIN_XOLD, MAIN_X);
-	transimmimm(MAIN_YOLD, MAIN_Y);
-	transimmimm(MAIN_XENDOLD, MAIN_XEND);
-	transimmimm(MAIN_YENDOLD, MAIN_YEND);
+	trans32immimm(MAIN_XOLD, MAIN_X);
+	trans32immimm(MAIN_YOLD, MAIN_Y);
+	trans32immimm(MAIN_XENDOLD, MAIN_XEND);
+	trans32immimm(MAIN_YENDOLD, MAIN_YEND);
 	//set MAIN_DDX
 	//start with gravity
-	setimmimm(MAIN_DDX, 0xff88);
+	set32immimm(MAIN_DDX, 0xfffffff8);
 	//accelerate up
 	keygen();
 	makeaddrodd();
 	inst("gen jzor 0200");
 	instexpnxt("dnc noop 0000", _next);
-	setimmimm(MAIN_DUMMY, 0x0222);
-	calladd(MAIN_DDX, MAIN_DDX, MAIN_DUMMY);
+	set32immimm(MAIN_DUMMY, 0x00000015);
+	calladd32(MAIN_DDX, MAIN_DDX, MAIN_DUMMY);
 	replacex88expimm(_next, addr);
 	//accelerate down
 	keygen();
 	makeaddrodd();
 	inst("gen jzor 0100");
 	instexpnxt("dnc noop 0000", _next);
-	setimmimm(MAIN_DUMMY, 0xfeef);
-	calladd(MAIN_DDX, MAIN_DDX, MAIN_DUMMY);
+	set32immimm(MAIN_DUMMY, 0xffffffeb);
+	calladd32(MAIN_DDX, MAIN_DDX, MAIN_DUMMY);
 	replacex88expimm(_next, addr);
 	//set MAIN_DDY
 	//start with zero
-	setimmimm(MAIN_DDY, 0x0000);
+	set32immimm(MAIN_DDY, 0x0000);
 	//accelerate right (negative)
 	keygen();
 	makeaddrodd();
 	inst("gen jzor 2000");
 	instexpnxt("dnc noop 0000", _next);
-	setimmimm(MAIN_DUMMY, 0xfeef);
-	calladd(MAIN_DDY, MAIN_DDY, MAIN_DUMMY);
+	set32immimm(MAIN_DUMMY, 0xffffffeb);
+	calladd32(MAIN_DDY, MAIN_DDY, MAIN_DUMMY);
 	replacex88expimm(_next, addr);
 	//accelerate left (positive)
 	keygen();
 	makeaddrodd();
 	inst("gen jzor 0020");
 	instexpnxt("dnc noop 0000", _next);
-	setimmimm(MAIN_DUMMY, 0x0111);
-	calladd(MAIN_DDY, MAIN_DDY, MAIN_DUMMY);
-	replacex88expimm(_next, addr);
-	//time scale adjust
-	//adjust speed and time scale value ONLY WHEN PRESSING BUTTON
-	//Note that time scale can be adjusted to go negative or to be zero
-	//(but negative has weird scaling).
-	//It can recover from being zero, too.
-	keygen();
-	makeaddrodd();
-	inst("gen jzor 0010");
-	instexpnxt("dnc noop 0000", _next);
-	//ensure that MAIN_DT is nonzero
-	setimmimm(MAIN_DUMMY, 0x0001);
-	calladd(MAIN_DT, MAIN_DT, MAIN_DUMMY);
-	//scale
-	setimmimm(MAIN_DUMMY, 0x1080);
-	callmfp(MAIN_DT, MAIN_DT, MAIN_DUMMY);
-	callmfp(MAIN_DX, MAIN_DX, MAIN_DUMMY);
-	callmfp(MAIN_DY, MAIN_DY, MAIN_DUMMY);
-	replacex88expimm(_next, addr);
-	keygen();
-	makeaddrodd();
-	inst("gen jzor 1000");
-	instexpnxt("dnc noop 0000", _next);
-	setimmimm(MAIN_DUMMY, 0x0f80);
-	callmfp(MAIN_DT, MAIN_DT, MAIN_DUMMY);
-	callmfp(MAIN_DX, MAIN_DX, MAIN_DUMMY);
-	callmfp(MAIN_DY, MAIN_DY, MAIN_DUMMY);
+	set32immimm(MAIN_DUMMY, 0x00000015);
+	calladd32(MAIN_DDY, MAIN_DDY, MAIN_DUMMY);
 	replacex88expimm(_next, addr);
 	//do the calculations
-	//adjust acceleration based on time scale
-	callmfp(MAIN_DDX, MAIN_DDX, MAIN_DT);
-	callmfp(MAIN_DDY, MAIN_DDY, MAIN_DT);
 	//integrate the acceleration
-	calladd(MAIN_DX, MAIN_DDX, MAIN_DX);
-	calladd(MAIN_DY, MAIN_DDY, MAIN_DY);
-	calladd(MAIN_X, MAIN_DX, MAIN_X);
-	calladd(MAIN_Y, MAIN_DY, MAIN_Y);
+	calladd32(MAIN_DX, MAIN_DDX, MAIN_DX);
+	calladd32(MAIN_DY, MAIN_DDY, MAIN_DY);
+	calladd32(MAIN_X, MAIN_DX, MAIN_X);
+	calladd32(MAIN_Y, MAIN_DY, MAIN_Y);
 	//ensure in range
 	//handle MAIN_X
 	checkloopaddr = addr;
@@ -1103,20 +1019,20 @@ void main(int argc, char** argv) {
 	makeaddrodd();
 	inst("ram jzor 8000");
 	instexpnxt("dnc noop 0000", _next);
-	setimmimm(MAIN_DUMMY, ((240-(5-1))<<6));
-	calladd(MAIN_X, MAIN_DUMMY, MAIN_X);
+	set32immimm(MAIN_DUMMY, (((240-(5-1))<<6))<<16);
+	calladd32(MAIN_X, MAIN_DUMMY, MAIN_X);
 	replacex88immimm(addr, checkloopaddr);
 	replacex88expimm(_next, addr);
 	checkloopaddr = addr;
-	setimmimm(MAIN_DUMMY, 0x10000-((240-(5-1))<<6));
-	calladd(MAIN_DUMMY, MAIN_DUMMY, MAIN_X);
+	set32immimm(MAIN_DUMMY, (0x10000-((240-(5-1))<<6))<<16);
+	calladd32(MAIN_DUMMY, MAIN_DUMMY, MAIN_X);
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_DUMMY);
 	makeaddrodd();
 	inst("ram jzor 8000");
 	instnxt("dnc noop 0000", addr+2);
 	instexpnxt("dnc noop 0000", _next);
-	transimmimm(MAIN_X, MAIN_DUMMY);
+	trans32immimm(MAIN_X, MAIN_DUMMY);
 	replacex88immimm(addr, checkloopaddr);
 	replacex88expimm(_next, addr);
 	//handle MAIN_Y
@@ -1126,35 +1042,36 @@ void main(int argc, char** argv) {
 	makeaddrodd();
 	inst("ram jzor 8000");
 	instexpnxt("dnc noop 0000", _next);
-	setimmimm(MAIN_DUMMY, ((320-(5-1))<<6));
-	calladd(MAIN_Y, MAIN_DUMMY, MAIN_Y);
+	set32immimm(MAIN_DUMMY, (((320-(5-1))<<6))<<16);
+	calladd32(MAIN_Y, MAIN_DUMMY, MAIN_Y);
 	replacex88immimm(addr, checkloopaddr);
 	replacex88expimm(_next, addr);
 	checkloopaddr = addr;
-	setimmimm(MAIN_DUMMY, 0x10000-((320-(5-1))<<6));
-	calladd(MAIN_DUMMY, MAIN_DUMMY, MAIN_Y);
+	set32immimm(MAIN_DUMMY, (0x10000-((320-(5-1))<<6))<<16);
+	calladd32(MAIN_DUMMY, MAIN_DUMMY, MAIN_Y);
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_DUMMY);
 	makeaddrodd();
 	inst("ram jzor 8000");
 	instnxt("dnc noop 0000", addr+2);
 	instexpnxt("dnc noop 0000", _next);
-	transimmimm(MAIN_Y, MAIN_DUMMY);
+	trans32immimm(MAIN_Y, MAIN_DUMMY);
 	replacex88immimm(addr, checkloopaddr);
 	replacex88expimm(_next, addr);
 	//render
-	setimmimm(MAIN_XEND, (5-1)*(1<<6));
-	setimmimm(MAIN_YEND, (5-1)*(1<<6));
-	calladd(MAIN_XEND, MAIN_XEND, MAIN_X);
-	calladd(MAIN_YEND, MAIN_YEND, MAIN_Y);
-	lcdboxgreypointimm_dwn6(0,  MAIN_XOLD, MAIN_XENDOLD, MAIN_YOLD, MAIN_YENDOLD, 25);
-	lcdboxgreypointimm_dwn6(63,  MAIN_X, MAIN_XEND, MAIN_Y, MAIN_YEND, 25);
+	set32immimm(MAIN_XEND, ((5-1)*(1<<6))<<16);
+	set32immimm(MAIN_YEND, ((5-1)*(1<<6))<<16);
+	calladd32(MAIN_XEND, MAIN_XEND, MAIN_X);
+	calladd32(MAIN_YEND, MAIN_YEND, MAIN_Y);
+	lcdboxgreypointimm_dwn6(0,  MAIN_XOLD|0x0001, MAIN_XENDOLD|0x0001,
+				MAIN_YOLD|0x0001, MAIN_YENDOLD|0x0001, 25);
+	lcdboxgreypointimm_dwn6(63,  MAIN_X|0x0001, MAIN_XEND|0x0001, MAIN_Y|0x0001, MAIN_YEND|0x0001, 25);
 	inst("dnc noop 0000");
 	//loop infinitely
 	replacex88immimm(addr, loopaddr);
 
 	add32code();
-	replaceaddcall();
+	replaceadd32call();
 	removex88(argv[1]);
 	fclose(fd);
 }
