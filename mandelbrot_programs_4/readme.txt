@@ -1,3 +1,5 @@
+This set of programs is basically a "deep fried mandelbrot set".
+
 Version 0:
 Just a sped up version of mandelbrot_3_04; basically, I will switch to the (a-b)*(a+b) method
 for calculating the real value. The escape test will be simply testing if the real or
