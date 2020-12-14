@@ -16,5 +16,16 @@ as escape value is too low.
 
 Version 2:
 Like version 1, but the algorythm is fixed and escape is 32.
-
 The algorithm where ZR(next) = (ZR-ZI)*(ZR+ZI)+ZR0 produces sign dependent artifacts.
+
+Version 3:
+This will be a copy of version 2, but I will set the max_iterations to 8. I will also return
+to making the escape "square" extend across (-2,2) in the real and imaginary. This setup
+will do two things: Create really weird artifacts and render really fast.
+
+Artifacts occur because:
+	The escape value is 4, which is way too high to ensure accuracy (overflows occur
+		everywhere).
+	If the last 4 bits of MAIN_ZR or MAIN_ZI are "1", the number is said to have escaped even if the value
+		is not outside of the escape squre. This is accomplished by testing the last bits.
+	There are only 8 iterations, which is just stupidly low.

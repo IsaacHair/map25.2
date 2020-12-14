@@ -17,3 +17,7 @@ This is basically just a copy of lunar_0_11 but without timewarp and with 32 bit
 slower accelerations.
 
 Note that this version CURRENTLY DOES NOT WORK.
+
+Version 1:
+Basically trying to get version 1 to work, but it still fails. Should probably just re-write most
+of this from scratch. That way, it can be cleaner to begin with.
