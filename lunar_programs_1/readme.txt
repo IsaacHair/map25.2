@@ -15,3 +15,5 @@ or y) and zeroing the speed in that direction (again either x or y).
 Version 0:
 This is basically just a copy of lunar_0_11 but without timewarp and with 32 bit precision and MUCH
 slower accelerations.
+
+Note that this version CURRENTLY DOES NOT WORK.
