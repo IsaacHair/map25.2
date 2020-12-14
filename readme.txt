@@ -217,3 +217,17 @@ as the factors don't end up being truncated.
 
 Ok now the most advanced file is lunar_0_11.c. Basically, until I update the "basic_library" folder,
 the most advanced file will be the latest lunar* file.
+
+New changes:
+Added mandelbrot_programs_4, which basically creates deep fired mandelbrot renderings.
+The main folder has:
+	lunar_0_11.up, which moves a "spaceship" on the screen with thrusters in four directions,
+		gravity, and time warp. The ship will wrap around as soon as it reaches the edge of the screen.
+	mandelbrot_3_04.up, which creates a rather detailed rendering of the mandelbrot set (with some
+		artifacts due to overflow). It renders in approx 47 minutes, and max_iterations is 32.
+		Uses (1,3,12) data form to store the variables as pixels are rendered
+	mandelbrot_4_03.up, which utilizes the (a-b)(a+b) algorithm, but is designed to "deep fry"
+		the mandelbrot rendering and create overflow artifacts on purpose. It is also
+		extremely fast, rendering in only a few minutes, because max_iterations is 8.
+Before continuing to write random programs for shits, I think it is important to take the time to create
+an effective collection of libraries that are clean, fast, and reliable.
