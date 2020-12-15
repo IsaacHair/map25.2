@@ -7,7 +7,7 @@ than guessing how big ranges are, and compiler functions to allocate and use lab
 rom addresses.
 
 Move the library version into whatever <include> folder you are using for your c programs,
-then discard the version extension (eg it should become bl.h). This is just done for ease
+then discard the version extension (eg it should become bl_map25.2.h). This is just done for ease
 of use as the library is updated. It will have the version extension in the main repo folder.
 
 Note that both rom address labels and ram address labels are allocated by functions in the
