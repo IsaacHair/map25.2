@@ -22,14 +22,15 @@ c "metaprogram" library to help avoid collisions.
 	}
 	addr = 0;
 	labelcount = 0;
+	heapcount = 0;
 	fd = fopen(argv[2], "w+");
 	makeaddlabel();
 	makemfplabel();
-	makeaddvariables();
-	makemfpvariables();
 	makelabel(_next);
 	inst("imm dir0 ffff");
 	lcdinit();
+<some code>
+<some code>
 <end:>
 	mfpcode();
 	addcode();
@@ -38,5 +39,12 @@ c "metaprogram" library to help avoid collisions.
 	removex88(argv[1]);
 	fclose(fd);
 
-Note that addr, labelcount, and fd are included within the library as global variables and should
-not be re-defined.
+Note that addr, labelcount, heapcount, and fd are included within the library as global variables and should
+not be re-instantiated when using the library (obviously).
+
+Only have to initialize stuff for functions or macros you will use in the program; don't do all of the
+function stuff for mfp if you won't use it because it will just soak up several pages of rom for
+nothing.
+
+Default for functions/macros is for them to operate on singe words (eg "add" adds a word to another word),
+and word size is 16 bits because that is the size for everything.
