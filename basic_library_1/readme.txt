@@ -48,3 +48,6 @@ nothing.
 
 Default for functions/macros is for them to operate on singe words (eg "add" adds a word to another word),
 and word size is 16 bits because that is the size for everything.
+
+Note that "addr" refers to the program address in rom unless otherwise stated (except for in the
+instruction itself, where the addr mnemonic refers to the address register for ram).
