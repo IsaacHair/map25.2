@@ -231,3 +231,9 @@ The main folder has:
 		extremely fast, rendering in only a few minutes, because max_iterations is 8.
 Before continuing to write random programs for shits, I think it is important to take the time to create
 an effective collection of libraries that are clean, fast, and reliable.
+
+Note:
+Mandelbrot folders 0, 1, 2, 3, and 4 do not use the libraries.
+Lunar folders 0, 1 do not use the libraries.
+Pacman_programs_0 has basically nothing, as does sprites_programs_0
+(but they also don't use the libraries).
