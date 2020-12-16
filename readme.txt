@@ -237,3 +237,8 @@ Mandelbrot folders 0, 1, 2, 3, and 4 do not use the libraries.
 Lunar folders 0, 1 do not use the libraries.
 Pacman_programs_0 has basically nothing, as does sprites_programs_0
 (but they also don't use the libraries).
+
+Modes of failure that could indicate a problem with the electrical connections on the board:
+	-stuck in an infinite loop (like just doing genpred16 constantly while resetting)
+	-instruction address goes to 0xffff (could also be the programmer's fault, or you 
+		could have been cancerous and actually used the 0xff80 page).
