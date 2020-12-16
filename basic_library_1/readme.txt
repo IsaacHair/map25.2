@@ -51,3 +51,7 @@ and word size is 16 bits because that is the size for everything.
 
 Note that "addr" refers to the program address in rom unless otherwise stated (except for in the
 instruction itself, where the addr mnemonic refers to the address register for ram).
+
+Note that, unless otherwise stated, the c functions act as macros, eg "calladd" will write the code
+that calls the addition function at that rom address, or "genpred16" will write the code to get the
+predecessor of the general register at that rom address.
