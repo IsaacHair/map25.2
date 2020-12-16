@@ -26,6 +26,7 @@ c "metaprogram" library to help avoid collisions.
 	fd = fopen(argv[2], "w+");
 	makeaddlabel();
 	makemfplabel();
+	makeheap(MAIN_dummy);
 	makelabel(_next);
 	inst("imm dir0 ffff");
 	lcdinit();
@@ -55,3 +56,5 @@ instruction itself, where the addr mnemonic refers to the address register for r
 Note that, unless otherwise stated, the c functions act as macros, eg "calladd" will write the code
 that calls the addition function at that rom address, or "genpred16" will write the code to get the
 predecessor of the general register at that rom address.
+
+Version 1_00: doesnt work as of now, or at least it apppears to fail with the add32() macro.

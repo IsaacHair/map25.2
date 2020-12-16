@@ -1221,3 +1221,14 @@ void add32(unsigned short point_sum, unsigned short point_addend0, unsigned shor
 	
 	replacex88expimm(_nocarry, addr);
 }
+
+void trans32immimm(unsigned short point_target, unsigned short point_source) {
+	//pointers should be to the lower word (which should be an even address number)
+	transimmimm(point_target, point_source);
+	transimmimm(point_target|0x0001, point_source|0x0001);
+}
+
+void set32immimm(unsigned short point_loc, int val) {
+	setimmimm(point_loc|0x0001, (val/65536)%65536);
+	setimmimm(point_loc, val%65536);
+}
