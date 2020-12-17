@@ -1,0 +1,7 @@
+<
+Let's see what happens if you charge the bus with the value in ram and then try to write
+to ram at the same time.
+>
+0000 imm ramall 6942 0001
+0001 imm dir0 ffff 0002
+0002 ram ramall 0000 0002
