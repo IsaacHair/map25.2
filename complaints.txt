@@ -1,0 +1,16 @@
+This just serves as a reference for if I build another computer in the future.
+
+List of things I wish I had included in the map25.2:
+	- rotate 8 instruction (swaps upper and lower bytes)
+	- ability to just put a sigle byte on the bus from ram
+	- more thorough indicators
+	- actually wired everything exactly correct
+	- addition instruction???????????? <this might not fit the definition of "the most minimal computer"
+	- video output scheduler???????????? <might not be minimalist
+	- Use nor flash memory instead of eeprom because, even though they are functionally the same
+	  on the transistor level, flash memory is way cheaper and comes in parallel packages up to
+	  a few gigabytes (and it is considered non-antiquated).
+
+Note that these are tiny complaints and, to be honest, there are always going
+to be issues. These just stand out to me the most and are useful to keep in
+mind for the future.

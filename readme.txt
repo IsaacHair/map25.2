@@ -251,3 +251,6 @@ Important note: romsend and arduinorecieve-highlowprog.ino should be designed so
 that contain data different from what is already on the chip are written. This makes the writing
 process faster and also protects the chip. I might want to do load balancing at some point,
 but I really don't care that much.
+
+Added a document for complaints about the machine just to have a place to record all of my
+mistakes for future reference if I build another computer.
