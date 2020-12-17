@@ -242,3 +242,7 @@ Modes of failure that could indicate a problem with the electrical connections o
 	-stuck in an infinite loop (like just doing genpred16 constantly while resetting)
 	-instruction address goes to 0xffff (could also be the programmer's fault, or you 
 		could have been cancerous and actually used the 0xff80 page).
+
+
+Should probably focus on cleaning up everything and making the algorithms cleaner, faster,
+smaller, and more reliable.
