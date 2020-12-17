@@ -11,6 +11,8 @@
  * is even, the lower data word is at the pointer, and
  * the upper data word is at the odd version of the pointer
  * (eg pointer|0x0001).
+ *
+ * Note that x refers to side-to-side and y refers to up-and-down.
  */
 
 unsigned short MAIN_x;

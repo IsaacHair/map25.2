@@ -11,6 +11,8 @@
  * is even, the lower data word is at the pointer, and
  * the upper data word is at the odd version of the pointer
  * (eg pointer|0x0001).
+ *
+ * Note that x refers to side-to-side and y refers to up-and-down.
  */
 
 unsigned short MAIN_x;
@@ -101,13 +103,13 @@ void main(int argc, char** argv) {
 	trans32immimm(MAIN_yendold, MAIN_yend);
 	//set MAIN_ddx
 	//start with gravity
-	set32immimm(MAIN_ddx, 0xfffffff8);
+	set32immimm(MAIN_ddx, 0xfffffe88);
 	//accelerate up
 	keygen();
 	makeaddrodd();
 	inst("gen jzor 0200");
 	instexpnxt("dnc noop 0000", _next);
-	set32immimm(MAIN_dummy, 0x00000015);
+	set32immimm(MAIN_dummy, 0x00000315);
 	add32(MAIN_ddx, MAIN_ddx, MAIN_dummy);
 	replacex88expimm(_next, addr);
 	//accelerate down
@@ -115,7 +117,7 @@ void main(int argc, char** argv) {
 	makeaddrodd();
 	inst("gen jzor 0100");
 	instexpnxt("dnc noop 0000", _next);
-	set32immimm(MAIN_dummy, 0xffffffeb);
+	set32immimm(MAIN_dummy, 0xfffffdeb);
 	add32(MAIN_ddx, MAIN_ddx, MAIN_dummy);
 	replacex88expimm(_next, addr);
 	//set MAIN_ddy
@@ -126,7 +128,7 @@ void main(int argc, char** argv) {
 	makeaddrodd();
 	inst("gen jzor 2000");
 	instexpnxt("dnc noop 0000", _next);
-	set32immimm(MAIN_dummy, 0xffffffeb);
+	set32immimm(MAIN_dummy, 0xfffffddd);
 	add32(MAIN_ddy, MAIN_ddy, MAIN_dummy);
 	replacex88expimm(_next, addr);
 	//accelerate left (positive)
@@ -134,7 +136,7 @@ void main(int argc, char** argv) {
 	makeaddrodd();
 	inst("gen jzor 0020");
 	instexpnxt("dnc noop 0000", _next);
-	set32immimm(MAIN_dummy, 0x00000015);
+	set32immimm(MAIN_dummy, 0x00000223);
 	add32(MAIN_ddy, MAIN_ddy, MAIN_dummy);
 	replacex88expimm(_next, addr);
 	//do the calculations

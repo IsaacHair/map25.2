@@ -71,7 +71,6 @@ void main(int argc, char** argv) {
 	makeheap(&MAIN_yendold);
 	heapcount++;
 	inst("imm dir0 ffff");
-	lcdinit();
 
 	//init values
 	set32immimm(MAIN_x, 0x14200000);
@@ -80,8 +79,6 @@ void main(int argc, char** argv) {
 	set32immimm(MAIN_dy, 0x00000000);
 	set32immimm(MAIN_ddx, 0x00000000);
 	set32immimm(MAIN_ddy, 0x00000000);
-	//init screen
-	lcdboxgreyimm(0,  0, 239, 0, 319);
 	//loop to move ship
 	loopaddr = addr;
 	//delay
@@ -99,34 +96,61 @@ void main(int argc, char** argv) {
 	trans32immimm(MAIN_yold, MAIN_y);
 	trans32immimm(MAIN_xendold, MAIN_xend);
 	trans32immimm(MAIN_yendold, MAIN_yend);
+
 	//set MAIN_ddx
 	//start with gravity
-	set32immimm(MAIN_ddx, 0xfffffff8);
-	//accelerate up
+	//accelerate up (positive)
 	keygen();
 	makeaddrodd();
 	inst("gen jzor 0200");
 	instexpnxt("dnc noop 0000", _next);
-	set32immimm(MAIN_dummy, 0x00000015);
+	set32immimm(MAIN_dummy, 0x00000115);
 	add32(MAIN_ddx, MAIN_ddx, MAIN_dummy);
 	replacex88expimm(_next, addr);
-	//accelerate down
+	//accelerate down (negative)
 	keygen();
 	makeaddrodd();
 	inst("gen jzor 0100");
 	instexpnxt("dnc noop 0000", _next);
-	set32immimm(MAIN_dummy, 0xffffffeb);
+	set32immimm(MAIN_dummy, 0xfffffeeb);
 	add32(MAIN_ddx, MAIN_ddx, MAIN_dummy);
 	replacex88expimm(_next, addr);
+	//delay and print
+	inst("imm gen0 ffff");
+	inst("imm gen1 ffff");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ddx);
+	inst("imm out0 ffff");
+	inst("ram out1 0000");
+	makeaddr_genpred16();
+	delayaddr = addr;
+	genpred16();
+	makeaddrodd();
+	inst("gen jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", delayaddr);
+	inst("imm gen0 ffff");
+	inst("imm gen1 ffff");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ddx|0x0001);
+	inst("imm out0 ffff");
+	inst("ram out1 0000");
+	makeaddr_genpred16();
+	delayaddr = addr;
+	genpred16();
+	makeaddrodd();
+	inst("gen jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", delayaddr);
+	
 	//set MAIN_ddy
 	//start with zero
-	set32immimm(MAIN_ddy, 0x00000000);
 	//accelerate right (negative)
 	keygen();
 	makeaddrodd();
 	inst("gen jzor 2000");
 	instexpnxt("dnc noop 0000", _next);
-	set32immimm(MAIN_dummy, 0xffffffeb);
+	set32immimm(MAIN_dummy, 0xfffffdeb);
 	add32(MAIN_ddy, MAIN_ddy, MAIN_dummy);
 	replacex88expimm(_next, addr);
 	//accelerate left (positive)
@@ -134,9 +158,37 @@ void main(int argc, char** argv) {
 	makeaddrodd();
 	inst("gen jzor 0020");
 	instexpnxt("dnc noop 0000", _next);
-	set32immimm(MAIN_dummy, 0x00000015);
+	set32immimm(MAIN_dummy, 0x00000215);
 	add32(MAIN_ddy, MAIN_ddy, MAIN_dummy);
 	replacex88expimm(_next, addr);
+	//delay and print
+	inst("imm gen0 ffff");
+	inst("imm gen1 ffff");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ddy);
+	inst("imm out0 ffff");
+	inst("ram out1 0000");
+	makeaddr_genpred16();
+	delayaddr = addr;
+	genpred16();
+	makeaddrodd();
+	inst("gen jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", delayaddr);
+	inst("imm gen0 ffff");
+	inst("imm gen1 ffff");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ddy|0x0001);
+	inst("imm out0 ffff");
+	inst("ram out1 0000");
+	makeaddr_genpred16();
+	delayaddr = addr;
+	genpred16();
+	makeaddrodd();
+	inst("gen jzor ffff");
+	instnxt("dnc noop 0000", addr+2);
+	instnxt("dnc noop 0000", delayaddr);
+
 	//do the calculations
 	//integrate the acceleration
 	add32(MAIN_dx, MAIN_ddx, MAIN_dx);
@@ -195,9 +247,6 @@ void main(int argc, char** argv) {
 	set32immimm(MAIN_yend, ((5-1)*(1<<6))<<16);
 	add32(MAIN_xend, MAIN_xend, MAIN_x);
 	add32(MAIN_yend, MAIN_yend, MAIN_y);
-	lcdboxgreypointimm_dwn6(0,  MAIN_xold|0x0001, MAIN_xendold|0x0001,
-				MAIN_yold|0x0001, MAIN_yendold|0x0001, 25);
-	lcdboxgreypointimm_dwn6(63,  MAIN_x|0x0001, MAIN_xend|0x0001, MAIN_y|0x0001, MAIN_yend|0x0001, 25);
 	inst("dnc noop 0000");
 	//loop infinitely
 	replacex88immimm(addr, loopaddr);

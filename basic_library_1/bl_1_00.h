@@ -48,6 +48,8 @@ unsigned short MFP_ret;
 unsigned short mfp_loc;
 char _mfp_loc_label[5];
 
+unsigned short ADD32_buffsum;
+
 void inst(char*op) {
 	fprintf(fd, "%04x %s \x88%04x\n", addr, op, addr+1);
 	addr++;
@@ -530,16 +532,6 @@ void mfpcode() {
 	makelabel(_blockend);
 	makelabel(_full);
 
-	makeheap(&MFP_f0);
-	makeheap(&MFP_f1);
-	makeheap(&MFP_prod);
-	makeheap(&MFP_ret);
-	while (heapcount&0x000f)
-		heapcount++;
-	makeheap(&MFP_array);
-	while (heapcount&0x000f)
-		heapcount++;
-
 	//record location
 	mfp_loc = addr;
 
@@ -741,12 +733,6 @@ void addcode() {
 
 	//record location
 	add_loc = addr;
-
-	//allocate space on heap
-	makeheap(&ADD_addend0);
-	makeheap(&ADD_addend1);
-	makeheap(&ADD_sum);
-	makeheap(&ADD_ret);
 
 	//charge gen with value at ADD_addend0 and set addr to ADD_addend1
 	inst("imm addr0 ffff");
@@ -1178,6 +1164,17 @@ void transimmimm(unsigned short targetptr, unsigned short sourceptr) {
 	inst("gen ramall 0000");
 }
 
+void trans32immimm(unsigned short point_target, unsigned short point_source) {
+	//pointers should be to the lower word (which should be an even address number)
+	transimmimm(point_target, point_source);
+	transimmimm(point_target|0x0001, point_source|0x0001);
+}
+
+void set32immimm(unsigned short point_loc, long val) {
+	setimmimm(point_loc|0x0001, (val/65536)%65536);
+	setimmimm(point_loc, val%65536);
+}
+
 void add32(unsigned short point_sum, unsigned short point_addend0, unsigned short point_addend1) {
 	//the pointers should be to the even version of the pointer (which corresponds to lowest word)
 	//This macro is rather slow as it calls the addition function twice.
@@ -1186,8 +1183,8 @@ void add32(unsigned short point_sum, unsigned short point_addend0, unsigned shor
 	makelabel(_carry);
 	makelabel(_nocarry);
 
-	calladd(point_sum, point_addend0, point_addend1);
-	calladd(point_sum|0x0001, point_addend0|0x0001, point_addend1|0x0001);
+	calladd(ADD32_buffsum, point_addend0, point_addend1);
+	calladd(ADD32_buffsum|0x0001, point_addend0|0x0001, point_addend1|0x0001);
 	//do a bunch of reverse engineering so see if the last bit rolled over
 	inst("imm addr0 ffff");
 	instval("imm addr1", point_addend0);
@@ -1203,14 +1200,14 @@ void add32(unsigned short point_sum, unsigned short point_addend0, unsigned shor
 	instnxt("imm addr0 ffff", addr+3);
 	instnxt("imm addr0 ffff", addr+2);
 	instexpnxt("dnc noop 0000", _carry);
-	instval("imm addr1", point_sum);
+	instval("imm addr1", ADD32_buffsum);
 	inst("ram jzor 8000");
 	instexpnxt("dnc noop 0000", _carry);
 	instexpnxt("dnc noop 0000", _nocarry);
 
 	replacex88expimm(_carry, addr);
 	inst("imm addr0 ffff");
-	instval("imm addr1", point_sum|0x0001);
+	instval("imm addr1", ADD32_buffsum|0x0001);
 	inst("imm gen1 ffff");
 	inst("ram gen0 0000");
 	genpred16();
@@ -1220,15 +1217,26 @@ void add32(unsigned short point_sum, unsigned short point_addend0, unsigned shor
 	inst("gen ramall 0000");
 	
 	replacex88expimm(_nocarry, addr);
+	trans32immimm(point_sum, ADD32_buffsum);
 }
 
-void trans32immimm(unsigned short point_target, unsigned short point_source) {
-	//pointers should be to the lower word (which should be an even address number)
-	transimmimm(point_target, point_source);
-	transimmimm(point_target|0x0001, point_source|0x0001);
-}
-
-void set32immimm(unsigned short point_loc, int val) {
-	setimmimm(point_loc|0x0001, (val/65536)%65536);
-	setimmimm(point_loc, val%65536);
+void libheap() {
+	//allocates memory for all the variables so that their pointers actually point somewhere
+	makeheap(&MFP_f0);
+	makeheap(&MFP_f1);
+	makeheap(&MFP_prod);
+	makeheap(&MFP_ret);
+	while (heapcount&0x000f)
+		heapcount++;
+	makeheap(&MFP_array);
+	while (heapcount&0x000f)
+		heapcount++;
+	makeheap(&ADD_addend0);
+	makeheap(&ADD_addend1);
+	makeheap(&ADD_sum);
+	makeheap(&ADD_ret);
+	if (heapcount&0x0001)
+		heapcount++;
+	makeheap(&ADD32_buffsum);
+	heapcount++;
 }
