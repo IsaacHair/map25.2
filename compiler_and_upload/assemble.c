@@ -141,7 +141,7 @@ char opdecode(char* opcode) {
 		return '8';
 	else if (compare("gen1", opcode))
 		return '9';
-	else if (compare("noop", opcode))
+	else if (compare("noop", opcode) || compare("nop", opcode))
 		return 'a';
 	else if (compare("rlow", opcode) || compare("ramlow", opcode))
 		return 'd';

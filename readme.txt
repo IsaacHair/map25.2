@@ -138,7 +138,7 @@ of the next program address value)
 0x7 => "dir1", "7" (direction register is set to one with bus as mask)
 0x8 => "gen0", "8" (general register is set to zero with bus as mask)
 0x9 => "gen1", "9" (general register is set to one with bus as mask)
-0xa => "noop", "a" (no operation is performed)
+0xa => "noop", "nop", "a" (no operation is performed)
 0xb => "b" (same as 0xa)
 0xc => "c" (same as 0xa)
 0xd => "rlow", "ramlow", "d" (ram lower byte at address register
