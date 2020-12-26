@@ -1,1 +1,19 @@
 This is just a flow map for the program and a place for me to organize my thoughts.
+
+Current library (bl_1_00.h) includes this shit already:
+- lcd boxes of immediate color and immediate or pointer location (but immediate area)
+- addition
+- multiplication
+- extremely rudimentary shit
+
+It looks like a good first step is to create a function that will draw sprites instead of
+just boxes. Honestly, the sprite should probably be stored as a segment of ROM, so really
+you will have a function to set up the box for the sprite, which calls another function that
+is the explicitly defined rom bit basher for each pixel of the sprite. This is the fastest
+and most efficient method; you can probably get up to around 10% of the ROM to hold
+actual data (the rest will store things like the op code for "imm out0" etc).
+
+Should also create an actual stack finally.
+
+So, both of these ^^ look like things that should go in the basic library, so I will probably
+create bl_1_01 and then return to this (lunar_3_01).
