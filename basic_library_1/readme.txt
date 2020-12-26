@@ -74,3 +74,26 @@ back into where it is supposed to be afterwards.
 
 So, calladd(), callmfp(), and add32() will give you the correct answer even if the pointers they are
 given point to some of the same numbers.
+
+
+Version 1_01:
+
+This will add a function to finally print arbitrary sprites (there is no alpha color, however).
+
+It will also FINALLY create a proper function stack.
+
+Will also do some general clean up so that the library is easier to use and doesn't require like
+20 lines of extremely complex initiation in the actual program. This means that there will be a function
+for the very beginning of main() in the target program and a function for the very end of main().
+These functions will do things like initialize all of the random annoying bullshit for map25.2 functions.
+There will be global variables that determine if the function is ever called, and, as a result,
+if the code for the function needs to be included in the map25.2 program. This means that map25.2
+functions will have several things associated with them: the function caller function, the function
+code, the function variable pointers in ram for immediate locations, the function variable pointers
+for stack locations, the ROM location of the function, the return address pointer location, the function
+parameter location, the function return location, the function heap initiation functions, the function
+label initiation functions, the function call global variable in the c program to determine if it is
+needed at all, etc. Note that the words "function" and "variable" are extremely overloaded here;
+each can refer to like 15 different things and you have to figure it out based on context as the reader.
+I should probably just invent specific words to refer to specific functions and variables to avoid
+confusion.
