@@ -97,3 +97,7 @@ needed at all, etc. Note that the words "function" and "variable" are extremely 
 each can refer to like 15 different things and you have to figure it out based on context as the reader.
 I should probably just invent specific words to refer to specific functions and variables to avoid
 confusion.
+
+***This version has not been created because I am opting to just write an operating system instead.
+I will also create adapted versions of what is in the library, which should hopefully be faster and
+easier to use***
