@@ -254,3 +254,5 @@ but I really don't care that much.
 
 Added a document for complaints about the machine just to have a place to record all of my
 mistakes for future reference if I build another computer.
+
+From here, I think I should either write an actual assembly language and/or an operating system.
