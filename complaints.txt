@@ -10,6 +10,10 @@ List of things I wish I had included in the map25.2:
 	- Use nor flash memory instead of eeprom because, even though they are functionally the same
 	  on the transistor level, flash memory is way cheaper and comes in parallel packages up to
 	  a few gigabytes (and it is considered non-antiquated).
+	- should have designed a dip (or zif) socket for the ram instead of directly soldering it on.
+	  This serves no functional purpose, but it does allow you to easily remove the ram and rom,
+	  leaving only the "PURE" "ABSOLUTELY DISCRETE CPU" behind if you want to admire it in its
+	  true beauty.
 
 Note that these are tiny complaints and, to be honest, there are always going
 to be issues. These just stand out to me the most and are useful to keep in
