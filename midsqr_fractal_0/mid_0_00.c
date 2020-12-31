@@ -49,6 +49,20 @@ void main(int argc, char** argv) {
 	setimmimm(MAIN_count, 0x00ff);
 
 	loopaddr = addr;
+	//test flag escape
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_rand);
+	inst("imm gen0 ffff");
+	inst("ram gen1 2422");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_flags);
+	inst("imm gen0 ff00");
+	inst("gen addr1 4555");
+	makeaddrodd();
+	inst("addr jzor 0001");
+	instnxt("dnc noop 1234", addr+2);
+	instnxt("dnc noop 
+	//set corresponding flag to "1"
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_rand);
 	inst("imm gen0 ffff");
@@ -57,7 +71,7 @@ void main(int argc, char** argv) {
 	instval("imm addr1", MAIN_flags);
 	inst("imm gen0 ff00");
 	inst("gen addr1 4545");
-	inst("
+	instnxt("imm ramall 0001", loopaddr);
 
 	mfpcode();
 	replacemfpcall();
