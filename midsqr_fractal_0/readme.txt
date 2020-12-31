@@ -35,5 +35,7 @@ The exact details of what counts as zero and one for the counter, if the VERY
 first number is written to the flags will kind of just be glossed over
 because it shouldn't really affect the end result very much.
 
+Basically, the color of the pixel is the cycle size at that point.
+
 Version 0_00:
 I am just gonna do everything described above and hope for the best.

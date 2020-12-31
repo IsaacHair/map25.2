@@ -96,7 +96,16 @@ void main(int argc, char** argv) {
 	instval("imm addr1", MAIN_count);
 	inst("imm gen0 ffff");
 	inst("ram gen1 0444");
-	buswritegen();
+	//shift up 2 spaces for clearer detail
+	inst("imm addr0 ffff");
+	inst("rol addr1 0000");
+	inst("imm gen0 ffff");
+	inst("addr gen1 0000");
+	inst("imm addr0 ffff");
+	inst("rol addr1 0000");
+	inst("imm gen0 ffff");
+	inst("addr gen1 0000");
+	buswritegen(); //last so you can see it persist on the register
 	instnxt("dnc noop 0001", startaddr);
 	//decrement counter
 	replacex88expimm(_loopiterate, addr);
