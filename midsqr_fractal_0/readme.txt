@@ -31,5 +31,9 @@ that is not already set to "1". This means that the flag must be tested
 before being written to. The final value of the flag is simply printed
 directly as the value of the pixel.
 
+The exact details of what counts as zero and one for the counter, if the VERY
+first number is written to the flags will kind of just be glossed over
+because it shouldn't really affect the end result very much.
+
 Version 0_00:
 I am just gonna do everything described above and hope for the best.

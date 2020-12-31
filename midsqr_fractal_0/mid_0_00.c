@@ -11,6 +11,8 @@ void main(int argc, char** argv) {
 	unsigned short startaddr;
 	unsigned short flagrstaddr;
 	unsigned short loopaddr;
+	char _loopiterate[5];
+	char _nonadjusted[5];
 	if (argc != 3) {
 		printf("need <target> <buffer>\n");
 		exit(0x01);
@@ -21,6 +23,8 @@ void main(int argc, char** argv) {
 	fd = fopen(argv[2], "w+");
 	makemfplabel();
 	libheap();
+	makelabel(_loopiterate);
+	makelabel(_nonadjusted);
 	makeheap(&MAIN_seed);
 	makeheap(&MAIN_rand);
 	makeheap(&MAIN_count);
@@ -33,6 +37,7 @@ void main(int argc, char** argv) {
 	lcdinit();
 	lcdboxgreyimm(42, 0, 239, 0, 319);
 	
+	lcdresetframe();
 	setimmimm(MAIN_seed, 0xffef);
 
 	startaddr = addr;
@@ -49,7 +54,7 @@ void main(int argc, char** argv) {
 	setimmimm(MAIN_count, 0x00ff);
 
 	loopaddr = addr;
-	//test flag escape
+	//test if flag is already set
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_rand);
 	inst("imm gen0 ffff");
@@ -59,9 +64,48 @@ void main(int argc, char** argv) {
 	inst("imm gen0 ff00");
 	inst("gen addr1 4555");
 	makeaddrodd();
-	inst("addr jzor 0001");
-	instnxt("dnc noop 1234", addr+2);
-	instnxt("dnc noop 
+	inst("ram jzor 0001");
+	instexpnxt("dnc noop 1234", _loopiterate);
+	//see if halt because the number WAS zero
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_seed);
+	makeaddrodd();
+	inst("ram jzor ffff");
+	instnxt("dnc noop 6969", addr); //this is where it halts
+	inst("dnc noop 4321");
+	//see if need to adjust column before decrementing to get desired results
+	//gets a bit messy but should still be evident what is happening
+	inst("imm gen0 ffff");
+	inst("ram gen1 aaaa");
+	makeaddrodd();
+	inst("ram jzor 00ff");
+	instnxt("dnc noop 6677", addr+2);
+	instexpnxt("dnc noop fead", _nonadjusted);
+	//this part will subtract from (for example) fa00 to f9ff,
+	//then set f9ff to f9f0, then send this number to be decremented
+	genpred16();
+	inst("imm gen0 000f");
+	//decrement
+	replacex88expimm(_nonadjusted, addr);
+	genpred16();
+	inst("gen ramall eeee");
+	//print and return to main loop
+	buswrite(0);
+	buswrite(0);
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_count);
+	inst("imm gen0 ffff");
+	inst("ram gen1 0444");
+	buswritegen();
+	instnxt("dnc noop 0001", startaddr);
+	//decrement counter
+	replacex88expimm(_loopiterate, addr);
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_count);
+	inst("imm gen0 ffff");
+	inst("ram gen1 7000");
+	genpred16();
+	inst("gen ramall 5555");
 	//set corresponding flag to "1"
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_rand);
@@ -71,7 +115,10 @@ void main(int argc, char** argv) {
 	instval("imm addr1", MAIN_flags);
 	inst("imm gen0 ff00");
 	inst("gen addr1 4545");
-	instnxt("imm ramall 0001", loopaddr);
+	inst("imm ramall 0001");
+	//iterate
+	callmfp(MAIN_rand, MAIN_rand, MAIN_rand);
+	instnxt("dnc noop bbbb", loopaddr);
 
 	mfpcode();
 	replacemfpcall();
