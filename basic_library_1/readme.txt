@@ -77,6 +77,7 @@ given point to some of the same numbers.
 
 
 Version 1_01:
+***NOT CREATED YET***
 
 This will add a function to finally print arbitrary sprites (there is no alpha color, however).
 

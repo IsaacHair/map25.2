@@ -1220,6 +1220,18 @@ void add32(unsigned short point_sum, unsigned short point_addend0, unsigned shor
 	trans32immimm(point_sum, ADD32_buffsum);
 }
 
+void whitepx() {
+	buswrite(0xffff);
+	buswrite(0xffff);
+	buswrite(0xffff);
+}
+
+void blackpx() {
+	buswrite(0x0000);
+	buswrite(0x0000);
+	buswrite(0x0000);
+}
+
 void libheap() {
 	//allocates memory for all the variables so that their pointers actually point somewhere
 	makeheap(&MFP_f0);

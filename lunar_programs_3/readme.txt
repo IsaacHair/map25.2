@@ -15,3 +15,8 @@ to actually correspond with what appears on the screen. In other words, "x" shit
 correspond to left-and-right, and "y" shit will correspond to up-and-down. Hopefully the new naming system
 will be easier to understand. I will also increase the accelerations a bit to make it faster
 and up the frame rate a bit by decreasing the frame delay counter.
+
+Version 1:
+I will add actual sprites (for now, it will just be a single sprite for the rocked that
+looks the same no matter if the thrusters are on or not). Note that the animation will work
+by overriding the previous sprite with black, then painting the new sprite.

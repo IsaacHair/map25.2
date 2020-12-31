@@ -17,3 +17,6 @@ Should also create an actual stack finally.
 
 So, both of these ^^ look like things that should go in the basic library, so I will probably
 create bl_1_01 and then return to this (lunar_3_01).
+
+*****Just see the readme.txt for what this version will contain, as this architecture
+is deprecated*****
