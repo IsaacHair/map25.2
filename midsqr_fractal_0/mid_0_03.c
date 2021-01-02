@@ -66,19 +66,7 @@ void main(int argc, char** argv) {
 	setimmimm(MAIN_count, 0x00ff);
 
 	loopaddr = addr;
-	//test if flag is already set for real OR imaginary
-	inst("imm addr0 ffff");
-	instval("imm addr1", MAIN_rand);
-	inst("imm gen0 ffff");
-	inst("ram gen1 2422");
-	inst("imm addr0 ffff");
-	instval("imm addr1", MAIN_flags);
-	inst("imm gen0 ff00");
-	inst("gen addr1 4555");
-	makeaddrodd();
-	inst("ram jzor 0001");
-	instnxt("dnc noop 1234", addr+2);
-	instexpnxt("dnc noop b00b", _stopiterate);
+	//test if flag is already set for real value
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_rand);
 	inst("imm gen0 ffff");
@@ -147,16 +135,6 @@ void main(int argc, char** argv) {
 	inst("ram gen1 7000");
 	genpred16();
 	inst("gen ramall 5555");
-	//set corresponding flag to "1" for real imaginary
-	inst("imm addr0 ffff");
-	instval("imm addr1", MAIN_rand);
-	inst("imm gen0 ffff");
-	inst("ram gen1 2222");
-	inst("imm addr0 ffff");
-	instval("imm addr1", MAIN_flags);
-	inst("imm gen0 ff00");
-	inst("gen addr1 4545");
-	inst("imm ramall 0001");
 	//set corresponding flag to "1" for real value
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_rand);

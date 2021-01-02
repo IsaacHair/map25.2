@@ -44,7 +44,8 @@ Update: it works perfectly (or at least seems to).
 Version 0_01:
 I am going to use the program setup as described above, except
 the x and y axes will correspond to real and imaginary respectively,
-and the array will be indexed using the imaginary part.
+and the array will be indexed and set using the imaginary part.
+Array is also tested using the imaginary part.
 
 The number is stored as one word, with the upper 8 bits for real and the
 lower 8 bits for imaginary. For multiplication, the number is split in two
@@ -67,3 +68,8 @@ used to check off values in the table (that means if the real and imaginary are
 equal, it is automatically killed off). Actually, the parenthesized section
 directly before this sentence is false; it is checked in a slightly different
 way (see program; it is self-evident).
+The flag array is set by the real AND imaginary, and it is tested by the real
+AND imaginary.
+
+Version 0_03:
+Same as 0_01, but tests only the real values. Also only sets the real values.
