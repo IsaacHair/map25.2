@@ -39,3 +39,24 @@ Basically, the color of the pixel is the cycle size at that point.
 
 Version 0_00:
 I am just gonna do everything described above and hope for the best.
+Update: it works perfectly (or at least seems to).
+
+Version 0_01:
+I am going to use the program setup as described above, except
+the x and y axes will correspond to real and imaginary respectively,
+and the array will be indexed using the imaginary part.
+
+The number is stored as one word, with the upper 8 bits for real and the
+lower 8 bits for imaginary. For multiplication, the number is split in two
+(real and imaginary), then the parts are shifted to the upper part of the
+word. Bottom part is padded with zeros as this will make multiplication
+using mfp() faster. Each is then squared, etc, you know the usual
+(a+bi)^2 = (a^2-b^2)+2abi bullshit. The upper 8 bits of each are then re-inserted
+into the number, it is tested with the array, and the process is repeated.
+This is not the most efficient process but who cares.
+
+Since mfp() expands with a center between the upper nibbles, this is going
+to actually create a "middle split" random number function instead of
+one where the split occurs higher.
+
+Result will also still be shifted up 2 spaces.
