@@ -60,3 +60,10 @@ to actually create a "middle split" random number function instead of
 one where the split occurs higher.
 
 Result will also still be shifted up 2 spaces.
+
+Version 0_02:
+Same as 0_01, except the 8-bit real value and 8-bit imaginary value are both
+used to check off values in the table (that means if the real and imaginary are
+equal, it is automatically killed off). Actually, the parenthesized section
+directly before this sentence is false; it is checked in a slightly different
+way (see program; it is self-evident).
