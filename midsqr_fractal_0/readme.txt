@@ -62,6 +62,8 @@ one where the split occurs higher.
 
 Result will also still be shifted up 2 spaces.
 
+INCORRECT MULTIPLICATION.
+
 Version 0_02:
 Same as 0_01, except the 8-bit real value and 8-bit imaginary value are both
 used to check off values in the table (that means if the real and imaginary are
@@ -71,5 +73,14 @@ way (see program; it is self-evident).
 The flag array is set by the real AND imaginary, and it is tested by the real
 AND imaginary.
 
+INCORRECT MULTIPLICATION.
+
 Version 0_03:
 Same as 0_01, but tests only the real values. Also only sets the real values.
+
+INCORRECT MULTIPLICATION.
+
+Version 0_04:
+Exact copy of version 2, except the real part of the complex square is evalueated
+properly (in 0_02, 0_01, and 0_03, the real part ends up being a^2+b^2+1 instead
+of a^2-b^2 because of an error in two's complement evaluation).
