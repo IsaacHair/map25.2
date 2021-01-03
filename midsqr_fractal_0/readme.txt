@@ -84,3 +84,6 @@ Version 0_04:
 Exact copy of version 2, except the real part of the complex square is evalueated
 properly (in 0_02, 0_01, and 0_03, the real part ends up being a^2+b^2+1 instead
 of a^2-b^2 because of an error in two's complement evaluation).
+
+Version 0_05:
+Exact copy of 0_04, but with the imaginary flag and check removed.
