@@ -37,6 +37,10 @@ because it shouldn't really affect the end result very much.
 
 Basically, the color of the pixel is the cycle size at that point.
 
+Note that the multiplication is SIGNED and the indexing of pixels is
+USNIGNED, so the resulting graph of the function goes from (0, -8] then jumps to (8, 0].
+
+
 Version 0_00:
 I am just gonna do everything described above and hope for the best.
 Update: it works perfectly (or at least seems to).
