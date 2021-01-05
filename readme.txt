@@ -256,3 +256,5 @@ Added a document for complaints about the machine just to have a place to record
 mistakes for future reference if I build another computer.
 
 From here, I think I should either write an actual assembly language and/or an operating system.
+
+I am also setting up a better way to use peripherals on the physical system board.
