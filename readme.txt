@@ -1,6 +1,9 @@
 **The readme.txt's in this repo will also act as changelog.txt's so that
 everything is visible easily**
 
+**The readme.txt's are fully updated, while comments within the code MIGHT
+BE DEPRECATED OR UNTRUE, so beware**
+
 map25.2 assembly:
 This is basically just machine code.
 instruction looks like: XXXX <mnemonic> XXXX XXXX
