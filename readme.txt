@@ -261,3 +261,7 @@ mistakes for future reference if I build another computer.
 From here, I think I should either write an actual assembly language and/or an operating system.
 
 I am also setting up a better way to use peripherals on the physical system board.
+
+
+Going to make a proper assembly language instead of using what was basically machine code.
+Language will be called biggiecheese with file extension .bc

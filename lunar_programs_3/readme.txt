@@ -20,3 +20,23 @@ Version 1:
 I will add actual sprites (for now, it will just be a single sprite for the rocked that
 looks the same no matter if the thrusters are on or not). Note that the animation will work
 by overriding the previous sprite with black, then painting the new sprite.
+
+Version 2: (Not completed yet)
+I will add rotation and the ability to render those rotations. The sprite will be stored
+as a rom array. The rotation WILL NOT INFLUENCE MOVEMENT. It is purely aesthetic.
+In specific, this version serves to test the viability of a ROM array paradigm. I will
+also expand the sprite up to 8x8, add color, and try to clean the file up from a
+programmer's point of view.
+
+The ROM array works as follows:
+There are different functions for printing each rotation of the sprite.
+The start addresses of these functions are stored in an array in RAM,
+which can be indexed through simply by incrementing or decrementing
+the RAM pointer. These functions will all share the same return pointer
+address in ram (the second addresses of return are all the same) so as
+to make everything easier.
+
+THERE IS STILL NO GENERAL STACK, only the heap and arrays created for shit you want to do.
+
+Note: the libraries are getting just disgusting and the bastardized c is horrible
+to program in. I will have to get serious about making an actual assembly language.
