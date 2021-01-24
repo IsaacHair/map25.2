@@ -1,0 +1,47 @@
+//This bad boy will move a box on the screen based on if keys are pressed
+//There is no realistic acceleration, it is just moving at a constant speed
+//if a key is pressed.
+//Even "gravity" is just a constant speed down if no vertical buttons are pressed.
+//Screen wrapping is non-existant.
+
+void $y $x $dummy
+
+#trans $a $b
+	imm addr0 ffff
+	imm addr1 $b
+	imm gen0 ffff
+	ram gen1
+	imm addr0 ffff
+	imm addr1 $a
+	gen ramall
+
+#set $a $b
+	imm addr0 ffff
+	imm addr1 $a
+	imm ramall $b
+
+!add $number $delta
+	
+
+set $x 0000
+set $y 1000
+for : 1:
+	for imm gen1 ffff: gen ffff: genpred
+	keygen
+	if gen 0020
+		set $dummy 0088
+		add $x $dummy
+	else if gen 2000
+		set $dummy ff78
+		add $x $dummy
+	keygen
+	if gen 0100
+		set $dummy 0088
+		add $y $dummy
+	else if gen 0200
+		set $dummy ff78
+		add $y $dummy
+	else
+		set $dummy fff0
+		add $y $dummy
+	whitebox $x $y 
