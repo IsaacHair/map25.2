@@ -5,6 +5,7 @@
 //Screen wrapping is non-existant.
 
 void $y $x $dummy
+eval int test;
 
 #trans $a $b
 	imm addr0 ffff
@@ -20,13 +21,16 @@ void $y $x $dummy
 	imm addr1 $a
 	imm ramall $b
 
+#shift $ptr $offset
+	eval test = 
+
 !add $number $delta
 	
 
 set $x 0000
 set $y 1000
 for : 1:
-	for imm gen1 ffff: gen ffff: genpred
+	for imm gen0 ffff; imm gen1 0800: gen ffff: genpred
 	keygen
 	if gen 0020
 		set $dummy 0088

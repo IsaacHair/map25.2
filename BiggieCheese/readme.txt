@@ -32,6 +32,8 @@ Revised features:
 	- functions are declared by !
 	- "continue" and "break"
 	- else, else if
+	- mark keyword will set a variable to the value of the ROM address at that point
+	  and change all instances of that variable ahead and behind of that point
 Compilation process:
 	- the inline c is evaluated first to create an interum ram buffer where
 	  all the assembly is written as dictated by the c code, meaning lines
@@ -76,3 +78,8 @@ Purposes:
 	- schedule all of the dumbass low-level shit for you
 	- greatly reduce the number of stupid errors
 	- obfuscate some stuff
+
+OK this is a lot more complex than I expected, and it still looks like this isn't providing
+the best functionality. Particularly:
+	- pre-compiler variables are still difficult to manipulate
+	- inner part of for/if loops are painful
