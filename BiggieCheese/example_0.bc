@@ -5,7 +5,6 @@
 //Screen wrapping is non-existant.
 
 void $y $x $dummy
-eval int test;
 
 #trans $a $b
 	imm addr0 ffff
@@ -22,15 +21,35 @@ eval int test;
 	imm ramall $b
 
 #shift $ptr $offset
-	eval test = 
+	//positive is left rotate (pads with zeros upon wrap around)
+	int i
+	imm gen0 ffff
+	imm addr0 ffff
+	imm addr1 $ptr
+	ram gen1
+	rep i = test:: i>0:: i--
+		imm addr0 ffff
+		rol addr1
+		imm addr0 0001
+		imm gen0 ffff
+		addr gen1
+	rep i = -test:: i>0:: i--
+		imm addr0 ffff
+		ror addr1
+		imm addr0 8000
+		imm gen0 ffff
+		addr gen1
+
+#genpred_iterate $
+	
 
 !add $number $delta
 	
 
 set $x 0000
 set $y 1000
-for : 1:
-	for imm gen0 ffff; imm gen1 0800: gen ffff: genpred
+rep :: 1::
+	for imm gen0 ffff; imm gen1 0800:: gen ffff:: genpred
 	keygen
 	if gen 0020
 		set $dummy 0088

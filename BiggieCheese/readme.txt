@@ -24,6 +24,9 @@ Revised features:
 	  put in a value for immediate
 	- "rep" command to repeat a block if the inside c variable evaluates to nonzero;
 	  should be paired with an inline c thing to change the variable
+	- "rep" is the equivalent of a for loop written in pre-compiler
+	  c; "for" is an actual for loop in machine code that
+	  will run on the map25.2
 	- macro is initiated with "#"
 	- comment is initiated with "//" and will comment the entirety of the line
 	  and only the entirety of the line; does not see semicolons
@@ -34,6 +37,33 @@ Revised features:
 	- else, else if
 	- mark keyword will set a variable to the value of the ROM address at that point
 	  and change all instances of that variable ahead and behind of that point
+	- there will also be an option to set a c variable to
+	  track along with a $variable; changing one will change
+	  the other; keyword is "track"
+	- tracking is synched before and after every "eval" block;
+	  @ variables are the only ones that can be easily dynamically
+	  changed, so the $ variable just takes on the value of the @
+	  variable
+	- pre-compiler variables are all global or just within
+	  macros; these are the only two options
+	- @ variables are only declared within inline-c ("eval");
+	  $ variables are declared as arguments to a macro or
+	  with the "void" keyword
+	- @ variables must be accessed using @ unless they are within
+	  inline c
+	- for and rep loops have their components separated by ::
+	- order of "track" arguments shouldn't matter as long
+	  as they come in pairs of those to be tracked
+	- "+" and "-" are used to show relative ROM address to the
+	  current position
+	*** Actually, with recursion, if/else, for, and macros,
+	  rom address stuff shouldn't be necessary at all
+	*** Actually, @ and $ variables should be combined into one;
+	  just use the $ symbol, so need to declare all of these
+	  variables with either "int" to make it random (also
+	  32 bits to give extra space to work with and sign) or "heap"
+	  which will assign it to a value on the heap and increment
+	  heap by one
 Compilation process:
 	- the inline c is evaluated first to create an interum ram buffer where
 	  all the assembly is written as dictated by the c code, meaning lines
