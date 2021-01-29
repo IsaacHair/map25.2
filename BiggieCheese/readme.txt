@@ -22,9 +22,10 @@ Revised features:
 	- don't have to specify immediate if not necessary
 	- can specify current and next addresses, but the latter requires you to
 	  put in a value for immediate
-	- "rep" command to repeat a block if the inside c variable evaluates to nonzero;
-	  should be paired with an inline c thing to change the variable
-	- "rep" is the equivalent of a for loop written in pre-compiler
+	- "fordef" command to repeat a block if the inside c variable evaluates to nonzero;
+	  should be paired with an inline c thing to change the variable;
+	  is called fordef because it is a for loop with definitions
+	- "fordef" is the equivalent of a for loop written in pre-compiler
 	  c; "for" is an actual for loop in machine code that
 	  will run on the map25.2
 	- macro is initiated with "#"
@@ -51,7 +52,7 @@ Revised features:
 	  with the "void" keyword
 	- @ variables must be accessed using @ unless they are within
 	  inline c
-	- for and rep loops have their components separated by ::
+	- for and fordef loops have their components separated by ::
 	- order of "track" arguments shouldn't matter as long
 	  as they come in pairs of those to be tracked
 	- "+" and "-" are used to show relative ROM address to the
@@ -74,11 +75,45 @@ Revised features:
 	- again, other variables can be created with inline c, but only
 	  variables created using "int" or "void" can be used
 	  in the BiggieCheese itself
+	- ifdef and elsedef are just pre-compiler conditional statements
+	  that feed directly into the corresponding if and else loops
+	  in c when compiled to bastardized c
+	*** fordef, ifdef, elsedef, int, void, #, ! represent pre-compiler statements,
+	  similar to #define in c, that do not produce code directly
+	  in the final machine code
+	- can use "else if" or "elsedef ifdef" if want
+	*** need to use semicolons for some parts and NOT others
+	- note that eval is proper inline c, and rep just goes
+	  directly into a c for loop. "int" doesnt even do that
+	  much besides allocating a linked variable
+	- absolute and relative ROM is not necessary because recursion
+	  can provide what you need in terms of complex threading
+	*** will have both labels/gotos and relative ROM positioning
+	  with "+"/"-" because recursion is not strong enough for
+	  the double-threaded add macro
+	- "goto $x asdf" goes to the $xth instance of asdf relative
+	  to the current position; if $x is negative it is backwards,
+	  positive is forwards, zero is bi-derectional (relies
+	  on their only being one instance of that label either in
+	  the macro or globally)
+	- again, labels can either be global or within a macro
+	  or within a function
+	*** the reason this is necessary is that positional entropy
+	  data storage is extremely "complex", and recursion is not
+	  powerful enough to describe it
+	- don't overload global and local variables
+	*** labels actually don't have to be global or local;
+	  they simply exist and can be accessed from anywhare at
+	  all times, so be safe
 Compilation process:
+	- use struct pointers for each line to allow easy shuffling
 	- the inline c is evaluated first to create an interum ram buffer where
 	  all the assembly is written as dictated by the c code, meaning lines
 	  are repeated or omitted as specified and variables are inserted
 	- eval lines outside of the macros happen first, then it goes inside the
+	- note that this will first create a c file as an output, which
+	  is basically the type of bastardized c i am using right now,
+	  which is then further compiled
 	  macros as they are called up; lastly, it is applied to functions
 	  when they are copied down at the end
 	- all addresses are resolved and inserted into the ram buffer. this

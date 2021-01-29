@@ -28,28 +28,152 @@ void $y $x $dummy
 	imm addr0 ffff
 	imm addr1 $ptr
 	ram gen1
-	rep i = offset:: i>0:: i--
+	fordef i = offset:: i>0:: i--
 		imm addr0 ffff
 		rol addr1
 		imm addr0 0001
 		imm gen0 ffff
 		addr gen1
-	rep i = -offset:: i>0:: i--
+	fordef i = -offset:: i>0:: i--
 		imm addr0 ffff
 		ror addr1
 		imm addr0 8000
 		imm gen0 ffff
 		addr gen1
 
-#genpred_iterate $scanwidth $mask
-	
+#genpred_iterate $width $section
+	//edge detect while tracking test width
+	//the section is the uppermost bit of the TESTED portion
+	int widthnew sectionnew
+	int mask
+	eval mask = (1<<(section+1)-1);
+	if gen $mask
+		ifdef width>=1
+			eval widthnew = width/2;
+			eval sectionnew = section-(width/2);
+			genpred_iterate $widthnew $sectionnew
+		elsedef
+			eval mask = (1<<(section+1)-1);
+			imm gen0 $mask
+			eval mask = mask>>1;
+			ifdef mask
+				imm gen1 $mask
+	else
+		ifdef width>=1
+			eval widthnew = width/2;
+			eval sectionnew = section+(width/2);
+			genpred_iterate $widthnew $sectionnew
+		elsedef ifdef section != 14
+			//is ok of the mask goes above 0xffff because int
+			eval mask = (1<<(section+2)-1);
+			ifdef mask&0xffff
+				imm gen0 $mask
+			eval mask = mask>>1;
+			imm gen1 $mask
+		elsedef
+			genpred_iterate 0 15
+
+#genpred
+	genpred_iterate 8 7
 
 !add $number $delta
-	
+	imm addr0 ffff
+	imm addr1 $delta
+	imm gen0 ffff
+	ram gen1
+	imm addr0 ffff
+	imm addr1 $number
+	int idx
+	if gen 0001
+		if ram 0001
+			imm gen0 0001
+			gotof carry
+		else
+			gotof noncarry
+	else
+		if ram 0001
+			imm gen1 0001
+			gotof noncarry
+		else
+			gotof noncarry
+	fordef idx=1:: idx<0x8000:: idx = idx<<1
+		nocarry:
+			if gen idx
+				if ram idx
+					imm gen0 idx
+					goto 2 carry
+				else
+					goto 1 noncarry
+			else
+				if ram idx
+					imm gen1 idx
+					goto 1 noncarry
+				else
+					goto 1 noncarry
+		carry:
+			if gen idx
+				if ram idx
+					goto 1 carry
+				else
+					imm gen0 idx
+					goto 1 carry
+			else
+				if ram idx
+					goto 1 carry
+				else
+					imm gen1 idx
+					goto 1 noncarry
+	nocarry:
+		if gen idx
+			if ram idx
+				imm gen0 idx
+				goto 1 end
+			else
+				goto 1 end
+		else
+			if ram idx
+				imm gen1 idx
+				goto 1 end
+			else
+				goto 1 end
+	carry:
+		if gen idx
+			if ram idx
+				goto 1 end
+			else
+				imm gen0 idx
+				goto 1 end
+		else
+			if ram idx
+				goto 1 end
+			else
+				imm gen1 idx
+				goto 1 end
+	end:
+	gen ramall
 
+//dummy fx
+!keygen
+	imm gen0 ffff
+	imm gen1 ffff
+
+//dummy fx; just prints value of $col and then $row with ~1 second delays
+!whitebox $row $col
+	imm addr0 ffff
+	imm addr1 $row
+	imm out0 ffff
+	ram out1
+	for imm gen1 ffff:: gen ffff:: genpred
+	imm addr0 ffff
+	imm addr1 $row
+	imm out0 ffff
+	ram out1
+	for imm gen1 ffff:: gen ffff:: genpred
+
+imm dir0 ffff
 set $x 0000
 set $y 1000
-rep :: 1::
+for imm gen1 ffff:: gen ffff::
 	for imm gen0 ffff; imm gen1 0800:: gen ffff:: genpred
 	keygen
 	if gen 0020
@@ -69,3 +193,5 @@ rep :: 1::
 		set $dummy fff0
 		add $y $dummy
 	whitebox $x $y 
+	shift dummy 5
+	shift dummy -5
