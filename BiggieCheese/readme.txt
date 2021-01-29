@@ -64,6 +64,16 @@ Revised features:
 	  32 bits to give extra space to work with and sign) or "heap"
 	  which will assign it to a value on the heap and increment
 	  heap by one
+	*** there will also be automatic stack creation with
+	  automatic pushes and pops for addresses and constant
+	  values
+	*** the start and end of the stacks defaults to the upper
+	  half of ram, starting with 0x8000
+	*** there will be a large set of implicit functions and macros
+	  in the language
+	- again, other variables can be created with inline c, but only
+	  variables created using "int" or "void" can be used
+	  in the BiggieCheese itself
 Compilation process:
 	- the inline c is evaluated first to create an interum ram buffer where
 	  all the assembly is written as dictated by the c code, meaning lines

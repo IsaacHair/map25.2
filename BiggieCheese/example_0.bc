@@ -22,25 +22,26 @@ void $y $x $dummy
 
 #shift $ptr $offset
 	//positive is left rotate (pads with zeros upon wrap around)
+	//eg offset is the exonent of the transformation
 	int i
 	imm gen0 ffff
 	imm addr0 ffff
 	imm addr1 $ptr
 	ram gen1
-	rep i = test:: i>0:: i--
+	rep i = offset:: i>0:: i--
 		imm addr0 ffff
 		rol addr1
 		imm addr0 0001
 		imm gen0 ffff
 		addr gen1
-	rep i = -test:: i>0:: i--
+	rep i = -offset:: i>0:: i--
 		imm addr0 ffff
 		ror addr1
 		imm addr0 8000
 		imm gen0 ffff
 		addr gen1
 
-#genpred_iterate $
+#genpred_iterate $scanwidth $mask
 	
 
 !add $number $delta
