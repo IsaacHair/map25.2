@@ -21,7 +21,11 @@ I will add actual sprites (for now, it will just be a single sprite for the rock
 looks the same no matter if the thrusters are on or not). Note that the animation will work
 by overriding the previous sprite with black, then painting the new sprite.
 
-Version 2: (Not completed yet)
+Version 2:
+I will just speed up the acceleration by a factor of 2.5 because it is painfully slow
+right now. I will also add an animation for the bottom thruster.
+
+Version 3: (Not completed yet)
 I will add rotation and the ability to render those rotations. The sprite will be stored
 as a rom array. The rotation WILL NOT INFLUENCE MOVEMENT. It is purely aesthetic.
 In specific, this version serves to test the viability of a ROM array paradigm. I will

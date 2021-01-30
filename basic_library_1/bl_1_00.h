@@ -1232,6 +1232,12 @@ void blackpx() {
 	buswrite(0x0000);
 }
 
+void redpx() {
+	buswrite(0x0000);
+	buswrite(0x0000);
+	buswrite(0xffff);
+}
+
 void libheap() {
 	//allocates memory for all the variables so that their pointers actually point somewhere
 	makeheap(&MFP_f0);

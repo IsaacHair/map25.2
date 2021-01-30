@@ -35,9 +35,24 @@ void lcdspritefixedpoint_dwn6(unsigned short scpoint, unsigned short ecpoint,
 	//note that this must be of size 5x5 because of the jank ass setup
 	//PLEASE make this entire library setup cleaner before getting too much futher
 	//this function is just a bit basher basically
+	//
+	//This funciton will also do a quick check to see if vertical acceleration is on;
+	//if so, red pixels will be added in for the "rocket engine"
+	
+	char _red[5];
+	char _end[5];
+	makelabel(_red);
+	makelabel(_end);
+
 	lcdpauseframe();
 	lcdsizeframepoint_dwn6(scpoint, ecpoint, sppoint, eppoint);
 	lcdresetframe();
+
+	keygen();
+	makeaddrodd();
+	inst("gen jzor 0200");
+	instnxt("dnc noop 0000", addr+2);
+	instexpnxt("dnc noop 0000", _red);
 
 	whitepx();
 	blackpx();
@@ -68,6 +83,42 @@ void lcdspritefixedpoint_dwn6(unsigned short scpoint, unsigned short ecpoint,
 	whitepx();
 	whitepx();
 	blackpx();
+
+	instexpnxt("dnc noop 8008", _end);
+
+	replacex88expimm(_red, addr);
+	
+	whitepx();
+	blackpx();
+	whitepx();
+	whitepx();
+	blackpx();
+
+	blackpx();
+	whitepx();
+	redpx();
+	redpx();
+	whitepx();
+	
+	redpx();
+	redpx();
+	redpx();
+	redpx();
+	whitepx();
+
+	blackpx();
+	whitepx();
+	redpx();
+	redpx();
+	whitepx();
+
+	whitepx();
+	blackpx();
+	whitepx();
+	whitepx();
+	blackpx();
+
+	replacex88expimm(_end, addr);
 
 	lcdpauseframe();
 }
@@ -146,13 +197,13 @@ void main(int argc, char** argv) {
 	trans32immimm(MAIN_xendold, MAIN_xend);
 	//set MAIN_ddy
 	//start with gravity
-	set32immimm(MAIN_ddy, 0xfffffe00);
+	set32immimm(MAIN_ddy, 0xfffffb00);
 	//accelerate up
 	keygen();
 	makeaddrodd();
 	inst("gen jzor 0200");
 	instexpnxt("dnc noop 0000", _next);
-	set32immimm(MAIN_dummy, 0x00000515);
+	set32immimm(MAIN_dummy, 0x00001215);
 	add32(MAIN_ddy, MAIN_ddy, MAIN_dummy);
 	replacex88expimm(_next, addr);
 	//accelerate down
@@ -160,7 +211,7 @@ void main(int argc, char** argv) {
 	makeaddrodd();
 	inst("gen jzor 0100");
 	instexpnxt("dnc noop 0000", _next);
-	set32immimm(MAIN_dummy, 0xfffffbeb);
+	set32immimm(MAIN_dummy, 0xfffff4eb);
 	add32(MAIN_ddy, MAIN_ddy, MAIN_dummy);
 	replacex88expimm(_next, addr);
 	//set MAIN_ddx
@@ -171,7 +222,7 @@ void main(int argc, char** argv) {
 	makeaddrodd();
 	inst("gen jzor 2000");
 	instexpnxt("dnc noop 0000", _next);
-	set32immimm(MAIN_dummy, 0xfffffbdd);
+	set32immimm(MAIN_dummy, 0xfffff8dd);
 	add32(MAIN_ddx, MAIN_ddx, MAIN_dummy);
 	replacex88expimm(_next, addr);
 	//accelerate left (positive)
@@ -179,7 +230,7 @@ void main(int argc, char** argv) {
 	makeaddrodd();
 	inst("gen jzor 0020");
 	instexpnxt("dnc noop 0000", _next);
-	set32immimm(MAIN_dummy, 0x00000423);
+	set32immimm(MAIN_dummy, 0x00000723);
 	add32(MAIN_ddx, MAIN_ddx, MAIN_dummy);
 	replacex88expimm(_next, addr);
 	//do the calculations
