@@ -119,6 +119,8 @@ Compilation process:
 	- all addresses are resolved and inserted into the ram buffer. this
 	  includes resolving the symbolic RAM/ROM addresses and resolving for/if
 	  loops and gotos. this also means the insertion of macros
+	*** Previous line is not necessary because
+	  compiling to bastardized c
 	- convert the file to machine code (actually upload code)
 Notes:
 	- RAM addresses are declared before use, but rom addresses are declared
@@ -149,6 +151,7 @@ Notes:
 	- $'s don't have to be initiated before use; they just simply exist and are added
 	  to the look up table if haven't been used before. The point of "void" operating
 	  on the variables is to assign them to a heap pointer.
+	*** Previous line is incorrect
 Purposes:
 	- schedule all of the dumbass low-level shit for you
 	- greatly reduce the number of stupid errors
@@ -158,3 +161,72 @@ OK this is a lot more complex than I expected, and it still looks like this isn'
 the best functionality. Particularly:
 	- pre-compiler variables are still difficult to manipulate
 	- inner part of for/if loops are painful
+	*** Note that variables declared anywhere
+	  can be used anywhere because everything
+	  is compiled to bastardized c
+	*** VARIABLES UPDATE: "heap" is used
+	  to simutaneously declare a 32-bit signed
+	  variable and assign it to a number on
+	  the heap; to declare variables
+	  without this, just use the "eval" thing,
+	  not "int" directly
+	*** to move the heap pointer head, use
+	  "mheap" command with a number after
+	  in hex of course, written out for absolute
+	  or with +/- for relative movement
+	*** don't give user any control to make
+	  absolute statement for ROM addresses;
+	  compiler handles all of this
+
+Compiler (actual process):
+	- the compiler outputs a bastardized c file.
+	  Which the user then executes to create an
+	  assembly file, which is then assembled
+	  into upload code (again by the user).
+	- the c file is buffered in ram as a struct*
+	  kinda thing where each line has a pointer
+	  to the nested content (which can be left
+	  null) and to the next line after the nesting (which
+	  can also be null to end that nest level)
+	- variable names don't have to be put into
+	  any fancy array; they are literally
+	  just typed as declarations in the output
+	  file because the output file is c
+	- macros just end up corresponding to
+	  functions in the c file that advance
+	  addr, etc in the expected ways
+	- functions in BiggieCheese become
+	  c functions with that extra pizzazz added
+	  like putting things on a function stack
+	  and actually creating a copy of the code
+	  in rom
+	- fordef -> c for loop
+	- ifdef/elsedef -> goes directly
+	  into what it would correspond to in c
+	- goto's -> translated into the bastardized
+	  versions currently used
+	- if/else/if else -> this is the most difficult of all,
+	  the compiler actually has to think a bit and
+	  make the corresponding gotos
+	- for -> same deal as "if" but with some
+	  extra added pizzazz
+	- variables -> literally just write it
+	  in c
+	- assembly -> just convert into the
+	  bastardized "inst()" function family stuff
+	- copy over most of the lower level setup functions from the basic library
+	  (this is EXCLUDING lcd drivers, multiplication, etc;
+	  the only actual machine code functions are
+	  the functions to create a map25.2 function stack)
+	- some basic parsing to remove comments
+	  and separate statements at ";" or "::"
+	- needs to handle local variable names and
+	  global variable names -> i think this
+	  naturally occurs because the variables
+	  are only declared in functions or globally,
+	  actually, if anything, need to ensure global
+	  for the global variables and that it isn't encapsulated
+	  into main() in the output file.
+	- goto with number for direction needs
+	  to be written in an intelligent way
+	- heap head manipulation obviously

@@ -4,7 +4,7 @@
 //Even "gravity" is just a constant speed down if no vertical buttons are pressed.
 //Screen wrapping is non-existant.
 
-void $y $x $dummy
+heap $y $x $dummy
 
 #trans $a $b
 	imm addr0 ffff
@@ -23,7 +23,7 @@ void $y $x $dummy
 #shift $ptr $offset
 	//positive is left rotate (pads with zeros upon wrap around)
 	//eg offset is the exonent of the transformation
-	int i
+	eval int i
 	imm gen0 ffff
 	imm addr0 ffff
 	imm addr1 $ptr
@@ -44,8 +44,8 @@ void $y $x $dummy
 #genpred_iterate $width $section
 	//edge detect while tracking test width
 	//the section is the uppermost bit of the TESTED portion
-	int widthnew sectionnew
-	int mask
+	eval int widthnew sectionnew
+	eval int mask
 	eval mask = (1<<(section+1)-1);
 	if gen $mask
 		ifdef width>=1
@@ -83,7 +83,7 @@ void $y $x $dummy
 	ram gen1
 	imm addr0 ffff
 	imm addr1 $number
-	int idx
+	eval int idx
 	if gen 0001
 		if ram 0001
 			imm gen0 0001
