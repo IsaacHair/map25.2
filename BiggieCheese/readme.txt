@@ -230,3 +230,16 @@ Compiler (actual process):
 	- goto with number for direction needs
 	  to be written in an intelligent way
 	- heap head manipulation obviously
+
+Notes
+	- basically everything should be translated
+	  into bastardized c so that things like
+	  the displacement parameter on goto
+	  can be a c expression
+	- removed need for $; these types of
+	  areas just default to being a c expression
+	- to reiterate, there is NO ABSOLUTE control
+	  over ROM addresses and only relative goto
+	  control; this is because obfuscation is
+	  helpful
+	- tab depth must be TABS ONLY
