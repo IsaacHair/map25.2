@@ -13,7 +13,7 @@ int depthof(char* text, int curr_depth) {
 	for (i = 0; text[i] != '\0'; i++) {
 		if (i == '\n')
 			return curr_depth;
-		else if (i == '/') {
+		else if (text[i] == '/') {
 			if (text[i+1] == '/')
 				return curr_depth;
 		}
@@ -74,6 +74,35 @@ int rambuffer(FILE* source, struct line *program, int depth) {
 	}
 }
 
+//need to have a dummy line to start in case the first line is a comment or blank, etc
+//also inits depth at zero
+//program needs to already be allocated
+int rambufferstart(FILE* source, struct line *program) {
+	program->nested = NULL;
+	program->content = malloc(sizeof(char));
+	program->content[0] = '\0';
+	program->next = malloc(sizeof(struct line));
+	rambuffer(source, program->next, 0);
+}
+
+void clean(struct line *program) {
+	//remove blank lines and comment lines
+	//don't have to worry about nesting for these
+	int i;
+	if (program->nested)
+		clean(program->nested);
+	if (program->next) {
+		for (i = 0; program->next->content[i] == '\t'; i++)
+			;
+		if (program->next->content[i] == 0x0d || program->next->content[i] == 0x0a || program->next->content[i] == '/') {
+			program->next = program->next->next;
+			clean(program);
+		}
+		else
+			clean(program->next);
+	}
+}
+
 //just a test program to see the struct contents
 void dump(struct line program) {
 	printf("%s\n", program.content);
@@ -98,6 +127,7 @@ void main(int argc, char** argv) {
 		exit(0x01);
 	}
 	source = fopen(argv[1], "rw+");
-	rambuffer(source, &program, 0);
+	rambufferstart(source, &program);
+	clean(&program);
 	dump(program);
 }
