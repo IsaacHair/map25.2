@@ -94,7 +94,7 @@ void clean(struct line *program) {
 	if (program->next) {
 		for (i = 0; program->next->content[i] == '\t'; i++)
 			;
-		if (program->next->content[i] == 0x0d || program->next->content[i] == 0x0a || program->next->content[i] == '/') {
+		if (program->next->content[i] == '\0' || program->next->content[i] == '/') {
 			program->next = program->next->next;
 			clean(program);
 		}
@@ -126,7 +126,7 @@ void main(int argc, char** argv) {
 		printf("need source file\n");
 		exit(0x01);
 	}
-	source = fopen(argv[1], "rw+");
+	source = fopen(argv[1], "r");
 	rambufferstart(source, &program);
 	clean(&program);
 	dump(program);
