@@ -109,22 +109,48 @@ void clean(struct line *program) {
 	}
 }
 
-char* firstword(char* content) {
+void firstword(char* content, char* ret) {
 	int i;
-	char *ret;
 	for (i = 0; content[i] != ' ' && content[i] != '\0'; i++)
 		;
 	ret = malloc((i+1)*sizeof(char));
 	for (i = 0; content[i] != ' ' && content[i] != '\0'; i++)
 		ret[i] = content[i];
-	return ret;
+	ret[i] = '\0';
 }
 
-int compare(
+int compare(char* str1, char* str2) {
+	int i;
+	for (i = 0; str1[i] == str2[i]; i++)
+		if (str1[i] == '\0')
+			return 1;
+	return 0;
+}
 
-void insertmacro(struct line *program) {
+void insertmacro(char* name, struct line *program, struct line *top) {
+	char* buff;
+	int i;
+	firstword(program->next->content[i], buff);
+	if (compare(buff, name)) {
+		replacenextwithcode(program, 
+/*XXX There is a problem: you need a blank line before every nested thingy for this to be OK*/
+
+void insertallmacro(struct line *program, struct line *top) {
 	//insert macros and delete the original after
-	
+	char* name;
+	int i;
+	if (program->content[i] == '#') {
+		firstword(program->content[i], name);
+		//get rid of hashtag
+		for (i = 1; name[i] != '\0'; i++)
+			name[i-1] = name[i];
+		name[i-1] = '\0';
+		insertmacro(name, program, top);
+	}
+	//can skip nested stuff because macros only appear on bottom-most depth
+	if (program->next)
+		insertallmacro(program->next);
+}
 
 //just a test program to see the struct contents
 void dump(struct line program) {
@@ -152,6 +178,6 @@ void main(int argc, char** argv) {
 	source = fopen(argv[1], "r");
 	rambufferstart(source, &program);
 	clean(&program);
-	insertmacro(&program);
+	insertallmacro(&program, &program);
 	dump(program);
 }
