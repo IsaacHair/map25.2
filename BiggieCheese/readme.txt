@@ -97,7 +97,11 @@ Revised features:
 	  on their only being one instance of that label either in
 	  the macro or globally)
 	- again, labels can either be global or within a macro
-	  or within a function
+	  or within a function -> ACTUALLY NO, global and local conflicts
+	  are painful, so all are either in a function or macro
+	*** the program begins at the main label, which is neither
+	  a function or a macro; label can only be used once; follows
+	  indentation rules
 	*** the reason this is necessary is that positional entropy
 	  data storage is extremely "complex", and recursion is not
 	  powerful enough to describe it
@@ -105,6 +109,9 @@ Revised features:
 	*** labels actually don't have to be global or local;
 	  they simply exist and can be accessed from anywhare at
 	  all times, so be safe
+	*** Macros CANNOT BE RECURSIVE, but functions can
+	*** fordef uses "," to separate statements and ";" to separate sections,
+	  but for uses ";" to separate statements and "::" to separate sections
 Compilation process:
 	- use struct pointers for each line to allow easy shuffling
 	- the inline c is evaluated first to create an interum ram buffer where
@@ -230,6 +237,9 @@ Compiler (actual process):
 	- goto with number for direction needs
 	  to be written in an intelligent way
 	- heap head manipulation obviously
+	*** Actually, all numbers are just passed
+	  into the bastardized c as is, so hex
+	  numbers must have the preceding "0x"
 
 Notes
 	- basically everything should be translated

@@ -88,7 +88,13 @@ int rambufferstart(FILE* source, struct line *program) {
 void clean(struct line *program) {
 	//remove blank lines and comment lines
 	//don't have to worry about nesting for these
-	int i;
+	//also delete '\t's
+	int i, j;
+	for (i = 0; program->content[i] == '\t'; i++)
+		;
+	for (j = i; program->content[j] != '\0'; j++)
+		program->content[j-i] = program->content[j];
+	program->content[j-i] = '\0';
 	if (program->nested)
 		clean(program->nested);
 	if (program->next) {
@@ -102,6 +108,23 @@ void clean(struct line *program) {
 			clean(program->next);
 	}
 }
+
+char* firstword(char* content) {
+	int i;
+	char *ret;
+	for (i = 0; content[i] != ' ' && content[i] != '\0'; i++)
+		;
+	ret = malloc((i+1)*sizeof(char));
+	for (i = 0; content[i] != ' ' && content[i] != '\0'; i++)
+		ret[i] = content[i];
+	return ret;
+}
+
+int compare(
+
+void insertmacro(struct line *program) {
+	//insert macros and delete the original after
+	
 
 //just a test program to see the struct contents
 void dump(struct line program) {
@@ -129,5 +152,6 @@ void main(int argc, char** argv) {
 	source = fopen(argv[1], "r");
 	rambufferstart(source, &program);
 	clean(&program);
+	insertmacro(&program);
 	dump(program);
 }
