@@ -253,3 +253,15 @@ Notes
 	  control; this is because obfuscation is
 	  helpful
 	- tab depth must be TABS ONLY
+	*** There can be global variables but not
+	  global code
+
+
+Compiler
+	- It uses a singly linked list, where
+	  you can have lines with no content to help
+	  with formatting (ex: the program
+	  starts with such a line)
+	- Note that the compiler just pisses unused ram everywhere as well
+	*** Actually, you don't have to insert the macros; just force gcc
+	  to do it for you, right?

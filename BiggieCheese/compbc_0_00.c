@@ -109,14 +109,14 @@ void clean(struct line *program) {
 	}
 }
 
-void firstword(char* content, char* ret) {
+void firstword(char* content, char** ret) {
 	int i;
 	for (i = 0; content[i] != ' ' && content[i] != '\0'; i++)
 		;
-	ret = malloc((i+1)*sizeof(char));
+	*ret = realloc(*ret, (i+1)*sizeof(char));
 	for (i = 0; content[i] != ' ' && content[i] != '\0'; i++)
-		ret[i] = content[i];
-	ret[i] = '\0';
+		(*ret)[i] = content[i];
+	(*ret)[i] = '\0';
 }
 
 int compare(char* str1, char* str2) {
@@ -127,29 +127,74 @@ int compare(char* str1, char* str2) {
 	return 0;
 }
 
-void insertmacro(char* name, struct line *program, struct line *top) {
-	char* buff;
+void replacewithmacro(struct line *insertaddr, struct line *macroaddr) {
+	//another recursive insert thingy
+	struct line *aftermacro;
 	int i;
-	firstword(program->next->content[i], buff);
-	if (compare(buff, name)) {
-		replacenextwithcode(program, 
-/*XXX There is a problem: you need a blank line before every nested thingy for this to be OK*/
 
-void insertallmacro(struct line *program, struct line *top) {
-	//insert macros and delete the original after
-	char* name;
+	//only need aftermacro if it is the lowest depth
+	if (insertaddr->next)
+		aftermacro = insertaddr->next;
+	else
+		aftermacro = NULL;
+	if (insertaddr->nested) {
+		printf("wtf nested from macro\n");
+		exit(0x02);
+	}
+	insertaddr->content = realloc(insertaddr->content, sizeof(macroaddr->content));
+	for (i = 0; macroaddr->content[i] != '\0'; i++)
+		insertaddr->content[i] = macroaddr->content[i];
+	insertaddr->nested = NULL;
+	insertaddr->next = NULL;
+	if (macroaddr->nested) {
+		insertaddr->nested = malloc(sizeof(struct line*));
+		replacewithmacro(insertaddr->nested, macroaddr->nested);
+	}
+	if (macroaddr->next) {
+		insertaddr->next = malloc(sizeof(struct line*));
+		if (aftermacro)
+			insertaddr->next->next = aftermacro;
+		replacewithmacro(insertaddr->next, macroaddr->next);
+	}
+	else if (aftermacro)
+		insertaddr->next = aftermacro;
+}
+
+void insertmacro(char* name, struct line *macroaddr, struct line *scan) {
+	//"scan" scans down, macroaddr is the pointer to the macro, name is its label
+	char* buff = malloc(1); //random size
 	int i;
-	if (program->content[i] == '#') {
-		firstword(program->content[i], name);
+	firstword(scan->content, &buff);
+	if (compare(buff, name))
+		replacewithmacro(scan, macroaddr);
+	if (scan->nested)
+		insertmacro(name, macroaddr, scan->nested);
+	if (scan->next)
+		insertmacro(name, macroaddr, scan->next);
+}
+
+void insertallmacro(struct line *scan, struct line *top) {
+	//insert macros and delete the original after
+	//this function finds the macros by scanning for the # definition
+	char* name = malloc(1); //just needs to have some size
+	int i;
+	if (scan->content[0] == '#') {
+		firstword(scan->content, &name);
 		//get rid of hashtag
-		for (i = 1; name[i] != '\0'; i++)
-			name[i-1] = name[i];
+		if (name[0] != '\n')
+			for (i = 1; name[i] != '\0'; i++)
+				name[i-1] = name[i];
 		name[i-1] = '\0';
-		insertmacro(name, program, top);
+		printf("gotem:%s\n", name); //XXX
+		/*XXX if (!scan->nested) {
+			printf("empty macro dude\n");
+			exit(0x03);
+		}*/
+		//XXX insertmacro(name, scan->nested, top);
 	}
 	//can skip nested stuff because macros only appear on bottom-most depth
-	if (program->next)
-		insertallmacro(program->next);
+	if (scan->next)
+		insertallmacro(scan->next, top);
 }
 
 //just a test program to see the struct contents
