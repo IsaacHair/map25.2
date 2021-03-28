@@ -265,3 +265,11 @@ Compiler
 	- Note that the compiler just pisses unused ram everywhere as well
 	*** Actually, you don't have to insert the macros; just force gcc
 	  to do it for you, right?
+
+
+
+VERSIONS:
+v0_00: Just feeling things out
+
+v0_01: Scrapped 0_00 and am going to store lines in a doubly linked list and 
+	do the insertion of macros on the gcc side.
