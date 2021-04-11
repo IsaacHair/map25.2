@@ -653,6 +653,12 @@ void render(unsigned short point_count, unsigned short point_zi0, unsigned short
 	inst("imm gen0 ffff");
 	inst("ram gen1 0000");
 	genpred16();
+	inst("imm addr1 ffff");
+	inst("gen addr0 0000");
+	inst("imm gen0 ffff");
+	inst("addr gen1 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ZR);
 	inst("gen ramall 0000");
 	sprintf(str, "%04x", addr);
 	replacex88("POS ", str);
@@ -664,6 +670,12 @@ void render(unsigned short point_count, unsigned short point_zi0, unsigned short
 	inst("imm gen0 ffff");
 	inst("ram gen1 0000");
 	genpred16();
+	inst("imm addr1 ffff");
+	inst("gen addr0 0000");
+	inst("imm gen0 ffff");
+	inst("addr gen1 0000");
+	inst("imm addr0 ffff");
+	instval("imm addr1", MAIN_ZI);
 	inst("gen ramall 0000");
 	sprintf(str, "%04x", addr);
 	replacex88("POS ", str);
