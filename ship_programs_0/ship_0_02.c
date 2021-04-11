@@ -824,22 +824,22 @@ void main(int argc, char**argv) {
 	//y axis is inverted by the way; x is not
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_X);
-	inst("imm ramall e780");
+	inst("imm ramall e580");
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_Y);
-	inst("imm ramall 02d0");
+	inst("imm ramall 0020");
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_DX);
-	inst("imm ramall fffa");
+	inst("imm ramall fffe");
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_DY);
-	inst("imm ramall fffa");
+	inst("imm ramall fffe");
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_XLIMN);
-	inst("imm ramall 2000");
+	inst("imm ramall 1d00");
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_YLIMN);
-	inst("imm ramall 02d0");
+	inst("imm ramall 01c0");
 	//print the rendering for the pixel you are at
 	loopaddr = addr;
 	//get rendering and load it into gen
@@ -882,7 +882,7 @@ void main(int argc, char**argv) {
 	calladd(MAIN_X, MAIN_X, MAIN_DX);
 	inst("imm addr0 ffff");
 	instval("imm addr1", MAIN_Y);
-	inst("imm ramall 02d0");
+	inst("imm ramall 0020");
 	//test row value
 	calladd(MAIN_TEMP, MAIN_X, MAIN_XLIMN);
 	inst("imm addr0 ffff");
