@@ -184,6 +184,9 @@ the best functionality. Particularly:
 	*** don't give user any control to make
 	  absolute statement for ROM addresses;
 	  compiler handles all of this
+	- Functions are just macros for the function
+	  call procedure.
+	- variables and such can be done globally
 
 Compiler (actual process):
 	- the compiler outputs a bastardized c file.
@@ -240,6 +243,8 @@ Compiler (actual process):
 	*** Actually, all numbers are just passed
 	  into the bastardized c as is, so hex
 	  numbers must have the preceding "0x"
+	- everything just ends up closely corresponding
+	  with the resulting bastardized c file
 
 Notes
 	- basically everything should be translated
@@ -255,6 +260,18 @@ Notes
 	- tab depth must be TABS ONLY
 	*** There can be global variables but not
 	  global code
+	- ROM won't be 100% packed because of
+	  if/else bodies that are just gotos
+	  and because it is less messy to not
+	  fully pack if-else stuff
+	- ***Actually, ROM can be packed with if-else
+	  if you just keep track of where the else
+	  body should start and then skip over the if
+	  body to
+	*** goto's should look back and see if they
+	  need to insert a no-operation instruction
+	  or if they can just be appended to the last
+	  instruction
 
 
 Compiler
@@ -265,6 +282,12 @@ Compiler
 	- Note that the compiler just pisses unused ram everywhere as well
 	*** Actually, you don't have to insert the macros; just force gcc
 	  to do it for you, right?
+	- NEED TO DO WEIRD STUFF for global
+	  "heap"; define the variable globally
+	  and then set it using the heap function
+	- ***OR wait; heap can just be definition?
+	- ***can't be definition because those are all
+	  global in the C file
 
 
 
@@ -273,3 +296,8 @@ v0_00: Just feeling things out
 
 v0_01: Scrapped 0_00 and am going to store lines in a doubly linked list and 
 	do the insertion of macros on the gcc side.
+
+v0_02: Going to just parse each line, then convert the line into bastardized c
+	based on the first keyword. The compiler will have to parse each line,
+	but, for the most part, the heavy lifting is left to gcc when it
+	compiles the file.
