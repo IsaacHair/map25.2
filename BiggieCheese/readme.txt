@@ -288,6 +288,9 @@ Compiler
 	- ***OR wait; heap can just be definition?
 	- ***can't be definition because those are all
 	  global in the C file
+	- Use recursive functions in the compiler to do if-else
+	  stuff
+	- need to provide a few native macros like genpred
 
 
 
