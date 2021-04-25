@@ -87,15 +87,15 @@ heap y x dummy
 	if gen 0x0001
 		if ram 0x0001
 			imm gen0 0x0001
-			gotof carry
+			goto 1 carry
 		else
-			gotof noncarry
+			goto 1 noncarry
 	else
 		if ram 0x0001
 			imm gen1 0x0001
-			gotof noncarry
+			goto 1 noncarry
 		else
-			gotof noncarry
+			goto 1 noncarry
 	fordef idx=1; idx<0x8000; idx = idx<<1
 		nocarry:
 			if gen idx

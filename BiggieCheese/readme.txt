@@ -291,6 +291,10 @@ Compiler
 	- Use recursive functions in the compiler to do if-else
 	  stuff
 	- need to provide a few native macros like genpred
+	*** 1000 character limit per line for the sake
+	  of simplicity in compiler
+	*** Can get absolute ROM addresses by
+	  just using labels and gotos
 
 
 
@@ -303,4 +307,5 @@ v0_01: Scrapped 0_00 and am going to store lines in a doubly linked list and
 v0_02: Going to just parse each line, then convert the line into bastardized c
 	based on the first keyword. The compiler will have to parse each line,
 	but, for the most part, the heavy lifting is left to gcc when it
-	compiles the file.
+	compiles the bastardized file.
+	- note that this version no longer has a singly linked list
