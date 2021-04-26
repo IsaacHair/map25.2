@@ -1,3 +1,6 @@
+Note: programming language is now called Suig instead of BiggieCheese
+Extention: .su
+
 Revised features:
 	- inline machine code or 1-to-1 machine code
 	- if loop, for loop
