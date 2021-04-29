@@ -314,3 +314,11 @@ v0_02: Going to just parse each line, then convert the line into bastardized c
 	but, for the most part, the heavy lifting is left to gcc when it
 	compiles the bastardized file.
 	- note that this version no longer has a singly linked list
+	*** It has a doubly linked list instead; still have
+	to be able to dynamically add or remove lines;
+	the difference is that this list doesn't
+	have nested lists within it
+	*** depth is an absolute measure of line
+	depth as no macros need to be inserted, so
+	you don't have to worry about this value
+	being wrong; gcc will do the heavy lifting
