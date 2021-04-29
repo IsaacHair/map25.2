@@ -1,5 +1,7 @@
 Note: programming language is now called Suig instead of BiggieCheese
 Extention: .su
+***Going back to calling it BiggieCheese, extension .bc, for the sake of
+simplicity and because BiggieCheese is a dumber name because hes a rapper
 
 Revised features:
 	- inline machine code or 1-to-1 machine code
