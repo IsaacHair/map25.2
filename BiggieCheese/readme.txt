@@ -322,3 +322,8 @@ v0_02: Going to just parse each line, then convert the line into bastardized c
 	depth as no macros need to be inserted, so
 	you don't have to worry about this value
 	being wrong; gcc will do the heavy lifting
+	*** depth is measured as the sum of preceding
+	tabs and preceding spaces; '\x20\t\t' has a depth
+	of 3, as does '\t\t\t'
+	*** Start and end lines are blank and just have
+	the START or END type
