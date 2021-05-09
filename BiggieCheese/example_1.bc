@@ -163,19 +163,19 @@ heap y x dummy
 	imm addr1 row
 	imm out0 0xffff
 	ram out1
-	for imm gen1 0xffff:: gen 0xffff:: genpred
+	for imm gen1 0xffff;: gen 0xffff;: genpred
 	imm addr0 0xffff
 	imm addr1 row
 	imm out0 0xffff
 	ram out1
-	for imm gen1 0xffff:: gen 0xffff:: genpred
+	for imm gen1 0xffff;: gen 0xffff;: genpred
 
 !main
 	imm dir0 0xffff
 	set x 0x0000
 	set y 0x1000
-	for imm gen1 0xffff:: gen 0xffff::
-		for imm gen0 0xffff; imm gen1 0x0800:: gen 0xffff:: genpred
+	for imm gen1 0xffff;: gen 0xffff;:
+		for imm gen0 0xffff; imm gen1 0x0800;: gen 0xffff;: genpred
 		keygen
 		if gen 0x0020
 			set dummy 0x0088

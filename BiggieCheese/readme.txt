@@ -1,3 +1,6 @@
+Note: notes written further down the page override previous notes
+if there is any conflict
+
 Note: programming language is now called Suig instead of BiggieCheese
 Extention: .su
 ***Going back to calling it BiggieCheese, extension .bc, for the sake of
@@ -345,3 +348,11 @@ v0_02: Going to just parse each line, then convert the line into bastardized c
 	*** also need BASTARDFX type for when go back and allocate
 	functions
 	*** also need BASTARDGHEAP for the same reason; global heap stuff
+	*** note that "eval" has to ignore semicolon separation of statements
+	*** inside for loops, ';:' is actually used to separate blocks
+	*** technically, for loops can only have the first section or only have the
+	first and second (instead of all 3); just need to terminate the first
+	two sections with ';:' (but don't terminate the last section with this)
+	*** "goto 0 place" is used if you don't know whether you go forward or backward
+	*** the only place where statements can be separated by ';' instead of '\n' is
+	within for loops

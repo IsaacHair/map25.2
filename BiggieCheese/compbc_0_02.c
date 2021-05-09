@@ -157,42 +157,138 @@ int haskeyword(int type) {
 	return 1;
 }
 
-void asntypes(struct progline *programhead) {
-	struct progline *currpos;
+void asntype(struct progline *currpos) {
 	char buffer[1000];
 	int i, j;
-	for (currpos = programhead->next; currpos->type != END; currpos = currpos->next) {
-		for (i = 0; currpos->line[i] != ' ' && currpos->line[i] != '\0'; i++)
-			buffer[i] = currpos->line[i];
-		buffer[i] = '\0';
-		currpos->type = linetype(buffer);
-		if (haskeyword(currpos->type)) { //delete keyword if needed
-			if (currpos->line[i] == '\0')
-				i--; //dont want to be reading past '\0'
-			for (i++, j = 0; currpos->line[i] != '\0'; i++, j++)
+	for (i = 0; currpos->line[i] != ' ' && currpos->line[i] != '\0'; i++)
+		buffer[i] = currpos->line[i];
+	buffer[i] = '\0';
+	currpos->type = linetype(buffer);
+	if (haskeyword(currpos->type)) { //delete keyword if needed
+		if (currpos->line[i] == '\0')
+			i--; //dont want to be reading past '\0'
+		for (i++, j = 0; currpos->line[i] != '\0'; i++, j++)
+			buffer[j] = currpos->line[i];
+		buffer[j] = '\0';
+		for (i = 0; buffer[i] != '\0'; i++)
+			currpos->line[i] = buffer[i];
+		currpos->line[i] = '\0';
+	}
+	if (currpos->type == MACRO || currpos->type == FX || currpos->type == LABEL) { //get rid of marker character
+		for (i = 0, j = 0; currpos->line[i] != '\0'; i++)
+			if ((currpos->line[i] != '#' && currpos->line[i] != '!' &&
+			    currpos->line[i] != ':') || j != i) {
 				buffer[j] = currpos->line[i];
-			buffer[j] = '\0';
-			for (i = 0; buffer[i] != '\0'; i++)
-				currpos->line[i] = buffer[i];
-			currpos->line[i] = '\0';
-		}
-		if (currpos->type == MACRO || currpos->type == FX || currpos->type == LABEL) { //get rid of marker character
-			for (i = 0, j = 0; currpos->line[i] != '\0'; i++)
-				if ((currpos->line[i] != '#' && currpos->line[i] != '!' &&
-				    currpos->line[i] != ':') || j != i) {
-					buffer[j] = currpos->line[i];
-					j++;
-				}
-			buffer[j] = '\0';
-			for (i = 0; buffer[i] != '\0'; i++)
-				currpos->line[i] = buffer[i];
-			currpos->line[i] = '\0';
-		}
+				j++;
+			}
+		buffer[j] = '\0';
+		for (i = 0; buffer[i] != '\0'; i++)
+			currpos->line[i] = buffer[i];
+		currpos->line[i] = '\0';
 	}
 }
 
-void forparse(struct progline *programhead) {
+void insertbehind(struct progline* currpos) {
+	currpos->previous->next = malloc(sizeof(struct progline));
+	currpos->previous->next->previous = currpos->previous;
+	currpos->previous->next->next = currpos;
+	currpos->previous = currpos->previous->next;
+}
 
+void writestring(char* target, char* str) {
+	int i;
+	for (i = 0; str[i] != '\0'; i++)
+		target[i] = str[i];
+	target[i] = '\0';
+}
+
+void forparse(struct progline *programhead) {
+	struct progline *currpos;
+	struct progline *endpos;
+	int i, j;
+	char buff[1000];
+	for (currpos = programhead->next; currpos->type != END; currpos = currpos->next)
+		if (currpos->type == FOR) {
+			i = 0;
+			//setup part
+			for (; currpos->line[i] != '\0'; i++) {
+				for (; currpos->line[i] == ' ' || currpos->line[i] == '\t'; i++)
+					;
+				for (j = 0; currpos->line[i] != ';' && currpos->line[i] != '\0'; i++, j++)
+					buff[j] = currpos->line[i];
+				buff[j] = '\0';
+				if (currpos->line[i] == '\0') {
+					printf("incomplete for loop\n");
+					exit(0x04);
+				}
+				if (j > 0) { //if the line isn't blank insert a line behind
+					insertbehind(currpos);
+					currpos->previous->depth = currpos->depth;
+					for (j = 0; buff[j] != '\0'; j++)
+						currpos->previous->line[j] = buff[j];
+					asntype(currpos->previous);
+				}
+				if (currpos->line[i+1] == ':') {
+					i += 2;
+					break;
+				}
+			}
+			//condition part
+			insertbehind(currpos);
+			writestring(currpos->previous->line, "forstart");
+			currpos->previous->depth = currpos->depth;
+			currpos->previous->type = LABEL;
+			insertbehind(currpos);
+			for (; currpos->line[i] == ' ' || currpos->line[i] == '\t'; i++)
+				;
+			for (j = 0; currpos->line[i] != ';' && currpos->line[i] != '\0'; i++, j++)
+				buff[j] = currpos->line[i];
+			buff[j] = '\0';
+			if (currpos->line[i] == '\0') {
+				printf("incomplete for loop\n");
+				exit(0x04);
+			}
+			if (j == 0) {
+				printf("for expected condition but was given none\n");
+				exit(0x05);
+			}
+			if (currpos->line[i+1] != ':') {
+				printf("for cannot have multiple conditions\n");
+				exit(0x06);
+			}
+			writestring(currpos->previous->line, buff);
+			currpos->previous->type = IF;
+			currpos->previous->depth = currpos->depth;
+			i += 2;
+			//iteration part
+			for (endpos = currpos->next; endpos->depth > currpos->depth && endpos->type != END; endpos = endpos->next)
+				;
+			for (; currpos->line[i] != '\0'; i++) {
+				for (; currpos->line[i] == ' ' || currpos->line[i] == '\t'; i++)
+					;
+				for (j = 0; currpos->line[i] != ';' && currpos->line[i] != '\0'; i++, j++)
+					buff[j] = currpos->line[i];
+				buff[j] = '\0';
+				if (j > 0) { //if the line isn't blank insert a line behind endpos
+					insertbehind(endpos);
+					endpos->previous->depth = currpos->depth+1;
+					for (j = 0; buff[j] != '\0'; j++)
+						endpos->previous->line[j] = buff[j];
+					asntype(endpos->previous);
+				}
+				if (currpos->line[i] == '\0')
+					break;
+			}
+			//loop part
+			insertbehind(endpos);
+			writestring(endpos->previous->line, "forstart");
+			endpos->previous->type = GOTO;
+			endpos->previous->depth = currpos->depth+1;
+			//de-allocate the for statement now that it has been translated
+			currpos->previous->next = currpos->next;
+			currpos->next->previous = currpos->previous;
+			free(currpos);
+		}
 }
 
 void bastardize(struct progline *programhead) {
@@ -246,9 +342,11 @@ void main(int argc, char** argv) {
 	}
 	FILE* source = fopen(argv[1], "r");
 	FILE* target = fopen(argv[2], "w");
+	struct progline *currpos;
 	struct progline *programhead = malloc(sizeof(struct progline));
 	naiveparse(source, programhead);
-	asntypes(programhead);
+	for (currpos = programhead->next; currpos->type != END; currpos = currpos->next)
+		asntype(currpos);
 	forparse(programhead);
 	/*
 	fxparse(programhead);
