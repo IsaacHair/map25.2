@@ -24,7 +24,6 @@ void naiveparse(FILE* source, struct progline *programhead) {
 	//***For now, just copying all lines directly
 	int i;
 	struct progline* currpos;
-	programhead = malloc(sizeof(struct progline));
 	programhead->type = START;
 	programhead->previous = NULL;
 	programhead->line[0] = '\0';
@@ -32,18 +31,18 @@ void naiveparse(FILE* source, struct progline *programhead) {
 	programhead->next = malloc(sizeof(struct progline));
 	currpos = programhead->next;
 	currpos->previous = programhead;
-	/*char c;
+	char c;
 	for (c = fgetc(source); c != EOF; c = fgetc(source)) {
 		for (i = 0; c != '\n'; c = fgetc(source), i++)
 			currpos->line[i] = c;
 		currpos->line[i] = '\0';
 		//XXX weird line for testing
-		currpos->type = i;
-		currpos->depth = i+1;
+		currpos->type = i+3;
+		currpos->depth = i+4;
 		currpos->next = malloc(sizeof(struct progline));
 		currpos->next->previous = currpos;
 		currpos = currpos->next;
-	}*/
+	}
 	currpos->next = NULL;
 	currpos->type = END;
 	currpos->line[0] = '\0';
@@ -87,6 +86,8 @@ void dump(struct progline *programhead) {
 	struct progline* currpos;
 	for (currpos = programhead; currpos->type != END; currpos = currpos->next)
 		printf("type:%d,depth:%d,content:%s\n", currpos->type, currpos->depth, currpos->line);
+	for (; currpos->type != START; currpos = currpos->previous)
+		printf("type:%d,depth:%d,content:%s\n", currpos->type, currpos->depth, currpos->line);
 }
 
 void main(int argc, char** argv) {
@@ -96,10 +97,8 @@ void main(int argc, char** argv) {
 	}
 	FILE* source = fopen(argv[1], "r");
 	FILE* target = fopen(argv[2], "w");
-	struct progline *programhead;
+	struct progline *programhead = malloc(sizeof(struct progline));
 	naiveparse(source, programhead);
-	programhead->line[0] = '\0';
-	printf("head:%d, %s\n", programhead->type, programhead->line);
 	/*
 	bastardize(programhead);
 	globalheap(programhead);
