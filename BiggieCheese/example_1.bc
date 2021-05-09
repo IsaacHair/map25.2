@@ -170,7 +170,7 @@ heap y x dummy
 	ram out1
 	for imm gen1 0xffff:: gen 0xffff:: genpred
 
-main
+!main
 	imm dir0 0xffff
 	set x 0x0000
 	set y 0x1000
@@ -180,14 +180,14 @@ main
 		if gen 0x0020
 			set dummy 0x0088
 			add x dummy
-		else if gen 0x2000
+		elif gen 0x2000
 			set dummy 0xff78
 			add x dummy
 		keygen
 		if gen 0x0100
 			set dummy 0x0088
 			add y dummy
-		else if gen 0x0200
+		elif gen 0x0200
 			set dummy 0xff78
 			add y dummy
 		else

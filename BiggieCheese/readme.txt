@@ -327,3 +327,13 @@ v0_02: Going to just parse each line, then convert the line into bastardized c
 	of 3, as does '\t\t\t'
 	*** Start and end lines are blank and just have
 	the START or END type
+	*** "else if" is now written as elif
+	*** "main" is labeled as a different type of function
+	and as BASTARDSTART as a reference for heap/fx insertion
+	*** still should mark main with '!'
+	- all rom positioning is relative
+	*** this language only allows for the most common
+	mneumonic for each assembly bus charge instruction
+	**** actually going to allow for all mneumonics
+	- you can put expressions in the assembly, just make
+	sure it stays as a block without spaces in between
