@@ -337,3 +337,11 @@ v0_02: Going to just parse each line, then convert the line into bastardized c
 	**** actually going to allow for all mneumonics
 	- you can put expressions in the assembly, just make
 	sure it stays as a block without spaces in between
+	*** the label "forstart:" will mark the beginning of the
+	current for loop; i guess you can use if for continues
+	and such within the loop; "continue;" in c translates to
+	"goto forstart" in BiggieCheese; this label also allows
+	the for loop to be parsed to begin with
+	*** also need BASTARDFX type for when go back and allocate
+	functions
+	*** also need BASTARDGHEAP for the same reason; global heap stuff

@@ -23,6 +23,8 @@
 #define BASTARDSTART 19
 #define GOTO 20
 #define LABEL 21
+#define BASTARDFX 22
+#define BASTARDGHEAP 23
 struct progline {
 	char line[1000];
 	int type;
@@ -189,6 +191,10 @@ void asntypes(struct progline *programhead) {
 	}
 }
 
+void forparse(struct progline *programhead) {
+
+}
+
 void bastardize(struct progline *programhead) {
 	//Convert each line into bastardized C.
 	//This means making the proper structures,
@@ -243,8 +249,8 @@ void main(int argc, char** argv) {
 	struct progline *programhead = malloc(sizeof(struct progline));
 	naiveparse(source, programhead);
 	asntypes(programhead);
-	/*
 	forparse(programhead);
+	/*
 	fxparse(programhead);
 	ieparse(programhead);
 	bastardize(programhead);
