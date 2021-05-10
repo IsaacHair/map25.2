@@ -409,3 +409,5 @@ pushed or popped in order from first declared to last declared. This variable is
 pointer; it will point to the next set of variable addresses if a new function is called
 and deallocate this when the function says to return, meaning it will now point back
 to the previous set.
+
+**registers are NOT preserved across function calls
