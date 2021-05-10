@@ -331,9 +331,10 @@ v0_02: Going to just parse each line, then convert the line into bastardized c
 	*** Start and end lines are blank and just have
 	the START or END type
 	*** "else if" is now written as elif
-	*** "main" is labeled as a different type of function
+	*** "main" is labeled as a different type from macro or function
 	and as BASTARDSTART as a reference for heap/fx insertion
-	*** still should mark main with '!'
+	*** "main" does not ned to be marked with '!' or '#'; infact it
+	cannot be
 	- all rom positioning is relative
 	*** this language only allows for the most common
 	mneumonic for each assembly bus charge instruction
@@ -356,3 +357,55 @@ v0_02: Going to just parse each line, then convert the line into bastardized c
 	*** "goto 0 place" is used if you don't know whether you go forward or backward
 	*** the only place where statements can be separated by ';' instead of '\n' is
 	within for loops
+
+FUNCTIONSSSSSS:
+	*** the variables passed to macros are
+	treated as just 32 bit signed integers, always
+	*** the numbers passed to functions are treated
+	as unsigned 16 bit integers, always
+	
+Call function procedure:
+	1. push the state of all 
+
+** NOT INCLUDING FUNCTIONS ANYMORE:
+	1. the sheer amount of processing power to make and manage a stack
+	on the map25.2 is extremely prohibitive.
+	2. Current function models don't allow for recursion
+	3. Function calls force the functions to either defer to the stack
+	every time, or a copy of the caller's variables will need to be saved
+	on the stack before calling in case there is recursive stuff going on
+	that would override the data.
+
+** Will include functions, with this process:
+	- All function map25.2 variables are either passed to the function,
+	meaning they are 16 bit unsigned constants placed in the corresponding
+	absolute heap location for those variables, or they must be declared
+	(using "heap") ON THE FIRST FUNCTION LINE ONLY.
+	- Obviously, compiler variables can be declared anywhere as gcc handles these.
+	- Basically, the state of the current function is saved when it calls
+	another function; then, it is restored after the function call returns
+	- Main is not eligible for recursion because it is simply treated as a
+	start for the program, not as a function; main is JUST a "start here"
+	button
+	- stack starts at 8000; stack pointer is at ffff
+	
+Function call process:
+	- push the 16 bit values of all absolute positioned variables in the current function
+	onto the stack in the order they were declared at the start of the function
+	(counting up in memory as you do so)
+	- push the return address
+	- push the 16 bit values of all variables passed to the next function
+	- goto the start of the function
+	- (coming back now) pop the variables you saved on the stack back into absolutes
+
+Function receive process:
+	- pop the variables on the stack that were passed to you
+	- do your function stuff
+	- when done, jump back to the return address, popping this last
+
+**All of this function stuff requires a global "current function variables" pointer in the
+bastardized c file, which will store the addresses of all variables that must currently be
+pushed or popped in order from first declared to last declared. This variable is a double
+pointer; it will point to the next set of variable addresses if a new function is called
+and deallocate this when the function says to return, meaning it will now point back
+to the previous set.
