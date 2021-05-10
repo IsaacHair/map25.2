@@ -408,6 +408,7 @@ bastardized c file, which will store the addresses of all variables that must cu
 pushed or popped in order from first declared to last declared. This variable is a double
 pointer; it will point to the next set of variable addresses if a new function is called
 and deallocate this when the function says to return, meaning it will now point back
-to the previous set.
+to the previous set. This function frame only has to be updated upon function calls,
+and this provides an elegant way to keep track of which variables must be buffered when.
 
 **registers are NOT preserved across function calls
