@@ -412,3 +412,11 @@ to the previous set. This function frame only has to be updated upon function ca
 and this provides an elegant way to keep track of which variables must be buffered when.
 
 **registers are NOT preserved across function calls
+
+**program labels are stored as the string resulting from writing "currentlabel" as a base 16
+3 digit number with lower case hex; it will be padded with zeros if needed
+and lead by "L"; ex: "L005"; it is treated like a stack pointer, incremented
+when you need another label and decremented once you are done using it. Basically, use
+it in small, easy to digest places that reset it once done and finish using it quickly.
+Still use "replacex88" to replace it
+**currentlabel should point to the lowest available spot and be incremented up

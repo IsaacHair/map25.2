@@ -17,14 +17,13 @@
 #define ELIFDEF 13
 #define FX 14
 #define CALL 15
-#define EVAL 16
-#define UNKNOWN 17
-#define BASTARD 18
-#define BASTARDSTART 19
-#define GOTO 20
-#define LABEL 21
-#define BASTARDFX 22
-#define BASTARDGHEAP 23
+#define UNKNOWN 16
+#define BASTARD 17
+#define BASTARDSTART 18
+#define GOTO 19
+#define LABEL 20
+#define BASTARDFX 21
+#define BASTARDGHEAP 22
 struct progline {
 	char line[1000];
 	int type;
@@ -113,7 +112,7 @@ int linetype(char* buffer) {
 	if (compare(buffer, "heap"))
 		return HEAP;
 	if (compare(buffer, "eval"))
-		return EVAL;
+		return BASTARD;
 	if (compare(buffer, "imm") ||
 	    compare(buffer, "0") ||
 	    compare(buffer, "adr") ||
@@ -291,6 +290,101 @@ void forparse(struct progline *programhead) {
 		}
 }
 
+void behindbastard(struct progline *currpos, char* str) {
+	insertbehind(currpos);
+	writestring(currpos->previous->line, str);
+	currpos->previous->type = BASTARD;
+	currpos->previous->depth = currpos->depth;
+}
+
+int ierecurse(struct progline *currhead, int headdepth) {
+	//this guy is recursive based on depth
+	//has to reduce depth of content once done
+	struct progline *currpos;
+	struct progline *linebuff;
+	char buff[1000];
+	int i, j;
+	for (currpos = currhead; currpos->depth >= headdepth && currpos->type != END;
+	     currpos = currpos->next) {
+		if (currpos->type == IF || currpos->type == ELIF) { //elif if recursed already
+			behindbastard(currpos, "makeaddrodd();");
+			writestring(buff, "instval(\"");
+			j = 9;
+			for (i = 0; currpos->line[i] != ' '; i++, j++) {
+				if (currpos->line[i] == '\0') {
+					printf("invalid if statement\n");
+					exit(0x06);
+				}
+				buff[j] = currpos->line[i];
+			}
+			writestring(buff+j, " jzor\", ");
+			j+= 8;
+			i+= 1;
+			for (; currpos->line[i] != '\0'; i++, j++) {
+				buff[j] = currpos->line[i];
+			}
+			writestring(buff+j, ");");
+			j+= 2;
+			buff[j] = '\0';
+			behindbastard(currpos, buff);
+			behindbastard(currpos, "instexp(\"dnc noop 0000\", sprintf(\"L%03x\", currentlabel));");
+			behindbastard(currpos, "currentlabel++;");
+			currpos->previous->next = currpos->next;
+			currpos->next->previous = currpos->previous;
+			linebuff = currpos;
+			currpos = currpos->previous;
+			free(linebuff);
+			//don't have do do any more because if there is another "if" it is already odd;
+			//program addr won't be screwed up
+			//ierecurse(currpos, currpos->depth+1);
+			currpos = currpos->next;
+			while (currpos->depth > headdepth && currpos->type != END) {
+				currpos->depth--;
+				currpos = currpos->next;
+			}
+			if (currpos->type == ELSE) {
+				behindbastard(currpos, "instexp(\"dnc noop 0000\", sprintf(\"L%03x\", currentlabel));");
+				behindbastard(currpos, "currentlabel--;");
+				behindbastard(currpos, "replacex88expimm(sprintf(\"L%03x\", currentlabel), addr);");
+				currpos->previous->next = currpos->next;
+				currpos->next->previous = currpos->previous;
+				linebuff = currpos;
+				currpos = currpos->previous;
+				free(linebuff);
+				ierecurse(currpos, currpos->depth+1);
+				currpos = currpos->next;
+				while (currpos->depth > headdepth && currpos->type != END) {
+					currpos->depth--;
+					currpos = currpos->next;
+				}
+				behindbastard(currpos, "currentlabel--;");
+				behindbastard(currpos, "replacex88expimm(sprintf(\"L%03x\", currentlabel), addr);");
+			}
+			else if (currpos->type == ELIF) {
+				ierecurse(currpos, currpos->depth);
+				behindbastard(currpos, "currentlabel--;");
+				behindbastard(currpos, "replacex88expimm(sprintf(\"L%03x\", currentlabel), addr);");
+				return 0; //don't have to loop again; the ierecurse() you just called did that
+			}
+			else {
+				behindbastard(currpos, "currentlabel--;");
+				behindbastard(currpos, "replacex88expimm(sprintf(\"L%03x\", currentlabel), addr);");
+			}
+			//have to make up for currpos advance
+			currpos = currpos->previous;
+		}
+		else if (currpos->type == ELSE) {
+			printf("else without preceding if\n");
+			exit(0x05);
+		}
+	}
+	return 0;
+}
+
+void ieparse(struct progline *programhead) {
+	ierecurse(programhead->next, 0);
+}
+
 void bastardize(struct progline *programhead) {
 	//Convert each line into bastardized C.
 	//This means making the proper structures,
@@ -348,9 +442,9 @@ void main(int argc, char** argv) {
 	for (currpos = programhead->next; currpos->type != END; currpos = currpos->next)
 		asntype(currpos);
 	forparse(programhead);
+	ieparse(programhead);
 	/*
 	fxparse(programhead);
-	ieparse(programhead);
 	bastardize(programhead);
 	globalheap(programhead);
 	fxallocate(programhead);
