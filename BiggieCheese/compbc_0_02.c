@@ -381,12 +381,27 @@ int ierecurse(struct progline *currhead, int headdepth) {
 	return 0;
 }
 
-void fxparse(struct progline *programhead) {
-	
-}
-
 void ieparse(struct progline *programhead) {
 	ierecurse(programhead->next, 0);
+}
+
+void fxparse(struct progline *programhead) {
+	struct progline *currpos;
+	for (currpos = programhead->next; currpos->type != MAIN; currpos = currpos->next)
+		if (currpos->type == END) {
+			printf("wtf you didn't include main\n");
+			exit(0x07);
+		}
+	behindbastard();
+}
+
+void fxparse(struct progline *programhead) {
+	struct progline *currpos;
+	//search for functions and make/use the associated stuff without processing the actual one
+	for (currpos = programhead->next; currpos->type != END; currpos = currpos->next) {
+		if (currpos->type == FX) {
+		}
+	}		
 }
 
 void bastardize(struct progline *programhead) {
@@ -433,6 +448,14 @@ void dump(struct progline *programhead) {
 	*/
 }
 
+void freeall(struct progline *programhead) {
+	struct progline *currpos;
+	for (currpos = programhead->next; currpos->type != END; currpos = currpos->next)
+		free(currpos->previous);
+	free(currpos->previous);
+	free(currpos);
+}
+
 void main(int argc, char** argv) {
 	if (argc != 3) {
 		printf("need <source> <target>\n");
@@ -447,7 +470,7 @@ void main(int argc, char** argv) {
 		asntype(currpos);
 	forparse(programhead);
 	ieparse(programhead);
-	fxparse(programhead);
+	fxparse(programhead); //allocates functions and makes calls
 	/*
 	bastardize(programhead);
 	globalheap(programhead);
@@ -456,4 +479,5 @@ void main(int argc, char** argv) {
 	produce(programhead, target);
 	*/
 	dump(programhead);
+	freeall(programhead);
 }
