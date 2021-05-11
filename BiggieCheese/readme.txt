@@ -420,3 +420,30 @@ when you need another label and decremented once you are done using it. Basicall
 it in small, easy to digest places that reset it once done and finish using it quickly.
 Still use "replacex88" to replace it
 **currentlabel should point to the lowest available spot and be incremented up
+
+Functions:
+	*** skip the middle man and just copy passed variables directly into the
+	local addresses of the function called
+	- only save the local frame of the function
+	- the local frame of a fucntion also consists of the address where
+	it will return to
+	- each program is terminated at the end of the main block; an infinite loop
+	is placed here
+	- again, make sure to define the super variable holding all frame information
+	*** frame is called "long fxframe[1000][1000]"; yes it is a 2nd degree;
+	the frame contains the constant values of the varialbes; the end of all frames is marked by
+	(-1 in the [x][0])<- this is deprecated; just going to use fxframeend
+	and end of frame variable set is at [x][y] marked with -1; hence the long for -1
+	*** the "x" value corresponding to differnt function frames is actually stored
+	in variable fxframeend; that way you don't have to search the entire frame for it
+
+FX count:
+	*** have to have a variable that labels and tracks the starts of functions
+	- use fxcount to count the number of functions, starting from -1 (ie the first
+	function is indexed to 0); then make labels from this number as you did with
+	the if-else stuff, but instead of using L%03x, use F%03x
+	- the functions also have to be allocated and then have the calls replaced
+	at the end of the "main" block
+	*******MAIN HAS TO reset fxframeend and fxcount
+***Note that, again, all variables on the map25.2 are of type "const u_int16*"
+ie. they are a fixed pointer to a 16 bit value, the pointer itself being 16 bits

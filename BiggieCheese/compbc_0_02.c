@@ -381,6 +381,10 @@ int ierecurse(struct progline *currhead, int headdepth) {
 	return 0;
 }
 
+void fxparse(struct progline *programhead) {
+	
+}
+
 void ieparse(struct progline *programhead) {
 	ierecurse(programhead->next, 0);
 }
@@ -443,8 +447,8 @@ void main(int argc, char** argv) {
 		asntype(currpos);
 	forparse(programhead);
 	ieparse(programhead);
-	/*
 	fxparse(programhead);
+	/*
 	bastardize(programhead);
 	globalheap(programhead);
 	fxallocate(programhead);
