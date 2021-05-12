@@ -447,3 +447,32 @@ FX count:
 	*******MAIN HAS TO reset fxframeend and fxcount
 ***Note that, again, all variables on the map25.2 are of type "const u_int16*"
 ie. they are a fixed pointer to a 16 bit value, the pointer itself being 16 bits
+
+**Note that gotos end up being fairly nicely encapsulated; they follow nice behavior
+in macros, functions, and main because macros and functions aren't inserted until after
+the gotos are pointed to each other, and the gotos exist on a global scale, so each
+has an index associated.
+*****Actually, this good behavior might not occur; YOU HAVE TO SEARCH BACK in the program
+to figure out the index of the specific goto label you want instead of just having
+increment/decrement because, if there is a macro between the gotos, it will increment
+the alloator further during operation
+***Searching back doesn't necessarily work; the code could be inside a fordef loop
+*******OK SO GOTOS WORK IF DECLARED LOCALLY WITHIN THE MACRO/FX; this naturally
+hides gotos from other functions/macors and still allows for forward/backward
+
+Functions:
+	//can't go alphabetical b/c can't bubble search on doubly linked list
+	//write fxnames in order they appear, then in order of variables' appearance
+	//start by writing the return address pointer location, then fx passed variables,
+	//then local fx variables. Finally, write the fx address constant and the fx pointer
+	//and the fx address label
+	//fx variables are written as "_____fx*_*" where the star is the name of the function,
+	//then the name of the variable (the underscore is not used if the variable is
+	//ret addr pointer, fx address, or fx address label; this allows them to be kept unique names)
+	//PUTTING THE RETURN FIRST IS IMPORTANT FOR FINDING UNIQUE FX LATER; if didn't, then
+	//function "abc" with first passed variable "_ef" and function "abc_" with first passed variable
+	//"ef" would both read as: "_____abc__ef"; creates ambiguity; so have to have ret in there first
+	//RET ADDR IS "ret"; location is "loc" and location label is "label"
+	***Actually, insert in reverse order that you see functions; easier to use this way
+
+**function frame is actually a doubly linked list

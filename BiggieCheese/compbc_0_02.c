@@ -387,19 +387,57 @@ void ieparse(struct progline *programhead) {
 
 void fxparse(struct progline *programhead) {
 	struct progline *currpos;
-	for (currpos = programhead->next; currpos->type != MAIN; currpos = currpos->next)
-		if (currpos->type == END) {
-			printf("wtf you didn't include main\n");
-			exit(0x07);
-		}
-	behindbastard();
-}
-
-void fxparse(struct progline *programhead) {
-	struct progline *currpos;
+	struct progline *insertpos;
+	char fxname[1000], varname[1000];
+	char str[1000];
+	int i, j;
+	insertpos = programhead->next;
 	//search for functions and make/use the associated stuff without processing the actual one
 	for (currpos = programhead->next; currpos->type != END; currpos = currpos->next) {
 		if (currpos->type == FX) {
+			//allocate global variables
+			for (i = 0; currpos->line[i] != ' '; i++) {
+				if (currpos->line[i] == '\0') {
+					break;
+				}
+				fxname[i] = currpos->line[i];
+			}
+			fxname[i] = '\0';
+			sprintf(str, "unsigned short _____%sret;", fxname);
+			behindbastard(insertpos, str);
+			while(currpos->line[i] == ' ')
+				i++;
+			for (; currpos->line[i] != '\0';) {
+				for (j = 0; currpos->line[i] != ' ' && currpos->line[i] != '\0'; i++, j++) {
+					varname[j] = currpos->line[i];
+				}
+				while(currpos->line[i] == ' ')
+					i++;
+				varname[j] = '\0';
+				sprintf(str, "unsigned short _____%s_%s;", fxname, varname);
+				behindbastard(insertpos, str);
+			}
+			currpos = currpos->next;
+			if (currpos->type == HEAP) {
+				i = 0;
+				while(currpos->line[i] == ' ')
+					i++;
+				for (; currpos->line[i] != '\0';) {
+					for (j = 0; currpos->line[i] != ' ' && currpos->line[i] != '\0'; i++, j++) {
+						varname[j] = currpos->line[i];
+					}
+					while(currpos->line[i] == ' ')
+						i++;
+					varname[j] = '\0';
+					sprintf(str, "unsigned short _____%s_%s;", fxname, varname);
+					behindbastard(insertpos, str);
+				}
+			}
+			sprintf(str, "unsigned short _____%sloc;", fxname);
+			behindbastard(insertpos, str);
+			sprintf(str, "char _____%slabel[5];", fxname);
+			behindbastard(insertpos, str);
+			currpos = currpos->previous; //have to make up for the advance check
 		}
 	}		
 }
