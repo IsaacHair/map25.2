@@ -77,6 +77,8 @@ heap y x dummy
 	genpred_iterate 8 7
 
 !add number delta
+	heap
+	array test 1500
 	imm addr0 0xffff
 	imm addr1 delta
 	imm gen0 0xffff

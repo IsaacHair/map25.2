@@ -24,8 +24,9 @@
 #define LABEL 20
 #define BASTARDFX 21
 #define BASTARDGHEAP 22
+#define ARR 23
 struct progline {
-	char line[1000];
+	char *line;
 	int type;
 	int depth;
 	struct progline* next;
@@ -40,11 +41,13 @@ void naiveparse(FILE* source, struct progline *programhead) {
 	struct progline* currpos;
 	programhead->type = START;
 	programhead->previous = NULL;
+	programhead->line = malloc(sizeof(char)*1000);
 	programhead->line[0] = '\0';
 	programhead->depth = 0;
 	programhead->next = malloc(sizeof(struct progline));
 	currpos = programhead->next;
 	currpos->previous = programhead;
+	currpos->line = malloc(sizeof(char)*1000);
 	char c;
 	int linestart;
 	for (c = fgetc(source); c != EOF; c = fgetc(source)) {
@@ -58,11 +61,13 @@ void naiveparse(FILE* source, struct progline *programhead) {
 		if (i == 0 || (i > 1 ? (currpos->line[0] == '/' && currpos->line[1] == '/') : 0))
 			continue; //just override with the next line if this line is blank or comment
 		currpos->next = malloc(sizeof(struct progline));
+		currpos->next->line = malloc(sizeof(char)*1000);
 		currpos->next->previous = currpos;
 		currpos = currpos->next;
 	}
 	currpos->next = NULL;
 	currpos->type = END;
+	currpos->line = malloc(sizeof(char)*1000);
 	currpos->line[0] = '\0';
 	currpos->depth = 0;
 }
@@ -143,6 +148,8 @@ int linetype(char* buffer) {
 	    compare(buffer, "e") ||
 	    compare(buffer, "f"))
 		return ASM;
+	if (compare(buffer, "array"))
+		return ARR;
 	return CALL;
 }
 
@@ -157,8 +164,11 @@ int haskeyword(int type) {
 }
 
 void asntype(struct progline *currpos) {
-	char buffer[1000];
+	char *buffer;
 	int i, j;
+	for (i = 0; currpos->line[i] != '\0'; i++)
+		;
+	buffer = malloc(sizeof(char)*(i+1));
 	for (i = 0; currpos->line[i] != ' ' && currpos->line[i] != '\0'; i++)
 		buffer[i] = currpos->line[i];
 	buffer[i] = '\0';
@@ -189,6 +199,7 @@ void asntype(struct progline *currpos) {
 
 void insertbehind(struct progline* currpos) {
 	currpos->previous->next = malloc(sizeof(struct progline));
+	currpos->previous->next->line = malloc(sizeof(char)*1000);
 	currpos->previous->next->previous = currpos->previous;
 	currpos->previous->next->next = currpos;
 	currpos->previous = currpos->previous->next;
@@ -205,8 +216,14 @@ void forparse(struct progline *programhead) {
 	struct progline *currpos;
 	struct progline *endpos;
 	int i, j;
-	char buff[1000];
+	char *buff;
+	for (i = 0; programhead->next->line[i] != '\0'; i++)
+		;
+	buff = malloc(sizeof(char)*(i+1));
 	for (currpos = programhead->next; currpos->type != END; currpos = currpos->next)
+		for (i = 0; currpos->line[i] != '\0'; i++)
+			;
+		buff = realloc(buff, sizeof(char)*(i+1));
 		if (currpos->type == FOR) {
 			i = 0;
 			//setup part
@@ -302,10 +319,16 @@ int ierecurse(struct progline *currhead, int headdepth) {
 	//has to reduce depth of content once done
 	struct progline *currpos;
 	struct progline *linebuff;
-	char buff[1000];
+	char *buff;
 	int i, j;
+	for (i = 0; currpos->line[i] != '\0'; i++)
+		;
+	buff = malloc(sizeof(char)*(i+1));
 	for (currpos = currhead; currpos->depth >= headdepth && currpos->type != END;
 	     currpos = currpos->next) {
+		for (i = 0; currpos->line[i] != '\0'; i++)
+			;
+		buff = realloc(buff, sizeof(char)*(i+1001));
 		if (currpos->type == IF || currpos->type == ELIF) { //elif if recursed already
 			behindbastard(currpos, "makeaddrodd();");
 			writestring(buff, "instval(\"");
@@ -327,7 +350,7 @@ int ierecurse(struct progline *currhead, int headdepth) {
 			j+= 2;
 			buff[j] = '\0';
 			behindbastard(currpos, buff);
-			behindbastard(currpos, "instexp(\"dnc noop 0000\", sprintf(\"L%03x\", currentlabel));");
+			behindbastard(currpos, "{char str[1000]; sprintf(str, \"L%03x\", currentlabel); instexp(\"dnc noop 0000\", str);}");
 			behindbastard(currpos, "currentlabel++;");
 			currpos->previous->next = currpos->next;
 			currpos->next->previous = currpos->previous;
@@ -343,7 +366,7 @@ int ierecurse(struct progline *currhead, int headdepth) {
 				currpos = currpos->next;
 			}
 			if (currpos->type == ELSE) {
-				behindbastard(currpos, "instexp(\"dnc noop 0000\", sprintf(\"L%03x\", currentlabel));");
+				behindbastard(currpos, "{char str[1000]; sprintf(str, \"L%03x\", currentlabel); instexp(\"dnc noop 0000\", str);}");
 				behindbastard(currpos, "currentlabel--;");
 				behindbastard(currpos, "replacex88expimm(sprintf(\"L%03x\", currentlabel), addr);");
 				currpos->previous->next = currpos->next;
@@ -383,6 +406,63 @@ int ierecurse(struct progline *currhead, int headdepth) {
 
 void ieparse(struct progline *programhead) {
 	ierecurse(programhead->next, 0);
+}
+
+void arrayparse(struct progline *programhead) {
+	struct progline *currpos;
+	int i, j, k, namelen;
+	char *buff;
+	char str[1000];
+	char name[1000], num[1000];
+	buff = malloc(sizeof(char)*1000);
+	for (currpos = programhead->next; currpos->type != END; currpos = currpos->next) {
+		if (currpos->type == ARR) {
+			if (currpos->previous->type != HEAP) {
+				printf("array without preceding heap\n");
+				exit(0x0a);
+			}
+			for (i = 0; currpos->line[i] != '\0';) {
+				for (i = 0; currpos->previous->line[i] != '\0'; i++)
+					;
+				buff = realloc(buff, sizeof(char)*(i+1));
+				while (currpos->line[i] == ' ')
+					i++;
+				namelen = 0;
+				for (j = 0; currpos->line[i] != ' ' && currpos->line[i] != '\0'; i++, j++)
+					name[j] = currpos->line[i];
+				name[j] = '\0';
+				namelen+= j;
+				while (currpos->line[i] == ' ')
+					i++;
+				for (j = 0; currpos->line[i] != ' ' && currpos->line[i] != '\0'; i++, j++)
+					num[j] = currpos->line[i];
+				num[j] = '\0';
+				k = atoi(num);
+				namelen+= 6; //just gonna force it to be a 5 digit decimal number & a space after
+				for (j = 0; currpos->previous->line[j] != '\0'; j++)
+					buff[j] = currpos->previous->line[j];
+				buff[j] = '\0';
+				printf("buff:%s\n", buff);
+				currpos->previous->line = realloc(currpos->previous->line, sizeof(char)*(j+namelen*k+1));
+				for (j = 0; buff[j] != '\0'; j++)
+					currpos->previous->line[j] = buff[j];
+				currpos->previous->line[j] = '\0';
+				for (; k > 1; k--) {
+					if (j > 0)
+						sprintf(str, " %s%05d", name, k-2);
+					else
+						sprintf(str, "%s%05d", name, k-2);
+					writestring(currpos->previous->line+j, str);
+					if (j > 0)
+						j += namelen;
+					else
+						j += namelen-1; //since no space
+				}
+				sprintf(str, " %s", name);
+				writestring(currpos->previous->line+j, str);
+			}
+		}
+	}
 }
 
 void fxparse(struct progline *programhead) {
@@ -508,6 +588,7 @@ void main(int argc, char** argv) {
 		asntype(currpos);
 	forparse(programhead);
 	ieparse(programhead);
+	arrayparse(programhead);
 	fxparse(programhead); //allocates functions and makes calls
 	/*
 	bastardize(programhead);

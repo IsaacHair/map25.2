@@ -476,3 +476,16 @@ Functions:
 	***Actually, insert in reverse order that you see functions; easier to use this way
 
 **function frame is actually a doubly linked list
+
+**main can have "heap" anywhere; it and macros can, but functions can only have it at the start
+
+***No nesting function definitions
+
+@@@@You can declare "heap" after the first line of a function, it will just create non-protected
+variables that are liable to be corrupted upon calling other functions, but will also
+increase the speed of operation
+
+**added "array" declaration
+
+**have added dynamic allocation for the "line" part of the progline structure to allow for longer
+lines in the case of array, but this is the only time when it is lengthened
