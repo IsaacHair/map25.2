@@ -6,6 +6,8 @@ Extention: .su
 ***Going back to calling it BiggieCheese, extension .bc, for the sake of
 simplicity and because BiggieCheese is a dumber name because hes a rapper
 
+**all lines must be well less than 1000 characters
+
 Revised features:
 	- inline machine code or 1-to-1 machine code
 	- if loop, for loop
