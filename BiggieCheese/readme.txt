@@ -494,3 +494,6 @@ lines in the case of array, but this is the only time when it is lengthened
 
 **fxframeend is initialized to zero, and it points one past the last frame entry
  ** !main cannot be empty
+
+*---- beware of variables reserved for the compiler like "addr"; actually addr can also be used in program
+*no empty fx either

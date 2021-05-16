@@ -493,7 +493,7 @@ void maininit(struct progline *programhead) {
 	sprintf(str, "int heapcount; int currentlabel;\
 		      int fxframe[(1<<15)];");
 	behindbastard(toppos, str);
-	sprintf(str, "heapcount = 0; currentlabel = 0; progaddr = 0;");
+	sprintf(str, "heapcount = 0; currentlabel = 0; progaddr = 0; setimmimm(0xffff, 0x8000);");
 	behindbastard(mainpos, str);
 }
 
@@ -505,9 +505,11 @@ void fxdef(struct progline *programhead) {
 	struct progline *fxpos;
 	struct progline *endmainpos;
 	struct progline *nonbaspos;
+	struct progline *scanpos;
 	char fxname[1000], varname[1000];
 	char str[1000];
 	int i, j;
+	int fxdepth;
 	insertpos = programhead->next;
 	for (mainpos = programhead->next; mainpos->type != MAIN; mainpos = mainpos->next)
 		if (mainpos->type == END) {
@@ -522,10 +524,8 @@ void fxdef(struct progline *programhead) {
 	//search for functions and make/use the associated stuff without processing the actual one
 	for (currpos = programhead->next; currpos->type != END; currpos = currpos->next) {
 		if (currpos->type == FX) {
+			fxdepth = currpos->depth;
 			fxpos = currpos->next;
-			//allocate global variables
-			sprintf(str, "int idx_fxvar; idx_fxvar = 0;", fxname);
-			behindbastard(fxpos, str);
 			for (i = 0; currpos->line[i] != ' '; i++) {
 				if (currpos->line[i] == '\0') {
 					break;
@@ -533,6 +533,20 @@ void fxdef(struct progline *programhead) {
 				fxname[i] = currpos->line[i];
 			}
 			fxname[i] = '\0';
+			sprintf(str, "_____%s", fxname);
+			writestring(currpos->line, fxname);
+
+			scanpos = fxpos;
+			while (scanpos->depth > fxdepth && scanpos->type != END)
+				scanpos = scanpos->next;
+			printf("loc stopped at:%s\n", scanpos->line); //XXX
+			sprintf(str, "inst(\"imm addr0 ffff\"); instval(\"imm addr1\", _____%sret); inst(\"ram asnx 0000\");", fxname);
+			behindbastard(scanpos, str);
+			scanpos->previous->depth = fxdepth+1;
+
+			sprintf(str, "int idx_fxvar; idx_fxvar = 0;", fxname);
+			behindbastard(fxpos, str);
+
 			sprintf(str, "unsigned short _____%sret;", fxname);
 			behindbastard(insertpos, str);
 			sprintf(str, "makeheap(&_____%sret);", fxname);
@@ -541,6 +555,8 @@ void fxdef(struct progline *programhead) {
 			behindbastard(fxpos, str);
 			while(currpos->line[i] == ' ')
 				i++;
+			sprintf(str, "unsigned short _____%sarg[1000];", fxname);
+			behindbastard(insertpos, str);
 			for (; currpos->line[i] != '\0';) {
 				for (j = 0; currpos->line[i] != ' ' && currpos->line[i] != '\0'; i++, j++) {
 					varname[j] = currpos->line[i];
@@ -552,11 +568,15 @@ void fxdef(struct progline *programhead) {
 				behindbastard(insertpos, str);
 				sprintf(str, "makeheap(&_____%s_%s);", fxname, varname);
 				behindbastard(mainpos, str);
-				sprintf(str, "fxframe[idx_fxvar] = _____%s_%s; idx_fxvar++;", fxname, varname);
+				sprintf(str, "fxframe[idx_fxvar] = _____%s_%s;", fxname, varname);
+				behindbastard(fxpos, str);
+				sprintf(str, "_____%sarg[idx_fxvar] = _____%s_%s; idx_fxvar++;", fxname, fxname, varname);
 				behindbastard(fxpos, str);
 				sprintf(str, "int %s = _____%s_%s", varname, fxname, varname);
 				behindbastard(fxpos, str);
 			}
+			sprintf(str, "_____%sarg[idx_fxvar] = -1;", fxname);
+			behindbastard(fxpos, str);
 			currpos = currpos->next;
 			if (currpos->type == HEAP) {
 				i = 0;
@@ -596,6 +616,50 @@ void fxdef(struct progline *programhead) {
 			currpos = currpos->previous; //have to make up for the advance check
 		}
 	}		
+}
+
+int fxmaccall(struct progline *programhead) {
+	struct progline *currpos;
+	struct progline *scanpos;
+	int i, j;
+	char str[1000];
+	char buff[1000];
+	int type;
+	for (currpos = programhead->next; currpos->type != END; currpos = currpos->next) {
+		if (currpos->type == CALL) {
+			//see which type of call it is; types use same defn as line types
+			type = MACRO;
+			for (scanpos = programhead; scanpos->type != END; scanpos = scanpos->next) {
+				if (scanpos->type == FX) {
+					for (i = 0; scanpos->line[i] == ' ' || scanpos->line[i] == '\t'; i++)
+						;
+					for (j = 0; scanpos->line[i] != ' ' && scanpos->line[i] != '\0'; i++, j++)
+						str[j] = scanpos->line[i];
+					str[j] = '\0';
+					if (compare(currpos->line, str)) {
+						type = FX;
+						break;
+					}
+				}
+			}
+			if (type == MACRO) {
+				currpos->type == BASTARD;
+				sprintf(str, "%s();", currpos->line);
+				writestring(currpos->line, str);
+				return 0;
+			}
+			//type must be FX then
+			for (i = 0; currpos->line[i] == ' ' || currpos->line[i] == '\t'; i++)
+				;
+			for (i = 0; currpos->line[i] != ' ' && currpos->line[i] != '\0'; i++)
+				;
+			while (currpos->line[i] == ' ') {
+				for (j = 0; currpos->line[i] != ' ' && currpos->line[i] != '\0'; j++, i++) {
+					str[j] = currpos->line[i];
+				}
+				str[j] = '\0';
+				sprintf(buff, "instval(\"imm addr0\", ");
+				behindbastard(currpos, buff);
 }
 
 void bastardize(struct progline *programhead) {
@@ -667,13 +731,11 @@ void main(int argc, char** argv) {
 	arrayparse(programhead);
 	maininit(programhead);
 	fxdef(programhead); //allocates functions and makes calls
-	/*
 	fxmaccall(programhead);
+	/*
+	globalheap(programhead);
 	mainend(programhead);
 	bastardize(programhead);
-	globalheap(programhead);
-	fxallocate(programhead);
-	addmacros(programhead);
 	produce(programhead, target);
 	*/
 	dump(programhead);
