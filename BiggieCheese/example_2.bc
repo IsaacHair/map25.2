@@ -1,14 +1,5 @@
 !main
-	for genpred;: gen idx;: genpred
-		if gen idx
-			ram gen0 0xffff
-		else
-			ram gen1 0xffff
-		imm addr0 0xffff
-		imm addr1 0xeeee
 	if gen idx
 		ram gen0 0xffff
 	else
 		ram gen1 0xffff
-	imm addr0 0xffff
-	imm addr1 0xeeee

@@ -322,6 +322,7 @@ int ierecurse(struct progline *currhead, int headdepth) {
 	struct progline *currpos;
 	struct progline *linebuff;
 	char *buff;
+	int thisdepth;
 	int i, j;
 	currpos = currhead;
 	for (i = 0; currpos->line[i] != '\0'; i++)
@@ -333,6 +334,8 @@ int ierecurse(struct progline *currhead, int headdepth) {
 			;
 		buff = realloc(buff, sizeof(char)*(i+1001));
 		if (currpos->type == IF || currpos->type == ELIF) { //elif if recursed already
+			thisdepth = currpos->depth;
+			printf("thisdepth:%d\n", thisdepth);
 			behindbastard(currpos, "makeaddrodd();");
 			writestring(buff, "instval(\"");
 			j = 9;
@@ -353,7 +356,7 @@ int ierecurse(struct progline *currhead, int headdepth) {
 			j+= 2;
 			buff[j] = '\0';
 			behindbastard(currpos, buff);
-			behindbastard(currpos, "{char str[1000]; sprintf(str, \"L%03x\", currentlabel); instexp(\"dnc noop 0000\", str);}");
+			behindbastard(currpos, "{char str[1000]; sprintf(str, \"L%03x\", currentlabel); instexpnxt(\"dnc noop 0000\", str);}");
 			behindbastard(currpos, "currentlabel++;");
 			currpos->previous->next = currpos->next;
 			currpos->next->previous = currpos->previous;
@@ -362,39 +365,47 @@ int ierecurse(struct progline *currhead, int headdepth) {
 			free(linebuff);
 			//don't have do do any more because if there is another "if" it is already odd;
 			//program addr won't be screwed up
-			//ierecurse(currpos, currpos->depth+1);
 			currpos = currpos->next;
-			while (currpos->depth > headdepth && currpos->type != END) {
+			ierecurse(currpos, thisdepth+1);
+			while (currpos->depth > thisdepth && currpos->type != END) {
 				currpos->depth--;
 				currpos = currpos->next;
 			}
 			if (currpos->type == ELSE) {
-				behindbastard(currpos, "{char str[1000]; sprintf(str, \"L%03x\", currentlabel); instexp(\"dnc noop 0000\", str);}");
+				behindbastard(currpos, "{char str[1000]; sprintf(str, \"L%03x\", currentlabel); instexpnxt(\"dnc noop 0000\", str);}");
 				behindbastard(currpos, "currentlabel--;");
+				currpos->previous->depth = thisdepth;
 				behindbastard(currpos, "replacex88expimm(sprintf(\"L%03x\", currentlabel), addr);");
+				currpos->previous->depth = thisdepth;
 				currpos->previous->next = currpos->next;
 				currpos->next->previous = currpos->previous;
 				linebuff = currpos;
 				currpos = currpos->previous;
 				free(linebuff);
-				ierecurse(currpos, currpos->depth+1);
+				ierecurse(currpos, thisdepth+1);
 				currpos = currpos->next;
-				while (currpos->depth > headdepth && currpos->type != END) {
+				while (currpos->depth > thisdepth && currpos->type != END) {
 					currpos->depth--;
 					currpos = currpos->next;
 				}
 				behindbastard(currpos, "currentlabel--;");
+				currpos->previous->depth = thisdepth;
 				behindbastard(currpos, "replacex88expimm(sprintf(\"L%03x\", currentlabel), addr);");
+				currpos->previous->depth = thisdepth;
 			}
 			else if (currpos->type == ELIF) {
-				ierecurse(currpos, currpos->depth);
+				ierecurse(currpos, thisdepth);
 				behindbastard(currpos, "currentlabel--;");
+				currpos->previous->depth = thisdepth;
 				behindbastard(currpos, "replacex88expimm(sprintf(\"L%03x\", currentlabel), addr);");
+				currpos->previous->depth = thisdepth;
 				return 0; //don't have to loop again; the ierecurse() you just called did that
 			}
 			else {
 				behindbastard(currpos, "currentlabel--;");
+				currpos->previous->depth = thisdepth;
 				behindbastard(currpos, "replacex88expimm(sprintf(\"L%03x\", currentlabel), addr);");
+				currpos->previous->depth = thisdepth;
 			}
 			//have to make up for currpos advance
 			currpos = currpos->previous;
