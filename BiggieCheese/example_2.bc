@@ -1,9 +1,14 @@
-if gen 0x0100
-	set dummy 0x0088
-	add y dummy
-elif gen 0x0200
-	set dummy 0xff78
-	add y dummy
-else
-	set dummy 0xfff0
-	add y dummy
+!main
+	for genpred;: gen idx;: genpred
+		if gen idx
+			ram gen0 0xffff
+		else
+			ram gen1 0xffff
+		imm addr0 0xffff
+		imm addr1 0xeeee
+	if gen idx
+		ram gen0 0xffff
+	else
+		ram gen1 0xffff
+	imm addr0 0xffff
+	imm addr1 0xeeee

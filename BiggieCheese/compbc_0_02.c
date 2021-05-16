@@ -220,11 +220,12 @@ void forparse(struct progline *programhead) {
 	for (i = 0; programhead->next->line[i] != '\0'; i++)
 		;
 	buff = malloc(sizeof(char)*(i+1));
-	for (currpos = programhead->next; currpos->type != END; currpos = currpos->next)
+	for (currpos = programhead->next; currpos->type != END; currpos = currpos->next) {
 		for (i = 0; currpos->line[i] != '\0'; i++)
 			;
 		buff = realloc(buff, sizeof(char)*(i+1));
 		if (currpos->type == FOR) {
+			printf("for:%s\n", currpos->line); //XXX
 			i = 0;
 			//setup part
 			for (; currpos->line[i] != '\0'; i++) {
@@ -305,6 +306,7 @@ void forparse(struct progline *programhead) {
 			currpos->next->previous = currpos->previous;
 			free(currpos);
 		}
+	}
 }
 
 void behindbastard(struct progline *currpos, char* str) {
@@ -321,10 +323,11 @@ int ierecurse(struct progline *currhead, int headdepth) {
 	struct progline *linebuff;
 	char *buff;
 	int i, j;
+	currpos = currhead;
 	for (i = 0; currpos->line[i] != '\0'; i++)
 		;
 	buff = malloc(sizeof(char)*(i+1));
-	for (currpos = currhead; currpos->depth >= headdepth && currpos->type != END;
+	for (; currpos->depth >= headdepth && currpos->type != END;
 	     currpos = currpos->next) {
 		for (i = 0; currpos->line[i] != '\0'; i++)
 			;
@@ -401,6 +404,7 @@ int ierecurse(struct progline *currhead, int headdepth) {
 			exit(0x05);
 		}
 	}
+	printf("type:%d\n", currpos->type); //XXX
 	return 0;
 }
 
@@ -442,7 +446,6 @@ void arrayparse(struct progline *programhead) {
 				for (j = 0; currpos->previous->line[j] != '\0'; j++)
 					buff[j] = currpos->previous->line[j];
 				buff[j] = '\0';
-				printf("buff:%s\n", buff);
 				currpos->previous->line = realloc(currpos->previous->line, sizeof(char)*(j+namelen*k+1));
 				for (j = 0; buff[j] != '\0'; j++)
 					currpos->previous->line[j] = buff[j];
@@ -465,17 +468,53 @@ void arrayparse(struct progline *programhead) {
 	}
 }
 
-void fxparse(struct progline *programhead) {
+void maininit(struct progline *programhead) {
+	struct progline *mainpos;
+	struct progline *toppos;
+	char str[1000];
+	toppos = programhead->next;
+	for (mainpos = programhead->next; mainpos->type != MAIN; mainpos = mainpos->next)
+		if (mainpos->type == END) {
+			printf("failed to find !main\n");
+			exit(0x0b);
+		}
+	mainpos = mainpos->next;
+	sprintf(str, "int heapcount; int currentlabel;\
+		      int fxframe[(1<<15)];");
+	behindbastard(toppos, str);
+	sprintf(str, "heapcount = 0; currentlabel = 0; progaddr = 0;");
+	behindbastard(mainpos, str);
+}
+
+void fxdef(struct progline *programhead) {
+	//also initializes main
 	struct progline *currpos;
 	struct progline *insertpos;
+	struct progline *mainpos;
+	struct progline *fxpos;
+	struct progline *endmainpos;
+	struct progline *nonbaspos;
 	char fxname[1000], varname[1000];
 	char str[1000];
 	int i, j;
 	insertpos = programhead->next;
+	for (mainpos = programhead->next; mainpos->type != MAIN; mainpos = mainpos->next)
+		if (mainpos->type == END) {
+			printf("failed to find !main\n");
+			exit(0x0b);
+		}
+	mainpos = mainpos->next->next; //since have to give one line for main init
+	for (endmainpos = mainpos->next; endmainpos->type != END && endmainpos->depth > mainpos->previous->previous->depth; endmainpos = endmainpos->next)
+		;
+	behindbastard(endmainpos, "//separator");
+	nonbaspos = endmainpos->previous;
 	//search for functions and make/use the associated stuff without processing the actual one
 	for (currpos = programhead->next; currpos->type != END; currpos = currpos->next) {
 		if (currpos->type == FX) {
+			fxpos = currpos->next;
 			//allocate global variables
+			sprintf(str, "int idx_fxvar; idx_fxvar = 0;", fxname);
+			behindbastard(fxpos, str);
 			for (i = 0; currpos->line[i] != ' '; i++) {
 				if (currpos->line[i] == '\0') {
 					break;
@@ -485,6 +524,10 @@ void fxparse(struct progline *programhead) {
 			fxname[i] = '\0';
 			sprintf(str, "unsigned short _____%sret;", fxname);
 			behindbastard(insertpos, str);
+			sprintf(str, "makeheap(&_____%sret);", fxname);
+			behindbastard(mainpos, str);
+			sprintf(str, "fxframe[idx_fxvar] = _____%sret; idx_fxvar++;", fxname);
+			behindbastard(fxpos, str);
 			while(currpos->line[i] == ' ')
 				i++;
 			for (; currpos->line[i] != '\0';) {
@@ -496,6 +539,12 @@ void fxparse(struct progline *programhead) {
 				varname[j] = '\0';
 				sprintf(str, "unsigned short _____%s_%s;", fxname, varname);
 				behindbastard(insertpos, str);
+				sprintf(str, "makeheap(&_____%s_%s);", fxname, varname);
+				behindbastard(mainpos, str);
+				sprintf(str, "fxframe[idx_fxvar] = _____%s_%s; idx_fxvar++;", fxname, varname);
+				behindbastard(fxpos, str);
+				sprintf(str, "int %s = _____%s_%s", varname, fxname, varname);
+				behindbastard(fxpos, str);
 			}
 			currpos = currpos->next;
 			if (currpos->type == HEAP) {
@@ -511,12 +560,28 @@ void fxparse(struct progline *programhead) {
 					varname[j] = '\0';
 					sprintf(str, "unsigned short _____%s_%s;", fxname, varname);
 					behindbastard(insertpos, str);
+					sprintf(str, "makeheap(&_____%s_%s);", fxname, varname);
+					behindbastard(mainpos, str);
+					sprintf(str, "fxframe[idx_fxvar] = _____%s_%s; idx_fxvar++;", fxname, varname);
+					behindbastard(fxpos, str);
+					sprintf(str, "int %s = _____%s_%s", varname, fxname, varname);
+					behindbastard(fxpos, str);
 				}
 			}
 			sprintf(str, "unsigned short _____%sloc;", fxname);
 			behindbastard(insertpos, str);
+			sprintf(str, "_____%sloc = addr;", fxname);
+			behindbastard(fxpos, str);
+			sprintf(str, "fxframe[idx_fxvar] = -1;", fxname, varname);
+			behindbastard(fxpos, str);
 			sprintf(str, "char _____%slabel[5];", fxname);
 			behindbastard(insertpos, str);
+			sprintf(str, "makelabel(_____%slabel);", fxname);
+			behindbastard(mainpos, str);
+			sprintf(str, "replacex88expimm(_____%slabel, _____%sloc);", fxname, fxname);
+			behindbastard(endmainpos, str);
+			sprintf(str, "_____%s()", fxname);
+			behindbastard(nonbaspos, str);
 			currpos = currpos->previous; //have to make up for the advance check
 		}
 	}		
@@ -589,8 +654,11 @@ void main(int argc, char** argv) {
 	forparse(programhead);
 	ieparse(programhead);
 	arrayparse(programhead);
-	fxparse(programhead); //allocates functions and makes calls
+	maininit(programhead);
+	fxdef(programhead); //allocates functions and makes calls
 	/*
+	fxmaccall(programhead);
+	mainend(programhead);
 	bastardize(programhead);
 	globalheap(programhead);
 	fxallocate(programhead);

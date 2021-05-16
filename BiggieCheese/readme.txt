@@ -491,3 +491,6 @@ increase the speed of operation
 
 **have added dynamic allocation for the "line" part of the progline structure to allow for longer
 lines in the case of array, but this is the only time when it is lengthened
+
+**fxframeend is initialized to zero, and it points one past the last frame entry
+ ** !main cannot be empty
