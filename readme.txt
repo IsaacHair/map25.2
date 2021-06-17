@@ -1,7 +1,16 @@
+WARNING: This repo may or may not contain all the details necessary for
+anyone besides myself to understand what is going on. It mostly served
+as a place to store files and write down my thoughts. I will write
+proper documentation at a later date regarding programs and innovations
+that I want to share.
+
+**View readme's within the folders for more detailed descriptions of the programs.
+They should explain how various programs are written and what their functions are.
+
 **The readme.txt's in this repo will also act as changelog.txt's so that
 everything is visible easily**
 
-**The readme.txt's are fully updated, while comments within the code MIGHT
+**The readme.txt's are fully updated (hopefully), while comments within the code MIGHT
 BE DEPRECATED OR UNTRUE, so beware**
 
 map25.2 assembly:
