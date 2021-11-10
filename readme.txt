@@ -1,3 +1,6 @@
+***THE FOLDER "COMPUTER STUFF" contains general notes and thoughts about the computer
+in a slightly more structured format.
+
 WARNING: This repo may or may not contain all the details necessary for
 anyone besides myself to understand what is going on. It mostly served
 as a place to store files and write down my thoughts. I will write
