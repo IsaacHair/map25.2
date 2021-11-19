@@ -99,7 +99,7 @@ Programming Language features:
  in place of "stuff"
 
 *write all numbers in decimal always unless use preceding "0x"
-*can goto
+*can goto by simply writing this at the end of an instruction
 *can use #def and #enddef for macros as well; literally just
  tells compiler to copy and paste, and it supports nesting
 *note that add #def statements must resolve before the
@@ -176,3 +176,7 @@ inst ram aux 0x000000;;
 inst imm addr heapaddr;;
 inst aux ram 0x000000;;
 #enddef
+
+<
+example function which grabs user input:
+>
